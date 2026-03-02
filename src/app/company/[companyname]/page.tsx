@@ -34,8 +34,10 @@ interface Draft {
   custom_paragraph: string;
   status: string;
   contactname?: string;
-  contacttitle?: string;
-  contactemail?: string;
+  contact_title?: string;
+  contact_email?: string;
+  subject_final?: string;
+  body_final?: string;
 }
 
 const STATUS_OPTIONS = ["draft", "ready_to_print", "printed", "sent", "closed"];
@@ -300,9 +302,42 @@ export default function CompanyDetailPage() {
         )}
       </section>
 
-      {/* Draft */}
+      {/* Letter Preview */}
+      {draft && (draft.subject_final || draft.body_final) && (
+        <section className="mb-6">
+          <h2 className="font-semibold mb-3">Letter</h2>
+          <div
+            className="bg-white border rounded-lg shadow-sm"
+            style={{
+              padding: "48px 56px",
+              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontSize: "13pt",
+              lineHeight: "1.7",
+              maxWidth: "8.5in",
+            }}
+          >
+            {draft.contact_title && draft.contactname && (
+              <div className="mb-6 text-sm" style={{ fontFamily: "inherit" }}>
+                <div>{draft.contactname}</div>
+                <div>{draft.contact_title}</div>
+                <div>{company.companyname}</div>
+              </div>
+            )}
+            {draft.subject_final && (
+              <h3 style={{ fontSize: "14pt", fontWeight: "bold", marginBottom: "20px" }}>
+                {draft.subject_final}
+              </h3>
+            )}
+            {draft.body_final && (
+              <div style={{ whiteSpace: "pre-wrap" }}>{draft.body_final}</div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Draft Controls */}
       <section className="bg-white rounded-lg border p-4">
-        <h2 className="font-semibold mb-3">Outreach Draft</h2>
+        <h2 className="font-semibold mb-3">Draft Settings</h2>
         {!draft ? (
           <button
             onClick={createDraft}
@@ -316,8 +351,8 @@ export default function CompanyDetailPage() {
             {draft.contactname && (
               <p className="text-sm text-gray-600">
                 Contact: <strong>{draft.contactname}</strong>
-                {draft.contacttitle && ` — ${draft.contacttitle}`}
-                {draft.contactemail && ` (${draft.contactemail})`}
+                {draft.contact_title && ` — ${draft.contact_title}`}
+                {draft.contact_email && ` (${draft.contact_email})`}
               </p>
             )}
             <div>
