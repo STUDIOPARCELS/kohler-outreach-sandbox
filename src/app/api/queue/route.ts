@@ -16,26 +16,8 @@ export async function GET(req: NextRequest) {
     query = query.in("id", idList);
   }
 
-  const { data: inserts, error } = await query;
+  const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Fetch final letters to merge
-  const { data: finals } = await supabaseAdmin
-    .from("reachout_final_letters")
-    .select("*");
-
-  const finalMap = new Map(
-    (finals || []).map((f: Record<string, unknown>) => [f.companyname, f])
-  );
-
-  const merged = (inserts || []).map((row: Record<string, unknown>) => {
-    const fl = finalMap.get(row.companyname) as Record<string, unknown> | undefined;
-    return {
-      ...row,
-      subject_final: fl?.subject_final || null,
-      body_final: fl?.body_final || null,
-    };
-  });
-
-  return NextResponse.json(merged);
+  return NextResponse.json(data || []);
 }

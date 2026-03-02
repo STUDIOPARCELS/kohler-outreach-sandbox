@@ -9,6 +9,7 @@ interface Row {
   tier: number;
   city: string;
   contactname?: string;
+  contact_title?: string;
   email?: string;
   [key: string]: unknown;
 }
@@ -117,8 +118,16 @@ export default function OutreachListPage() {
                     {r.city}
                   </td>
                   <td className="py-2 pr-4 hidden md:table-cell text-gray-600">
-                    {r.contactname || "—"}
-                    {r.email ? ` (${r.email})` : ""}
+                    {r.contactname ? (
+                      <>
+                        <span className="font-medium">{r.contactname}</span>
+                        {r.contact_title && (
+                          <span className="text-gray-400"> — {r.contact_title}</span>
+                        )}
+                      </>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               ))}
