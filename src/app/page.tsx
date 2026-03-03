@@ -75,7 +75,7 @@ function assembleLetter(
   body = body.replace(/this passion/g, "my passion");
   body = body.replace(
     "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.",
-    "If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team."
+    "If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team."
   );
 
   // Only collapse excessive blank lines in the body, preserve signature space
@@ -198,9 +198,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the energy and power generation space.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the energy sector.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -222,9 +222,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the commercial building industry.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the building systems sector.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -246,9 +246,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. My background includes metal fabrication, and I have hands-on experience taking CAD designs from concept through prototype and fabrication. I am eager to put these skills to work in the heavy civil and construction industry.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. My background includes metal fabrication, and I have hands-on experience taking CAD designs from concept through prototype and fabrication. I am eager to put these skills to work in the heavy construction industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -270,9 +270,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the environmental and geotech space.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the environmental sector.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -296,7 +296,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the aerospace industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -318,9 +318,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the electronics and robotics space.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the robotics space.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -342,9 +342,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the manufacturing and product design industry.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the manufacturing sector.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -368,7 +368,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the audio and musical instrument industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -392,7 +392,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have skied all my life, and I'm eager to combine my passion for skiing with my engineering background.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -416,7 +416,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have enjoyed the outdoors all my life, and I'm eager to combine my passion for the outdoors with my engineering background.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -440,7 +440,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I spent the last year designing and prototyping custom woodworking projects, and I am eager to put these skills to work in the woodworking and prototyping industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -650,7 +650,7 @@ export default function HomePage() {
     ? currentLetter.body_final
       ? { subject: template.subject_template.replace(/\{\{COMPANY\}\}/g, expandedCompany), body: currentLetter.body_final
           .replace(/this passion/g, "my passion")
-          .replace("Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.", "If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.")
+          .replace("Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.", "If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.")
         }
       : assembleLetter(
           template,
@@ -858,7 +858,10 @@ export default function HomePage() {
 
             function renderBentoBox(niche: string, items: CompanyRow[]) {
               const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
-              const isOpen = expandedNiches.has(niche);
+              const PREVIEW_COUNT = 3;
+              const isFullyExpanded = expandedNiches.has(niche);
+              const visibleItems = isFullyExpanded ? items : items.slice(0, PREVIEW_COUNT);
+              const hiddenCount = items.length - PREVIEW_COUNT;
               const sentCount = items.filter(c => { const l = lettersMap.get(c.companyname); return l && (l.status === "sent" || l.status === "printed"); }).length;
 
               return (
@@ -869,45 +872,32 @@ export default function HomePage() {
                     boxShadow: "0 20px 40px -12px rgba(0,0,0,0.15), 0 8px 20px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6)",
                   }}
                 >
-                  {/* Niche header — always visible, click to expand/collapse */}
-                  <button
-                    onClick={() => toggleNiche(niche)}
-                    className="w-full text-left"
+                  {/* Niche header */}
+                  <div
+                    className={`relative px-5 py-4 ${colors.headerBg ? `bg-gradient-to-r ${colors.headerBg}` : ""}`}
+                    style={{
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.1)",
+                      ...(!colors.headerBg ? { background: "linear-gradient(135deg, #5b2333 0%, #3d1522 50%, #2a0e18 100%)" } : {}),
+                    }}
                   >
-                    <div
-                      className={`relative px-5 py-4 ${colors.headerBg ? `bg-gradient-to-r ${colors.headerBg}` : ""}`}
-                      style={{
-                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.1)",
-                        ...(!colors.headerBg ? { background: "linear-gradient(135deg, #5b2333 0%, #3d1522 50%, #2a0e18 100%)" } : {}),
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-bold text-sm text-white drop-shadow-sm">
-                            {niche}
-                          </h3>
-                          <p className="text-xs text-white/60 mt-0.5">
-                            {items.length} {items.length === 1 ? "company" : "companies"}
-                            {sentCount > 0 && <span className="text-green-300 ml-1.5">({sentCount} sent)</span>}
-                          </p>
-                        </div>
-                        <svg
-                          className={`w-4 h-4 text-white/70 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-sm text-white drop-shadow-sm">
+                          {niche}
+                        </h3>
+                        <p className="text-xs text-white/60 mt-0.5">
+                          {items.length} {items.length === 1 ? "company" : "companies"}
+                          {sentCount > 0 && <span className="text-green-300 ml-1.5">({sentCount} sent)</span>}
+                        </p>
                       </div>
                     </div>
-                  </button>
+                  </div>
 
-                  {/* Companies list — only shown when expanded */}
-                  {isOpen && (() => {
+                  {/* Companies list — first 3 always visible, rest on expand */}
+                  {(() => {
                     return (
                     <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04]`}>
-                      {items.map((c) => {
+                      {visibleItems.map((c) => {
                         globalIdx++;
                         const num = globalIdx;
                         const isExpanded = expandedCompany === c.companyname;
@@ -1092,6 +1082,14 @@ export default function HomePage() {
                           </div>
                         );
                       })}
+                      {hiddenCount > 0 && (
+                        <button
+                          onClick={() => toggleNiche(niche)}
+                          className="w-full px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors flex items-center justify-center gap-1"
+                        >
+                          {isFullyExpanded ? "Show less" : `Show remaining ${hiddenCount} companies`}
+                        </button>
+                      )}
                     </div>
                     );
                   })()}
