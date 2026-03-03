@@ -355,6 +355,102 @@ Kohler Wood, EIT
 208-720-4635
 Lakewood, CO
 akwood1@mines.edu`,
+
+  "Acoustics / Audio / Musical Instruments": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the acoustics and audio sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the audio and musical instrument industry.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Skiing": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the ski industry and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the ski and snow sports space.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Outdoor Recreation & Equipment": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the outdoor recreation sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the outdoor recreation and equipment industry.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Woodworking / Furniture / Cabinetry / Prototyping": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the woodworking and fabrication sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the woodworking and prototyping industry.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
 };
 
 /* ── Main Page ── */
@@ -591,17 +687,17 @@ export default function HomePage() {
           <div className="absolute inset-0 opacity-[0.03]"
             style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
           />
-          <div className="relative px-6 py-8 sm:px-8 sm:py-10">
-            <div className="flex items-start justify-between">
+          <div className="relative px-4 py-6 sm:px-8 sm:py-10">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight uppercase">
+                <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight uppercase">
                   OUTREACH | MISSION CONTROL
                 </h1>
-                <p className="text-slate-300 mt-1.5 text-sm sm:text-base font-medium uppercase tracking-wide">
+                <p className="text-slate-300 mt-1 text-xs sm:text-base font-medium uppercase tracking-wide">
                   ENTRY LEVEL BSME / EIT
                 </p>
               </div>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
                   {filteredCompanies.length} companies
                 </span>
@@ -665,7 +761,7 @@ export default function HomePage() {
                   ))}
                 </div>
                 {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-1.5">
+                <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
                   {cells.map((day, i) => {
                     if (day === null) return <div key={i} />;
                     const entries = sentByDay.get(day);
@@ -674,7 +770,7 @@ export default function HomePage() {
                     return (
                       <div
                         key={i}
-                        className={`relative rounded-lg text-center py-2.5 text-xs transition-all group cursor-default ${
+                        className={`relative rounded-lg text-center py-2 sm:py-2.5 text-xs transition-all group cursor-default ${
                           count > 0
                             ? "bg-green-200 text-green-900 font-bold ring-1 ring-green-400 shadow-sm"
                             : isToday
@@ -864,7 +960,7 @@ export default function HomePage() {
 
                             {/* Expanded company detail */}
                             {isExpanded && (
-                              <div className="border-t border-black/[0.06] bg-white/90 backdrop-blur-sm px-5 pb-5 pt-4">
+                              <div className="border-t border-black/[0.06] bg-white/90 backdrop-blur-sm px-3 sm:px-5 pb-4 sm:pb-5 pt-3 sm:pt-4">
                                 {expandLoading ? (
                                   <div className="flex items-center gap-2 py-3">
                                     <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
@@ -933,7 +1029,7 @@ export default function HomePage() {
                                         <div
                                           className="bg-white"
                                           style={{
-                                            padding: "24px 32px",
+                                            padding: "16px 16px",
                                             fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
                                             fontSize: "10pt",
                                             lineHeight: "1.6",
