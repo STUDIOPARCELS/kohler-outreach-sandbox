@@ -528,257 +528,282 @@ export default function HomePage() {
             <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="columns-1 md:columns-2 gap-5 space-y-5">
-            {(() => {
-              const grouped = new Map<string, CompanyRow[]>();
-              for (const c of filteredCompanies) {
-                const n = c.niche || "Other";
-                if (!grouped.has(n)) grouped.set(n, []);
-                grouped.get(n)!.push(c);
+          (() => {
+            const grouped = new Map<string, CompanyRow[]>();
+            for (const c of filteredCompanies) {
+              const n = c.niche || "Other";
+              if (!grouped.has(n)) grouped.set(n, []);
+              grouped.get(n)!.push(c);
+            }
+
+            const TOP_NICHES = [
+              "Acoustics / Audio / Musical Instruments",
+              "Skiing",
+              "Outdoor Recreation & Equipment",
+              "Woodworking / Furniture / Cabinetry / Prototyping",
+            ];
+
+            // Collect all non-top-4 companies into "Other"
+            const otherItems: CompanyRow[] = [];
+            Array.from(grouped.keys()).forEach((n) => {
+              if (!TOP_NICHES.includes(n)) {
+                otherItems.push(...(grouped.get(n) || []));
               }
-              const sortedNiches = NICHE_ORDER.filter((n) => grouped.has(n));
-              Array.from(grouped.keys()).forEach((n) => {
-                if (!sortedNiches.includes(n)) sortedNiches.push(n);
-              });
-              let globalIdx = 0;
-              return sortedNiches.map((niche) => {
-                const items = grouped.get(niche)!;
-                const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
-                const isCollapsed = collapsedNiches.has(niche);
+            });
 
-                return (
-                  <div
-                    key={niche}
-                    className={`break-inside-avoid rounded-2xl border ${colors.border} overflow-hidden transition-all duration-300`}
-                    style={{
-                      boxShadow: "0 10px 30px -8px rgba(0,0,0,0.12), 0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
-                      transform: "translateZ(0)",
-                    }}
+            let globalIdx = 0;
+
+            function renderBentoBox(niche: string, items: CompanyRow[], fullWidth?: boolean) {
+              const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
+              const isCollapsed = collapsedNiches.has(niche);
+
+              return (
+                <div
+                  key={niche}
+                  className={`rounded-2xl border ${colors.border} overflow-hidden transition-all duration-300 ${fullWidth ? "" : "min-w-0"}`}
+                  style={{
+                    boxShadow: "0 10px 30px -8px rgba(0,0,0,0.12), 0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
+                  }}
+                >
+                  {/* Niche header */}
+                  <button
+                    onClick={() => toggleNiche(niche)}
+                    className="w-full text-left"
                   >
-                    {/* Niche header */}
-                    <button
-                      onClick={() => toggleNiche(niche)}
-                      className="w-full text-left"
+                    <div
+                      className={`relative px-5 py-4 bg-gradient-to-r ${colors.headerBg}`}
+                      style={{
+                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.1)",
+                      }}
                     >
-                      <div
-                        className={`relative px-5 py-4 bg-gradient-to-r ${colors.headerBg}`}
-                        style={{
-                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.1)",
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-bold text-sm text-white drop-shadow-sm">
-                              {niche}
-                            </h3>
-                            <p className="text-[11px] text-white/60 mt-0.5">
-                              {items.length} {items.length === 1 ? "company" : "companies"}
-                            </p>
-                          </div>
-                          <svg
-                            className={`w-4 h-4 text-white/70 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-sm text-white drop-shadow-sm">
+                            {niche}
+                          </h3>
+                          <p className="text-[11px] text-white/60 mt-0.5">
+                            {items.length} {items.length === 1 ? "company" : "companies"}
+                          </p>
                         </div>
+                        <svg
+                          className={`w-4 h-4 text-white/70 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
                       </div>
-                    </button>
+                    </div>
+                  </button>
 
-                    {/* Companies list */}
-                    {!isCollapsed && (
-                      <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04]`}>
-                        {items.map((c) => {
-                          globalIdx++;
-                          const num = globalIdx;
-                          const isExpanded = expandedCompany === c.companyname;
-                          const letter = lettersMap.get(c.companyname);
-                          return (
-                            <div key={c.companyname}>
-                              <button
-                                onClick={() => expandCompany(c.companyname)}
-                                className={`w-full text-left px-5 py-3 flex items-center justify-between transition-all duration-200 ${
-                                  isExpanded
-                                    ? "bg-white/80 shadow-inner"
-                                    : "hover:bg-white/50"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-black/[0.06] text-gray-400">
-                                    {num}
+                  {/* Companies list */}
+                  {!isCollapsed && (
+                    <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04] ${fullWidth ? "columns-1 sm:columns-2 lg:columns-3 gap-0" : ""}`}>
+                      {items.map((c) => {
+                        globalIdx++;
+                        const num = globalIdx;
+                        const isExpanded = expandedCompany === c.companyname;
+                        const letter = lettersMap.get(c.companyname);
+                        return (
+                          <div key={c.companyname} className={fullWidth ? "break-inside-avoid" : ""}>
+                            <button
+                              onClick={() => expandCompany(c.companyname)}
+                              className={`w-full text-left px-5 py-3 flex items-center justify-between transition-all duration-200 ${
+                                isExpanded
+                                  ? "bg-white/80 shadow-inner"
+                                  : "hover:bg-white/50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-black/[0.06] text-gray-400">
+                                  {num}
+                                </span>
+                                <div className="min-w-0">
+                                  <span className="font-semibold text-sm truncate block text-gray-800">
+                                    {c.companyname}
                                   </span>
-                                  <div className="min-w-0">
-                                    <span className="font-semibold text-sm truncate block text-gray-800">
-                                      {c.companyname}
-                                    </span>
-                                    <span className="text-[11px] truncate block text-gray-400">
-                                      {c.city}
-                                    </span>
+                                  <span className="text-[11px] truncate block text-gray-400">
+                                    {c.city}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {letter && (
+                                  <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
+                                    {letter.status.replace(/_/g, " ")}
+                                  </span>
+                                )}
+                                <svg
+                                  className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-300 ${isExpanded ? "rotate-180" : ""}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </button>
+
+                            {/* Expanded company detail */}
+                            {isExpanded && (
+                              <div className="border-t border-black/[0.06] bg-white/90 backdrop-blur-sm px-5 pb-5 pt-4">
+                                {expandLoading ? (
+                                  <div className="flex items-center gap-2 py-3">
+                                    <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
+                                    <span className="text-xs text-gray-400">Loading...</span>
                                   </div>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  {letter && (
-                                    <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
-                                      {letter.status.replace(/_/g, " ")}
-                                    </span>
-                                  )}
-                                  <svg
-                                    className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-300 ${isExpanded ? "rotate-180" : ""}`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                  </svg>
-                                </div>
-                              </button>
+                                ) : (
+                                  <>
+                                    {/* Company info */}
+                                    {c.company_about && (
+                                      <div className="flex items-start gap-2 mb-4 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-100"
+                                        style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}
+                                      >
+                                        <svg className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-xs text-gray-600 leading-relaxed">{c.company_about}</p>
+                                      </div>
+                                    )}
 
-                              {/* Expanded company detail */}
-                              {isExpanded && (
-                                <div className="border-t border-black/[0.06] bg-white/90 backdrop-blur-sm px-5 pb-5 pt-4">
-                                  {expandLoading ? (
-                                    <div className="flex items-center gap-2 py-3">
-                                      <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
-                                      <span className="text-xs text-gray-400">Loading...</span>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      {/* Company info */}
-                                      {c.company_about && (
-                                        <div className="flex items-start gap-2 mb-4 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-100"
-                                          style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}
+                                    {/* Contact selector */}
+                                    {contacts.length > 0 && (
+                                      <div className="mb-4">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                                          Contact
+                                        </label>
+                                        <select
+                                          value={selectedContactIdx}
+                                          onChange={(e) => applyContact(Number(e.target.value))}
+                                          className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white w-full max-w-sm shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
                                         >
-                                          <svg className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                          </svg>
-                                          <p className="text-xs text-gray-600 leading-relaxed">{c.company_about}</p>
-                                        </div>
-                                      )}
+                                          {contacts.map((ct, i) => (
+                                            <option key={i} value={i}>
+                                              {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    )}
 
-                                      {/* Contact selector */}
-                                      {contacts.length > 0 && (
-                                        <div className="mb-4">
-                                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
-                                            Contact
-                                          </label>
-                                          <select
-                                            value={selectedContactIdx}
-                                            onChange={(e) => applyContact(Number(e.target.value))}
-                                            className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white w-full max-w-sm shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                                          >
-                                            {contacts.map((ct, i) => (
-                                              <option key={i} value={i}>
-                                                {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}
-                                              </option>
-                                            ))}
-                                          </select>
+                                    {/* Letter preview */}
+                                    {assembled && !editing && (
+                                      <div
+                                        className="rounded-xl overflow-hidden border border-gray-200 mt-2"
+                                        style={{
+                                          boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08), 0 2px 6px -2px rgba(0,0,0,0.04)",
+                                        }}
+                                      >
+                                        <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gradient-to-r from-gray-50 to-white">
+                                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Letter Preview</span>
+                                          <div className="flex gap-2">
+                                            <button
+                                              onClick={() => { setEditing(true); setEditBody(assembled.body); }}
+                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
+                                            >
+                                              Edit
+                                            </button>
+                                            <button
+                                              onClick={() => printAndLog()}
+                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-900 text-white hover:bg-black transition-colors"
+                                              style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+                                            >
+                                              Print
+                                            </button>
+                                          </div>
                                         </div>
-                                      )}
-
-                                      {/* Letter preview */}
-                                      {assembled && !editing && (
                                         <div
-                                          className="rounded-xl overflow-hidden border border-gray-200 mt-2"
+                                          className="bg-white"
                                           style={{
-                                            boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08), 0 2px 6px -2px rgba(0,0,0,0.04)",
+                                            padding: "24px 32px",
+                                            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                                            fontSize: "10pt",
+                                            lineHeight: "1.6",
+                                            whiteSpace: "pre-wrap",
+                                            maxHeight: "400px",
+                                            overflowY: "auto",
                                           }}
                                         >
-                                          <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gradient-to-r from-gray-50 to-white">
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Letter Preview</span>
-                                            <div className="flex gap-2">
-                                              <button
-                                                onClick={() => { setEditing(true); setEditBody(assembled.body); }}
-                                                className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
-                                              >
-                                                Edit
-                                              </button>
-                                              <button
-                                                onClick={() => printAndLog()}
-                                                className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-900 text-white hover:bg-black transition-colors"
-                                                style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
-                                              >
-                                                Print
-                                              </button>
-                                            </div>
-                                          </div>
-                                          <div
-                                            className="bg-white"
-                                            style={{
-                                              padding: "24px 32px",
-                                              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                                              fontSize: "10pt",
-                                              lineHeight: "1.6",
-                                              whiteSpace: "pre-wrap",
-                                              maxHeight: "400px",
-                                              overflowY: "auto",
-                                            }}
+                                          {assembled.body}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Edit mode */}
+                                    {editing && (
+                                      <div className="mt-2">
+                                        <textarea
+                                          value={editBody}
+                                          onChange={(e) => setEditBody(e.target.value)}
+                                          className="w-full border border-gray-200 rounded-xl p-4 text-xs shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                          style={{
+                                            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                                            fontSize: "10pt",
+                                            lineHeight: "1.5",
+                                            minHeight: "400px",
+                                            whiteSpace: "pre-wrap",
+                                          }}
+                                        />
+                                        <div className="flex gap-2 mt-3">
+                                          <button
+                                            onClick={() => setEditing(false)}
+                                            className="px-4 py-2 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
                                           >
-                                            {assembled.body}
-                                          </div>
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={saveLetter}
+                                            disabled={saving}
+                                            className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                            style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}
+                                          >
+                                            {saving ? "Saving..." : "Save"}
+                                          </button>
                                         </div>
-                                      )}
+                                      </div>
+                                    )}
 
-                                      {/* Edit mode */}
-                                      {editing && (
-                                        <div className="mt-2">
-                                          <textarea
-                                            value={editBody}
-                                            onChange={(e) => setEditBody(e.target.value)}
-                                            className="w-full border border-gray-200 rounded-xl p-4 text-xs shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                                            style={{
-                                              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                                              fontSize: "10pt",
-                                              lineHeight: "1.5",
-                                              minHeight: "400px",
-                                              whiteSpace: "pre-wrap",
-                                            }}
-                                          />
-                                          <div className="flex gap-2 mt-3">
-                                            <button
-                                              onClick={() => setEditing(false)}
-                                              className="px-4 py-2 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
-                                            >
-                                              Cancel
-                                            </button>
-                                            <button
-                                              onClick={saveLetter}
-                                              disabled={saving}
-                                              className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                                              style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}
-                                            >
-                                              {saving ? "Saving..." : "Save"}
-                                            </button>
-                                          </div>
-                                        </div>
-                                      )}
+                                    {/* No letter yet */}
+                                    {!assembled && !editing && (
+                                      <div className="flex items-center gap-2 py-3 px-4 rounded-xl bg-gray-50 border border-dashed border-gray-200 mt-2">
+                                        <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <p className="text-xs text-gray-400 italic">
+                                          No letter draft for this company yet.
+                                        </p>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
-                                      {/* No letter yet */}
-                                      {!assembled && !editing && (
-                                        <div className="flex items-center gap-2 py-3 px-4 rounded-xl bg-gray-50 border border-dashed border-gray-200 mt-2">
-                                          <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                          </svg>
-                                          <p className="text-xs text-gray-400 italic">
-                                            No letter draft for this company yet.
-                                          </p>
-                                        </div>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              });
-            })()}
-          </div>
+            return (
+              <div className="space-y-5">
+                {/* Top row: 4 target niches */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {TOP_NICHES.map((niche) => {
+                    const items = grouped.get(niche);
+                    if (!items || items.length === 0) return null;
+                    return renderBentoBox(niche, items);
+                  })}
+                </div>
+
+                {/* Bottom: full-width Other bento box */}
+                {otherItems.length > 0 && renderBentoBox("Other", otherItems, true)}
+              </div>
+            );
+          })()
         )}
       </div>
 
