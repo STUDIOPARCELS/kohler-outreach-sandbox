@@ -406,21 +406,21 @@ export default function HomePage() {
           <div className="absolute inset-0 opacity-[0.03]"
             style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
           />
-          <div className="relative px-6 py-8 sm:px-8 sm:py-10">
+          <div className="relative px-6 py-8 sm:px-8 sm:py-10 text-right">
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight uppercase">
               ENTRY LEVEL BSME / EIT
             </h1>
             <p className="text-slate-300 mt-1.5 text-sm sm:text-base font-medium uppercase tracking-wide">
               OUTREACH MISSION CONTROL
             </p>
-            <div className="flex items-center gap-3 mt-4">
-              <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mt-4 justify-end">
+              <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
                 {filteredCompanies.length} companies
               </span>
-              <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
+              <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
                 {lettersMap.size} letters drafted
               </span>
-              <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
+              <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
                 {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent
               </span>
             </div>
@@ -461,22 +461,22 @@ export default function HomePage() {
           const todayDay = today.getFullYear() === 2026 && today.getMonth() === 2 ? today.getDate() : -1;
 
           return (
-            <div className="mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden"
-              style={{ boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08)" }}
+            <div className="mb-6 rounded-xl border border-gray-300 bg-white overflow-hidden"
+              style={{ boxShadow: "0 10px 30px -8px rgba(0,0,0,0.12), 0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)" }}
             >
-              <div className="px-5 py-3 border-b bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
-                <h2 className="text-sm font-bold text-gray-700">March 2026</h2>
-                <span className="text-[11px] text-gray-400">{sentOrPrinted.length} letters sent</span>
+              <div className="px-5 py-3.5 border-b border-gray-300 bg-gradient-to-r from-gray-100 to-gray-50 flex items-center justify-between">
+                <h2 className="text-sm font-bold text-gray-800">March 2026</h2>
+                <span className="text-[11px] font-semibold text-gray-500">{sentOrPrinted.length} letters sent</span>
               </div>
-              <div className="p-4">
+              <div className="p-4 bg-gradient-to-b from-gray-50/50 to-white">
                 {/* Day-of-week headers */}
-                <div className="grid grid-cols-7 mb-1">
+                <div className="grid grid-cols-7 mb-2">
                   {dayNames.map(d => (
-                    <div key={d} className="text-center text-[10px] font-bold text-gray-400 uppercase py-1">{d}</div>
+                    <div key={d} className="text-center text-[10px] font-bold text-gray-600 uppercase py-1.5">{d}</div>
                   ))}
                 </div>
                 {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-1.5">
                   {cells.map((day, i) => {
                     if (day === null) return <div key={i} />;
                     const entries = sentByDay.get(day);
@@ -485,12 +485,12 @@ export default function HomePage() {
                     return (
                       <div
                         key={i}
-                        className={`relative rounded-lg text-center py-2 text-xs transition-all group cursor-default ${
+                        className={`relative rounded-lg text-center py-2.5 text-xs transition-all group cursor-default ${
                           count > 0
-                            ? "bg-green-100 text-green-900 font-bold ring-1 ring-green-300"
+                            ? "bg-green-200 text-green-900 font-bold ring-1 ring-green-400 shadow-sm"
                             : isToday
-                            ? "bg-blue-50 text-blue-800 font-semibold ring-1 ring-blue-300"
-                            : "text-gray-500 hover:bg-gray-50"
+                            ? "bg-blue-100 text-blue-900 font-semibold ring-1 ring-blue-400 shadow-sm"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
                         {day}
@@ -583,7 +583,7 @@ export default function HomePage() {
                   key={niche}
                   className={`rounded-2xl border ${colors.border} overflow-hidden transition-all duration-300 min-w-0`}
                   style={{
-                    boxShadow: "0 10px 30px -8px rgba(0,0,0,0.12), 0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
+                    boxShadow: "0 20px 40px -12px rgba(0,0,0,0.15), 0 8px 20px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6)",
                   }}
                 >
                   {/* Niche header */}
