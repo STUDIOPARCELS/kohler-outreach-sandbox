@@ -553,7 +553,10 @@ export default function HomePage() {
   /* ── Assembled letter for expanded company ── */
   const assembled = expandedCompany && template && currentLetter
     ? currentLetter.body_final
-      ? { subject: template.subject_template.replace(/\{\{COMPANY\}\}/g, expandedCompany), body: currentLetter.body_final }
+      ? { subject: template.subject_template.replace(/\{\{COMPANY\}\}/g, expandedCompany), body: currentLetter.body_final
+          .replace(/this passion/g, "my passion")
+          .replace("Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.", "If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.")
+        }
       : assembleLetter(
           template,
           expandedCompany,
