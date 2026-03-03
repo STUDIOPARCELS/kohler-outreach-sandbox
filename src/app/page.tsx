@@ -46,7 +46,8 @@ function assembleLetter(
   customParagraph: string,
   contactName?: string,
   contactTitle?: string,
-  companyAddress?: string
+  companyAddress?: string,
+  niche?: string
 ) {
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -54,7 +55,10 @@ function assembleLetter(
     day: "numeric",
   });
 
-  let body = template.body_template
+  // Use niche-specific template if available, otherwise fall back to default
+  const bodyTemplate = (niche && NICHE_BODY_TEMPLATES[niche]) || template.body_template;
+
+  let body = bodyTemplate
     .replace(/\{\{COMPANY\}\}/g, companyname)
     .replace(/\{\{CUSTOM_PARAGRAPH\}\}/g, customParagraph || "")
     .replace(/\{\{TODAY_DATE\}\}/g, today)
@@ -174,6 +178,177 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
 };
 
 const DEFAULT_COLORS = NICHE_COLORS["Other"];
+
+/* ── Niche-specific letter body templates ── */
+const NICHE_BODY_TEMPLATES: Record<string, string> = {
+  "Energy / Renewables / Power": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the energy and renewables sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the power generation space.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "MEP / HVAC / Building Systems": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the commercial building industry.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Construction / Civil / Heavy Industry": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the work you are doing at {{COMPANY}}. My background includes metal fabrication, and I have hands-on experience taking CAD designs from concept through prototype and fabrication. I am eager to put these skills to work in the heavy civil and construction industry.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Water / Environmental / Geotech": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the water and environmental sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the environmental and Geotech space.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Aerospace / Space": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the aerospace sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the aerospace industry.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Quantum / Deep Tech / Electronics / Robotics": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the deep tech and robotics sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the electronics and robotics space.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+
+  "Manufacturing / Automation / Product Design": `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the product design and automation sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the manufacturing and product design industry.
+
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
+};
 
 /* ── Main Page ── */
 export default function HomePage() {
@@ -378,7 +553,8 @@ export default function HomePage() {
           currentLetter.custom_paragraph || "",
           currentLetter.contactname || (contacts.length > 0 ? contacts[selectedContactIdx]?.contactname : undefined),
           currentLetter.contact_title || (contacts.length > 0 ? contacts[selectedContactIdx]?.title : undefined),
-          companyAddress
+          companyAddress,
+          companies.find((c) => c.companyname === expandedCompany)?.niche
         )
     : null;
 
