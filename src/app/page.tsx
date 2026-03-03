@@ -334,19 +334,20 @@ export default function HomePage() {
     }
   }
 
-  /* ── Print and auto-log as printed/sent ── */
+  /* ── Print and auto-log as sent ── */
   async function printAndLog() {
     if (!expandedCompany || !currentLetter) { window.print(); return; }
     try {
       await fetch("/api/batch-status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [currentLetter.id], status: "printed" }),
+        body: JSON.stringify({ ids: [currentLetter.id], status: "sent" }),
       });
-      const updated = { ...currentLetter, status: "printed", printed_at: new Date().toISOString() };
+      const now = new Date().toISOString();
+      const updated = { ...currentLetter, status: "sent", sent_at: now, printed_at: now };
       setCurrentLetter(updated);
       setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
-      toast("Marked as printed");
+      toast("Marked as sent");
     } catch {
       // still print even if logging fails
     }
@@ -433,79 +434,102 @@ export default function HomePage() {
                 {lettersMap.size} letters drafted
               </span>
               <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
-                {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent / printed
+                {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent
               </span>
             </div>
           </div>
         </div>
 
-        {/* ── Mailing Activity Calendar ── */}
+        {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
           const allLetters = Array.from(lettersMap.values());
           const sentOrPrinted = allLetters.filter(l => l.sent_at || l.printed_at || l.status === "sent" || l.status === "printed");
-          if (sentOrPrinted.length === 0 && allLetters.length > 0) {
-            return (
-              <div className="mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden"
-                style={{ boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08)" }}
-              >
-                <div className="px-5 py-3 border-b bg-gradient-to-r from-gray-50 to-white">
-                  <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mailing Activity</h2>
-                </div>
-                <div className="px-5 py-6 text-center text-sm text-gray-400">
-                  No letters sent yet. Print a letter to start tracking.
-                </div>
-              </div>
-            );
-          }
-          if (sentOrPrinted.length === 0) return null;
 
-          // Group by date
-          const byDate = new Map<string, { companyname: string; contactname?: string; status: string }[]>();
+          // Group sent letters by day-of-month for March 2026
+          const sentByDay = new Map<number, { companyname: string; contactname?: string }[]>();
           for (const l of sentOrPrinted) {
             const dateStr = l.sent_at || l.printed_at || "";
-            const day = dateStr ? new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Unknown";
-            if (!byDate.has(day)) byDate.set(day, []);
-            byDate.get(day)!.push({ companyname: l.companyname, contactname: l.contactname, status: l.status });
+            if (!dateStr) continue;
+            const d = new Date(dateStr);
+            if (d.getFullYear() === 2026 && d.getMonth() === 2) {
+              const day = d.getDate();
+              if (!sentByDay.has(day)) sentByDay.set(day, []);
+              sentByDay.get(day)!.push({ companyname: l.companyname, contactname: l.contactname });
+            }
           }
-          const sortedDates = Array.from(byDate.keys()).sort((a, b) => {
-            const da = new Date(a);
-            const db = new Date(b);
-            return db.getTime() - da.getTime();
-          });
+
+          // March 2026 starts on Sunday (day 0), 31 days
+          const daysInMonth = 31;
+          const startDow = 0; // Sunday
+          const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const cells: (number | null)[] = [];
+          for (let i = 0; i < startDow; i++) cells.push(null);
+          for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+          while (cells.length % 7 !== 0) cells.push(null);
+
+          const today = new Date();
+          const todayDay = today.getFullYear() === 2026 && today.getMonth() === 2 ? today.getDate() : -1;
 
           return (
             <div className="mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden"
               style={{ boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08)" }}
             >
               <div className="px-5 py-3 border-b bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
-                <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mailing Activity</h2>
-                <span className="text-[11px] text-gray-400">{sentOrPrinted.length} letters tracked</span>
+                <h2 className="text-sm font-bold text-gray-700">March 2026</h2>
+                <span className="text-[11px] text-gray-400">{sentOrPrinted.length} letters sent</span>
               </div>
-              <div className="divide-y max-h-64 overflow-y-auto">
-                {sortedDates.map(date => (
-                  <div key={date} className="px-5 py-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                      <span className="text-xs font-bold text-gray-700">{date}</span>
-                      <span className="text-[10px] text-gray-400">({byDate.get(date)!.length} letters)</span>
-                    </div>
-                    <div className="ml-4 space-y-1">
-                      {byDate.get(date)!.map((entry, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${
-                            entry.status === "sent" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
-                          }`}>
-                            {entry.status}
+              <div className="p-4">
+                {/* Day-of-week headers */}
+                <div className="grid grid-cols-7 mb-1">
+                  {dayNames.map(d => (
+                    <div key={d} className="text-center text-[10px] font-bold text-gray-400 uppercase py-1">{d}</div>
+                  ))}
+                </div>
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {cells.map((day, i) => {
+                    if (day === null) return <div key={i} />;
+                    const entries = sentByDay.get(day);
+                    const count = entries ? entries.length : 0;
+                    const isToday = day === todayDay;
+                    return (
+                      <div
+                        key={i}
+                        className={`relative rounded-lg text-center py-2 text-xs transition-all group cursor-default ${
+                          count > 0
+                            ? "bg-green-100 text-green-900 font-bold ring-1 ring-green-300"
+                            : isToday
+                            ? "bg-blue-50 text-blue-800 font-semibold ring-1 ring-blue-300"
+                            : "text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        {day}
+                        {count > 0 && (
+                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-green-600 text-white text-[9px] font-bold px-1">
+                            {count}
                           </span>
-                          <span className="font-medium">{entry.companyname}</span>
-                          {entry.contactname && (
-                            <span className="text-gray-400">to {entry.contactname}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                        {/* Tooltip on hover */}
+                        {count > 0 && (
+                          <div className="hidden group-hover:block absolute z-20 left-1/2 -translate-x-1/2 top-full mt-1 w-48 bg-gray-900 text-white rounded-lg p-2 text-[10px] text-left shadow-xl">
+                            <div className="font-bold mb-1">March {day} — {count} sent</div>
+                            {entries!.slice(0, 5).map((e, j) => (
+                              <div key={j} className="truncate text-gray-300">
+                                {e.companyname}{e.contactname ? ` → ${e.contactname}` : ""}
+                              </div>
+                            ))}
+                            {count > 5 && <div className="text-gray-500 mt-0.5">+{count - 5} more</div>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {sentOrPrinted.length === 0 && (
+                  <div className="text-center text-sm text-gray-400 py-3 mt-2">
+                    No letters sent yet. Print a letter to start tracking.
                   </div>
-                ))}
+                )}
               </div>
             </div>
           );
@@ -734,10 +758,10 @@ export default function HomePage() {
                                             </button>
                                             <button
                                               onClick={() => printAndLog()}
-                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-900 text-white hover:bg-black transition-colors"
+                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors"
                                               style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
                                             >
-                                              Print
+                                              Print & Send
                                             </button>
                                           </div>
                                         </div>
@@ -760,11 +784,30 @@ export default function HomePage() {
 
                                     {/* Edit mode */}
                                     {editing && (
-                                      <div className="mt-2">
+                                      <div className="mt-2 rounded-xl overflow-hidden border border-blue-200" style={{ boxShadow: "0 4px 12px -2px rgba(37,99,235,0.15)" }}>
+                                        <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gradient-to-r from-blue-50 to-white">
+                                          <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Editing Letter</span>
+                                          <div className="flex gap-2">
+                                            <button
+                                              onClick={() => setEditing(false)}
+                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
+                                            >
+                                              Cancel
+                                            </button>
+                                            <button
+                                              onClick={saveLetter}
+                                              disabled={saving}
+                                              className="px-4 py-1.5 text-[11px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                              style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}
+                                            >
+                                              {saving ? "Saving..." : "Save Letter"}
+                                            </button>
+                                          </div>
+                                        </div>
                                         <textarea
                                           value={editBody}
                                           onChange={(e) => setEditBody(e.target.value)}
-                                          className="w-full border border-gray-200 rounded-xl p-4 text-xs shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                          className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none"
                                           style={{
                                             fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
                                             fontSize: "10pt",
@@ -773,22 +816,6 @@ export default function HomePage() {
                                             whiteSpace: "pre-wrap",
                                           }}
                                         />
-                                        <div className="flex gap-2 mt-3">
-                                          <button
-                                            onClick={() => setEditing(false)}
-                                            className="px-4 py-2 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
-                                          >
-                                            Cancel
-                                          </button>
-                                          <button
-                                            onClick={saveLetter}
-                                            disabled={saving}
-                                            className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                                            style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}
-                                          >
-                                            {saving ? "Saving..." : "Save"}
-                                          </button>
-                                        </div>
                                       </div>
                                     )}
 
