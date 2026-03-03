@@ -9,9 +9,14 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
 
+  const now = new Date().toISOString();
+  const updatePayload: Record<string, string> = { status, updated_at: now };
+  if (status === "printed") updatePayload.printed_at = now;
+  if (status === "sent") updatePayload.sent_at = now;
+
   const { data, error } = await supabaseAdmin
     .from("reachout_company_inserts")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .in("id", ids)
     .select();
 

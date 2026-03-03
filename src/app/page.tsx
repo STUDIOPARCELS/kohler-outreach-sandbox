@@ -13,6 +13,9 @@ interface LetterRow {
   custom_paragraph?: string;
   body_final?: string;
   status: string;
+  printed_at?: string;
+  sent_at?: string;
+  created_at?: string;
 }
 
 interface Template {
@@ -326,6 +329,25 @@ export default function HomePage() {
     }
   }
 
+  /* ── Print and auto-log as printed/sent ── */
+  async function printAndLog() {
+    if (!expandedCompany || !currentLetter) { window.print(); return; }
+    try {
+      await fetch("/api/batch-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [currentLetter.id], status: "printed" }),
+      });
+      const updated = { ...currentLetter, status: "printed", printed_at: new Date().toISOString() };
+      setCurrentLetter(updated);
+      setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+      toast("Marked as printed");
+    } catch {
+      // still print even if logging fails
+    }
+    window.print();
+  }
+
   /* ── Toggle niche collapse ── */
   function toggleNiche(niche: string) {
     setCollapsedNiches((prev) => {
@@ -395,9 +417,84 @@ export default function HomePage() {
               <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
                 {lettersMap.size} letters drafted
               </span>
+              <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
+                {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent / printed
+              </span>
             </div>
           </div>
         </div>
+
+        {/* ── Mailing Activity Calendar ── */}
+        {(() => {
+          const allLetters = Array.from(lettersMap.values());
+          const sentOrPrinted = allLetters.filter(l => l.sent_at || l.printed_at || l.status === "sent" || l.status === "printed");
+          if (sentOrPrinted.length === 0 && allLetters.length > 0) {
+            return (
+              <div className="mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden"
+                style={{ boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08)" }}
+              >
+                <div className="px-5 py-3 border-b bg-gradient-to-r from-gray-50 to-white">
+                  <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mailing Activity</h2>
+                </div>
+                <div className="px-5 py-6 text-center text-sm text-gray-400">
+                  No letters sent yet. Print a letter to start tracking.
+                </div>
+              </div>
+            );
+          }
+          if (sentOrPrinted.length === 0) return null;
+
+          // Group by date
+          const byDate = new Map<string, { companyname: string; contactname?: string; status: string }[]>();
+          for (const l of sentOrPrinted) {
+            const dateStr = l.sent_at || l.printed_at || "";
+            const day = dateStr ? new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Unknown";
+            if (!byDate.has(day)) byDate.set(day, []);
+            byDate.get(day)!.push({ companyname: l.companyname, contactname: l.contactname, status: l.status });
+          }
+          const sortedDates = Array.from(byDate.keys()).sort((a, b) => {
+            const da = new Date(a);
+            const db = new Date(b);
+            return db.getTime() - da.getTime();
+          });
+
+          return (
+            <div className="mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden"
+              style={{ boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08)" }}
+            >
+              <div className="px-5 py-3 border-b bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
+                <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mailing Activity</h2>
+                <span className="text-[11px] text-gray-400">{sentOrPrinted.length} letters tracked</span>
+              </div>
+              <div className="divide-y max-h-64 overflow-y-auto">
+                {sortedDates.map(date => (
+                  <div key={date} className="px-5 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-xs font-bold text-gray-700">{date}</span>
+                      <span className="text-[10px] text-gray-400">({byDate.get(date)!.length} letters)</span>
+                    </div>
+                    <div className="ml-4 space-y-1">
+                      {byDate.get(date)!.map((entry, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${
+                            entry.status === "sent" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+                          }`}>
+                            {entry.status}
+                          </span>
+                          <span className="font-medium">{entry.companyname}</span>
+                          {entry.contactname && (
+                            <span className="text-gray-400">to {entry.contactname}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── Filters ── */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -598,7 +695,7 @@ export default function HomePage() {
                                                 Edit
                                               </button>
                                               <button
-                                                onClick={() => window.print()}
+                                                onClick={() => printAndLog()}
                                                 className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-900 text-white hover:bg-black transition-colors"
                                                 style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
                                               >
