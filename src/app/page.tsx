@@ -880,7 +880,7 @@ export default function HomePage() {
         <div
           className="hidden print:block"
           style={{
-            padding: "0.75in 1in",
+            padding: "0.75in 0.65in",
             fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
             fontSize: "11pt",
             lineHeight: "1.5",
