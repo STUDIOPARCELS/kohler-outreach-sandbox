@@ -390,6 +390,16 @@ export default function HomePage() {
     }
   };
 
+  const tierBadge = (t: number) => {
+    switch (t) {
+      case 1: return "bg-amber-400/20 text-amber-800 border border-amber-300 font-bold";
+      case 2: return "bg-purple-400/20 text-purple-800 border border-purple-300";
+      case 3: return "bg-blue-400/20 text-blue-800 border border-blue-300";
+      case 4: return "bg-gray-400/15 text-gray-600 border border-gray-300";
+      default: return "bg-gray-100 text-gray-500 border border-gray-200";
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="no-print">
@@ -536,31 +546,34 @@ export default function HomePage() {
               grouped.get(n)!.push(c);
             }
 
-            const TOP_NICHES = [
-              "Acoustics / Audio / Musical Instruments",
-              "Skiing",
-              "Outdoor Recreation & Equipment",
-              "Woodworking / Furniture / Cabinetry / Prototyping",
-            ];
-
-            // Collect all non-top-4 companies into "Other"
-            const otherItems: CompanyRow[] = [];
+            // Build ordered list of niches: follow NICHE_ORDER, then any extras
+            const orderedNiches: string[] = [];
+            for (const n of NICHE_ORDER) {
+              if (grouped.has(n) && grouped.get(n)!.length > 0) {
+                orderedNiches.push(n);
+              }
+            }
+            // Add any niches not in NICHE_ORDER (e.g. new categories)
             Array.from(grouped.keys()).forEach((n) => {
-              if (!TOP_NICHES.includes(n)) {
-                otherItems.push(...(grouped.get(n) || []));
+              if (!orderedNiches.includes(n) && n !== "Other") {
+                orderedNiches.push(n);
               }
             });
+            // "Other" always last
+            if (grouped.has("Other") && grouped.get("Other")!.length > 0) {
+              if (!orderedNiches.includes("Other")) orderedNiches.push("Other");
+            }
 
             let globalIdx = 0;
 
-            function renderBentoBox(niche: string, items: CompanyRow[], fullWidth?: boolean) {
+            function renderBentoBox(niche: string, items: CompanyRow[]) {
               const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
               const isCollapsed = collapsedNiches.has(niche);
 
               return (
                 <div
                   key={niche}
-                  className={`rounded-2xl border ${colors.border} overflow-hidden transition-all duration-300 ${fullWidth ? "" : "min-w-0"}`}
+                  className={`rounded-2xl border ${colors.border} overflow-hidden transition-all duration-300 min-w-0`}
                   style={{
                     boxShadow: "0 10px 30px -8px rgba(0,0,0,0.12), 0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
                   }}
@@ -600,38 +613,39 @@ export default function HomePage() {
 
                   {/* Companies list */}
                   {!isCollapsed && (
-                    <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04] ${fullWidth ? "columns-1 sm:columns-2 lg:columns-4 xl:columns-5 gap-0" : ""}`}>
+                    <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04]`}>
                       {items.map((c) => {
                         globalIdx++;
                         const num = globalIdx;
                         const isExpanded = expandedCompany === c.companyname;
                         const letter = lettersMap.get(c.companyname);
                         return (
-                          <div key={c.companyname} className={fullWidth ? "break-inside-avoid" : ""}>
+                          <div key={c.companyname}>
                             <button
                               onClick={() => expandCompany(c.companyname)}
-                              className={`w-full text-left ${fullWidth ? "px-3 py-1.5" : "px-5 py-3"} flex items-center justify-between transition-all duration-200 ${
+                              className={`w-full text-left px-4 py-2.5 flex items-center justify-between transition-all duration-200 ${
                                 isExpanded
                                   ? "bg-white/80 shadow-inner"
                                   : "hover:bg-white/50"
                               }`}
                             >
-                              <div className={`flex items-center ${fullWidth ? "gap-2" : "gap-3"} min-w-0`}>
-                                <span className={`shrink-0 ${fullWidth ? "w-5 h-5 text-[9px]" : "w-6 h-6 text-[10px]"} rounded-full flex items-center justify-center font-bold bg-black/[0.06] text-gray-400`}>
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="shrink-0 w-5 h-5 text-[9px] rounded-full flex items-center justify-center font-bold bg-black/[0.06] text-gray-400">
                                   {num}
                                 </span>
                                 <div className="min-w-0">
-                                  <span className={`font-semibold ${fullWidth ? "text-xs" : "text-sm"} truncate block text-gray-800`}>
+                                  <span className="font-semibold text-xs truncate block text-gray-800">
                                     {c.companyname}
                                   </span>
-                                  {!fullWidth && (
-                                    <span className="text-[11px] truncate block text-gray-400">
-                                      {c.city}
-                                    </span>
-                                  )}
+                                  <span className="text-[10px] truncate block text-gray-400">
+                                    {c.city}
+                                  </span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
+                                <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${tierBadge(c.tier)}`}>
+                                  T{c.tier}
+                                </span>
                                 {letter && (
                                   <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
                                     {letter.status.replace(/_/g, " ")}
@@ -792,18 +806,12 @@ export default function HomePage() {
             }
 
             return (
-              <div className="space-y-5">
-                {/* Top row: 4 target niches */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {TOP_NICHES.map((niche) => {
-                    const items = grouped.get(niche);
-                    if (!items || items.length === 0) return null;
-                    return renderBentoBox(niche, items);
-                  })}
-                </div>
-
-                {/* Bottom: full-width Other bento box */}
-                {otherItems.length > 0 && renderBentoBox("Other", otherItems, true)}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {orderedNiches.map((niche) => {
+                  const items = grouped.get(niche);
+                  if (!items || items.length === 0) return null;
+                  return renderBentoBox(niche, items);
+                })}
               </div>
             );
           })()
