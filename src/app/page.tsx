@@ -71,6 +71,13 @@ function assembleLetter(
     body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
   }
 
+  // Standardize wording across all templates (including database default)
+  body = body.replace(/this passion/g, "my passion");
+  body = body.replace(
+    "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.",
+    "If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team."
+  );
+
   // Only collapse excessive blank lines in the body, preserve signature space
   const signIdx = body.indexOf("Sincerely,");
   if (signIdx > 0) {
@@ -193,7 +200,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the energy and renewables sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the power generation space.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -217,7 +224,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the commercial building industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -241,7 +248,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. My background includes metal fabrication, and I have hands-on experience taking CAD designs from concept through prototype and fabrication. I am eager to put these skills to work in the heavy civil and construction industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -265,7 +272,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the water and environmental sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the environmental and Geotech space.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -289,7 +296,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the aerospace sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the aerospace industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -313,7 +320,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the deep tech and robotics sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the electronics and robotics space.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -337,7 +344,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the product design and automation sector and the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the manufacturing and product design industry.
 
-{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.
+{{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
