@@ -3,8 +3,8 @@ import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 
 export const metadata: Metadata = {
-  title: "Entry Level",
-  description: "Entry level job outreach management tool",
+  title: "Outreach | Mission Control",
+  description: "Outreach mission control for entry level BSME/EIT",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -406,23 +406,27 @@ export default function HomePage() {
           <div className="absolute inset-0 opacity-[0.03]"
             style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
           />
-          <div className="relative px-6 py-8 sm:px-8 sm:py-10 text-right">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight uppercase">
-              ENTRY LEVEL BSME / EIT
-            </h1>
-            <p className="text-slate-300 mt-1.5 text-sm sm:text-base font-medium uppercase tracking-wide">
-              OUTREACH MISSION CONTROL
-            </p>
-            <div className="flex items-center gap-3 mt-4 justify-end">
-              <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
-                {filteredCompanies.length} companies
-              </span>
-              <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
-                {lettersMap.size} letters drafted
-              </span>
-              <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
-                {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent
-              </span>
+          <div className="relative px-6 py-8 sm:px-8 sm:py-10">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight uppercase">
+                  OUTREACH | MISSION CONTROL
+                </h1>
+                <p className="text-slate-300 mt-1.5 text-sm sm:text-base font-medium uppercase tracking-wide">
+                  ENTRY LEVEL BSME / EIT
+                </p>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
+                  {filteredCompanies.length} companies
+                </span>
+                <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
+                  {lettersMap.size} letters drafted
+                </span>
+                <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
+                  {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent
+                </span>
+              </div>
             </div>
           </div>
         </div>
