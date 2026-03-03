@@ -93,6 +93,7 @@ export default function HomePage() {
   const [letters, setLetters] = useState<LetterRow[]>([]);
   const [selected, setSelected] = useState<LetterRow | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContactIdx, setSelectedContactIdx] = useState(0);
   const [companyAddress, setCompanyAddress] = useState("");
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState("");
@@ -154,6 +155,7 @@ export default function HomePage() {
     setSelected(letter);
     setEditing(false);
     setCompanyAddress("");
+    setSelectedContactIdx(0);
     // Load contacts and company data for this company
     try {
       const [contRes, compRes] = await Promise.all([
@@ -201,6 +203,40 @@ export default function HomePage() {
       toast((e as Error).message, "error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  /* ── Apply selected contact to the draft ── */
+  async function applyContact(idx: number) {
+    setSelectedContactIdx(idx);
+    const c = contacts[idx];
+    if (!c || !selected) return;
+    // Save the contact to the draft and clear body_final so it re-assembles
+    try {
+      const res = await fetch("/api/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyname: selected.companyname,
+          contactname: c.contactname,
+          contact_title: c.title,
+          contact_email: c.email,
+          body_final: null,
+        }),
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+      setSelected({
+        ...selected,
+        contactname: c.contactname,
+        contact_title: c.title,
+        contact_email: c.email,
+        body_final: undefined,
+      });
+      toast(`Contact set: ${c.contactname}`);
+      loadLetters();
+    } catch (e: unknown) {
+      toast((e as Error).message, "error");
     }
   }
 
@@ -257,8 +293,8 @@ export default function HomePage() {
           template,
           selected.companyname,
           selected.custom_paragraph || "",
-          selected.contactname || (contacts.length > 0 ? contacts[0].contactname : undefined),
-          selected.contact_title || (contacts.length > 0 ? contacts[0].title : undefined),
+          selected.contactname || (contacts.length > 0 ? contacts[selectedContactIdx]?.contactname : undefined),
+          selected.contact_title || (contacts.length > 0 ? contacts[selectedContactIdx]?.title : undefined),
           companyAddress
         )
     : null;
@@ -319,19 +355,31 @@ export default function HomePage() {
                 <div className="bg-white border rounded-lg overflow-hidden">
                   {/* Toolbar */}
                   <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="font-semibold">{selected.companyname}</h3>
-                      {selected.contactname && (
+                      {contacts.length > 1 ? (
+                        <select
+                          value={selectedContactIdx}
+                          onChange={(e) => applyContact(Number(e.target.value))}
+                          className="mt-1 text-xs border rounded px-2 py-1 bg-white max-w-[260px]"
+                        >
+                          {contacts.map((c, i) => (
+                            <option key={i} value={i}>
+                              {c.contactname}{c.title ? ` — ${c.title}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : contacts.length === 1 ? (
+                        <p className="text-xs text-gray-500">
+                          To: {contacts[0].contactname}
+                          {contacts[0].title && ` — ${contacts[0].title}`}
+                        </p>
+                      ) : selected.contactname ? (
                         <p className="text-xs text-gray-500">
                           To: {selected.contactname}
                           {selected.contact_title && ` — ${selected.contact_title}`}
                         </p>
-                      )}
-                      {!selected.contactname && contacts.length > 0 && (
-                        <p className="text-xs text-gray-500">
-                          Contact: {contacts[0].contactname} — {contacts[0].title}
-                        </p>
-                      )}
+                      ) : null}
                     </div>
                     <div className="flex gap-2">
                       {!editing ? (
