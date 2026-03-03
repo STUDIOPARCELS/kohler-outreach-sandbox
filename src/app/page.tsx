@@ -377,7 +377,6 @@ export default function HomePage() {
   const [tierFilter, setTierFilter] = useState("");
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [collapsedNiches, setCollapsedNiches] = useState<Set<string>>(new Set());
-  const [fullyExpandedNiches, setFullyExpandedNiches] = useState<Set<string>>(new Set());
 
   /* ── Load template + letters + companies ── */
   const loadData = useCallback(async () => {
@@ -811,14 +810,9 @@ export default function HomePage() {
 
                   {/* Companies list */}
                   {!isCollapsed && (() => {
-                    const PREVIEW_COUNT = 3;
-                    const isFullyExpanded = fullyExpandedNiches.has(niche);
-                    const visibleItems = isFullyExpanded ? items : items.slice(0, PREVIEW_COUNT);
-                    const hiddenCount = items.length - PREVIEW_COUNT;
-
                     return (
                     <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04]`}>
-                      {visibleItems.map((c) => {
+                      {items.map((c) => {
                         globalIdx++;
                         const num = globalIdx;
                         const isExpanded = expandedCompany === c.companyname;
@@ -1003,24 +997,6 @@ export default function HomePage() {
                           </div>
                         );
                       })}
-                      {/* Show more / Show less button */}
-                      {hiddenCount > 0 && (
-                        <button
-                          onClick={() => setFullyExpandedNiches((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(niche)) next.delete(niche);
-                            else next.add(niche);
-                            return next;
-                          })}
-                          className="w-full px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors flex items-center justify-center gap-1"
-                        >
-                          {isFullyExpanded ? (
-                            <>Show less</>
-                          ) : (
-                            <>Show all {items.length} companies ({hiddenCount} more)</>
-                          )}
-                        </button>
-                      )}
                     </div>
                     );
                   })()}
