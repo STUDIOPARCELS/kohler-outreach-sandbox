@@ -32,6 +32,7 @@ interface CompanyRow {
   city: string;
   contactname?: string;
   contact_title?: string;
+  company_about?: string;
 }
 
 interface Role {
@@ -521,25 +522,15 @@ export default function HomePage() {
           <p className="text-gray-400 text-sm">Loading...</p>
         ) : (
           <div className="space-y-1">
-            {filteredCompanies.slice(0, 50).map((c) => (
+            {filteredCompanies.slice(0, 50).map((c, idx) => (
               <div key={c.companyname} className="bg-white rounded-lg border">
                 <button
                   onClick={() => toggleRoles(c.companyname)}
                   className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={`shrink-0 inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        c.tier === 1
-                          ? "bg-green-100 text-green-800"
-                          : c.tier === 2
-                          ? "bg-blue-100 text-blue-800"
-                          : c.tier === 3
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {c.tier}
+                    <span className="shrink-0 inline-block w-6 text-center text-xs font-medium text-gray-400">
+                      {idx + 1}
                     </span>
                     <span className="font-medium text-sm truncate">
                       {c.companyname}
@@ -575,6 +566,11 @@ export default function HomePage() {
 
                 {expandedCompany === c.companyname && (
                   <div className="border-t px-4 pb-4 pt-3">
+                    {c.company_about && (
+                      <p className="text-sm text-gray-700 mb-3">
+                        {c.company_about}
+                      </p>
+                    )}
                     {rolesLoading ? (
                       <p className="text-gray-400 text-xs">Loading roles...</p>
                     ) : roles.length === 0 ? (
@@ -583,6 +579,7 @@ export default function HomePage() {
                       </p>
                     ) : (
                       <div className="divide-y">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide pb-1">Open Roles</p>
                         {roles.map((role, i) => (
                           <div key={i} className="py-2">
                             <p className="font-medium text-sm">{role.title}</p>

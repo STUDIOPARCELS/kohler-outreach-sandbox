@@ -5,7 +5,7 @@ export async function GET() {
   // Get all companies
   const { data: companies, error: compErr } = await supabaseAdmin
     .from("companies")
-    .select("companyname, tier, city, company_key")
+    .select("companyname, tier, city, company_key, company_about")
     .order("tier", { ascending: true });
 
   if (compErr)
