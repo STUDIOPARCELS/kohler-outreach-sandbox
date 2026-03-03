@@ -194,11 +194,7 @@ export default function HomePage() {
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
   const [companiesLoading, setCompaniesLoading] = useState(true);
-  const [collapsedNiches, setCollapsedNiches] = useState<Set<string>>(() => {
-    // Non-top-4 niches start collapsed
-    const TOP_4 = new Set(NICHE_ORDER.slice(0, 4));
-    return new Set(NICHE_ORDER.filter(n => !TOP_4.has(n)));
-  });
+  const [collapsedNiches, setCollapsedNiches] = useState<Set<string>>(new Set());
   const [fullyExpandedNiches, setFullyExpandedNiches] = useState<Set<string>>(new Set());
 
   /* ── Load template + letters + companies ── */
