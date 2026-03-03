@@ -8,6 +8,7 @@ interface LetterRow {
   contactname?: string;
   contact_title?: string;
   custom_paragraph?: string;
+  body_final?: string;
 }
 
 interface Template {
@@ -41,8 +42,10 @@ function assembleLetter(
     .replace(/\{\{TODAY_DATE\}\}/g, today);
 
   if (contactName) {
-    body = body.replace(/Hiring Manager\n/g, `${contactName}\n${contactTitle || ""}\n`);
-    body = body.replace(/Dear Hiring Manager/g, `Dear ${contactName}`);
+    const firstName = contactName.split(" ")[0];
+    const titleLine = contactTitle ? `${contactTitle}\n` : "";
+    body = body.replace("Hiring Manager\n", `${contactName}\n${titleLine}`);
+    body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
   }
 
   return body;
@@ -104,13 +107,15 @@ function PrintLettersContent() {
 
       {/* Letters */}
       {letters.map((letter, i) => {
-        const body = assembleLetter(
-          template,
-          letter.companyname,
-          letter.custom_paragraph || "",
-          letter.contactname,
-          letter.contact_title
-        );
+        const body = letter.body_final
+          ? letter.body_final
+          : assembleLetter(
+              template,
+              letter.companyname,
+              letter.custom_paragraph || "",
+              letter.contactname,
+              letter.contact_title
+            );
 
         return (
           <div
@@ -118,40 +123,18 @@ function PrintLettersContent() {
             className="letter-page"
             style={{
               pageBreakAfter: i < letters.length - 1 ? "always" : "auto",
-              padding: "1in",
-              minHeight: "10in",
+              padding: "0.75in 1in",
+              minHeight: "9.5in",
+              maxHeight: "10in",
               position: "relative",
-              fontFamily: "Georgia, 'Times New Roman', serif",
-              fontSize: "12pt",
-              lineHeight: "1.6",
+              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "11pt",
+              lineHeight: "1.5",
+              overflow: "hidden",
             }}
           >
             {/* Body with preserved line breaks */}
             <div style={{ whiteSpace: "pre-wrap" }}>{body}</div>
-
-            {/* Footer */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "1in",
-                left: "1in",
-                right: "1in",
-                borderTop: "1px solid #ccc",
-                paddingTop: "12pt",
-                fontSize: "9pt",
-                color: "#555",
-              }}
-            >
-              {profile && (
-                <div style={{ marginBottom: "6pt" }}>
-                  {profile.full_name} &middot; {profile.phone} &middot; {profile.email}
-                </div>
-              )}
-              <div>
-                Packet includes: Letter + R&eacute;sum&eacute; + Solo Card
-                {profile?.portfolio_url && ` (QR \u2192 ${profile.portfolio_url})`}
-              </div>
-            </div>
           </div>
         );
       })}

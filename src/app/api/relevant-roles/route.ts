@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const companyname = req.nextUrl.searchParams.get("companyname");
 
-  let query = supabaseAdmin.from("relevant_roles").select("*");
+  let query = supabaseAdmin.from("jobs").select("*");
   if (companyname) {
     query = query.eq("company_name", companyname);
   }

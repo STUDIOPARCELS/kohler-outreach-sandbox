@@ -310,7 +310,7 @@ export default function CompanyDetailPage() {
             className="bg-white border rounded-lg shadow-sm"
             style={{
               padding: "48px 56px",
-              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
               fontSize: "13pt",
               lineHeight: "1.7",
               maxWidth: "8.5in",

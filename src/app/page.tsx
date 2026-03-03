@@ -11,6 +11,7 @@ interface LetterRow {
   contact_title?: string;
   contact_email?: string;
   custom_paragraph?: string;
+  body_final?: string;
   status: string;
 }
 
@@ -64,8 +65,10 @@ function assembleLetter(
 
   // Replace "Hiring Manager" with actual contact if available
   if (contactName) {
-    body = body.replace(/Hiring Manager\n/g, `${contactName}\n${contactTitle || ""}\n`);
-    body = body.replace(/Dear Hiring Manager/g, `Dear ${contactName}`);
+    const firstName = contactName.split(" ")[0];
+    const titleLine = contactTitle ? `${contactTitle}\n` : "";
+    body = body.replace("Hiring Manager\n", `${contactName}\n${titleLine}`);
+    body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
   }
 
   const subject = template.subject_template
@@ -86,7 +89,7 @@ export default function HomePage() {
   const [selected, setSelected] = useState<LetterRow | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [editing, setEditing] = useState(false);
-  const [editParagraph, setEditParagraph] = useState("");
+  const [editBody, setEditBody] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Company browser
@@ -144,7 +147,6 @@ export default function HomePage() {
   async function selectLetter(letter: LetterRow) {
     setSelected(letter);
     setEditing(false);
-    setEditParagraph(letter.custom_paragraph || "");
     // Load contacts for this company
     try {
       const res = await fetch(
@@ -158,8 +160,8 @@ export default function HomePage() {
     }
   }
 
-  /* ── Save custom paragraph edits ── */
-  async function saveParagraph() {
+  /* ── Save full letter edits ── */
+  async function saveLetter() {
     if (!selected) return;
     setSaving(true);
     try {
@@ -168,12 +170,12 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           companyname: selected.companyname,
-          custom_paragraph: editParagraph,
+          body_final: editBody,
         }),
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      setSelected({ ...selected, custom_paragraph: editParagraph });
+      setSelected({ ...selected, body_final: editBody });
       setEditing(false);
       toast("Letter saved");
       loadLetters();
@@ -231,13 +233,15 @@ export default function HomePage() {
 
   /* ── Assembled letter for selected card ── */
   const assembled = selected && template
-    ? assembleLetter(
-        template,
-        selected.companyname,
-        selected.custom_paragraph || "",
-        selected.contactname || (contacts.length > 0 ? contacts[0].contactname : undefined),
-        selected.contact_title || (contacts.length > 0 ? contacts[0].title : undefined)
-      )
+    ? selected.body_final
+      ? { subject: template.subject_template.replace(/\{\{COMPANY\}\}/g, selected.companyname), body: selected.body_final }
+      : assembleLetter(
+          template,
+          selected.companyname,
+          selected.custom_paragraph || "",
+          selected.contactname || (contacts.length > 0 ? contacts[0].contactname : undefined),
+          selected.contact_title || (contacts.length > 0 ? contacts[0].title : undefined)
+        )
     : null;
 
   return (
@@ -316,7 +320,7 @@ export default function HomePage() {
                           <button
                             onClick={() => {
                               setEditing(true);
-                              setEditParagraph(selected.custom_paragraph || "");
+                              setEditBody(assembled?.body || "");
                             }}
                             className="px-3 py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300"
                           >
@@ -338,7 +342,7 @@ export default function HomePage() {
                             Cancel
                           </button>
                           <button
-                            onClick={saveParagraph}
+                            onClick={saveLetter}
                             disabled={saving}
                             className="px-3 py-1.5 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                           >
@@ -351,30 +355,25 @@ export default function HomePage() {
 
                   {/* Letter content */}
                   {editing ? (
-                    <div className="p-6">
-                      <label className="block text-xs font-medium text-gray-500 mb-2">
-                        Custom paragraph (the personalized section of the letter):
-                      </label>
+                    <div className="p-4">
                       <textarea
-                        value={editParagraph}
-                        onChange={(e) => setEditParagraph(e.target.value)}
-                        className="w-full border rounded-lg p-3 text-sm"
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                        className="w-full border rounded-lg p-4"
                         style={{
-                          fontFamily: "Georgia, 'Times New Roman', serif",
-                          fontSize: "12pt",
-                          lineHeight: "1.7",
-                          minHeight: "200px",
+                          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                          fontSize: "11pt",
+                          lineHeight: "1.6",
+                          minHeight: "600px",
+                          whiteSpace: "pre-wrap",
                         }}
                       />
-                      <p className="text-xs text-gray-400 mt-2">
-                        This paragraph replaces {"{{CUSTOM_PARAGRAPH}}"} in the template.
-                      </p>
                     </div>
                   ) : assembled ? (
                     <div
                       style={{
                         padding: "40px 48px",
-                        fontFamily: "Georgia, 'Times New Roman', serif",
+                        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
                         fontSize: "12pt",
                         lineHeight: "1.7",
                         minHeight: "400px",
@@ -400,16 +399,24 @@ export default function HomePage() {
         <div
           className="hidden print:block"
           style={{
-            padding: "1in",
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: "12pt",
-            lineHeight: "1.6",
+            padding: "0.75in 1in",
+            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+            fontSize: "11pt",
+            lineHeight: "1.5",
             whiteSpace: "pre-wrap",
+            maxHeight: "9.5in",
+            overflow: "hidden",
           }}
         >
           {assembled.body}
         </div>
       )}
+      <style>{`
+        @media print {
+          @page { size: letter; margin: 0; }
+          body { margin: 0; padding: 0; }
+        }
+      `}</style>
 
       {/* ════════════════════════════════════════════
           SECTION 2: COMPANIES & JOBS
