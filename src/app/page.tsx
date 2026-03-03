@@ -396,15 +396,6 @@ export default function HomePage() {
     }
   };
 
-  const tierBadge = (t: number) => {
-    switch (t) {
-      case 1: return "bg-amber-400/20 text-amber-800 border border-amber-300 font-bold";
-      case 2: return "bg-purple-400/20 text-purple-800 border border-purple-300";
-      case 3: return "bg-blue-400/20 text-blue-800 border border-blue-300";
-      case 4: return "bg-gray-400/15 text-gray-600 border border-gray-300";
-      default: return "bg-gray-100 text-gray-500 border border-gray-200";
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -549,17 +540,6 @@ export default function HomePage() {
               className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
             />
           </div>
-          <select
-            value={tierFilter}
-            onChange={(e) => setTierFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-          >
-            <option value="">All Tiers</option>
-            <option value="1">Tier 1</option>
-            <option value="2">Tier 2</option>
-            <option value="3">Tier 3</option>
-            <option value="4">Tier 4</option>
-          </select>
         </div>
 
         {companiesLoading ? (
@@ -678,9 +658,6 @@ export default function HomePage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${tierBadge(c.tier)}`}>
-                                  T{c.tier}
-                                </span>
                                 {letter && (
                                   <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
                                     {letter.status.replace(/_/g, " ")}
