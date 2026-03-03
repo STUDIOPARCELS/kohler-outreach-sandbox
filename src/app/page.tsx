@@ -33,6 +33,7 @@ interface CompanyRow {
   contactname?: string;
   contact_title?: string;
   company_about?: string;
+  niche?: string;
 }
 
 interface Role {
@@ -487,7 +488,7 @@ export default function HomePage() {
       `}</style>
 
       {/* ════════════════════════════════════════════
-          SECTION 2: COMPANIES & JOBS
+          SECTION 2: COMPANIES BY NICHE (Bento Boxes)
          ════════════════════════════════════════════ */}
       <section className="no-print">
         <h2 className="text-xl font-bold mb-4">Companies</h2>
@@ -521,96 +522,120 @@ export default function HomePage() {
         {companiesLoading ? (
           <p className="text-gray-400 text-sm">Loading...</p>
         ) : (
-          <div className="space-y-1">
-            {filteredCompanies.slice(0, 50).map((c, idx) => (
-              <div key={c.companyname} className="bg-white rounded-lg border">
-                <button
-                  onClick={() => toggleRoles(c.companyname)}
-                  className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="shrink-0 inline-block w-6 text-center text-xs font-medium text-gray-400">
-                      {idx + 1}
-                    </span>
-                    <span className="font-medium text-sm truncate">
-                      {c.companyname}
-                    </span>
-                    <span className="text-xs text-gray-400 hidden sm:inline">
-                      {c.city}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {c.contactname && (
-                      <span className="text-xs text-gray-500 hidden md:inline">
-                        {c.contactname}
-                        {c.contact_title && ` — ${c.contact_title}`}
-                      </span>
-                    )}
-                    <svg
-                      className={`w-4 h-4 text-gray-400 transition-transform ${
-                        expandedCompany === c.companyname ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </button>
-
-                {expandedCompany === c.companyname && (
-                  <div className="border-t px-4 pb-4 pt-3">
-                    {c.company_about && (
-                      <p className="text-sm text-gray-700 mb-3">
-                        {c.company_about}
-                      </p>
-                    )}
-                    {rolesLoading ? (
-                      <p className="text-gray-400 text-xs">Loading roles...</p>
-                    ) : roles.length === 0 ? (
-                      <p className="text-gray-400 text-xs">
-                        No open roles found.
-                      </p>
-                    ) : (
-                      <div className="divide-y">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide pb-1">Open Roles</p>
-                        {roles.map((role, i) => (
-                          <div key={i} className="py-2">
-                            <p className="font-medium text-sm">{role.title}</p>
-                            <p className="text-xs text-gray-500">
-                              {role.location} &middot; {role.work_type}
-                              {role.salary && ` · ${role.salary}`}
-                            </p>
-                            {role.url && (
-                              <a
-                                href={role.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-500 hover:underline"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(() => {
+              const NICHE_ORDER = [
+                "Acoustics / Audio / Musical Instruments",
+                "Skiing",
+                "Outdoor Recreation & Equipment",
+                "Woodworking / Furniture / Cabinetry / Prototyping",
+                "Energy / Renewables / Power",
+                "MEP / HVAC / Building Systems",
+                "Construction / Civil / Heavy Industry",
+                "Manufacturing / Automation / Product Design",
+                "Water / Environmental / Geotech",
+                "Quantum / Deep Tech / Electronics / Robotics",
+                "Aerospace / Space",
+                "Other",
+              ];
+              const grouped = new Map<string, CompanyRow[]>();
+              for (const c of filteredCompanies) {
+                const n = c.niche || "Other";
+                if (!grouped.has(n)) grouped.set(n, []);
+                grouped.get(n)!.push(c);
+              }
+              const sortedNiches = NICHE_ORDER.filter((n) => grouped.has(n));
+              // Add any niches not in the predefined order
+              Array.from(grouped.keys()).forEach((n) => {
+                if (!sortedNiches.includes(n)) sortedNiches.push(n);
+              });
+              let globalIdx = 0;
+              return sortedNiches.map((niche) => {
+                const items = grouped.get(niche)!;
+                return (
+                  <div
+                    key={niche}
+                    className="bg-white rounded-xl border shadow-sm overflow-hidden"
+                  >
+                    <div className="px-4 py-3 bg-gray-50 border-b">
+                      <h3 className="font-semibold text-sm">{niche}</h3>
+                      <p className="text-xs text-gray-400">{items.length} companies</p>
+                    </div>
+                    <div className="divide-y max-h-[400px] overflow-y-auto">
+                      {items.map((c) => {
+                        globalIdx++;
+                        const num = globalIdx;
+                        return (
+                          <div key={c.companyname}>
+                            <button
+                              onClick={() => toggleRoles(c.companyname)}
+                              className="w-full text-left px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="shrink-0 w-5 text-center text-[10px] font-medium text-gray-300">
+                                  {num}
+                                </span>
+                                <span className="font-medium text-sm truncate">
+                                  {c.companyname}
+                                </span>
+                                <span className="text-[11px] text-gray-400 hidden sm:inline truncate">
+                                  {c.city}
+                                </span>
+                              </div>
+                              <svg
+                                className={`w-3.5 h-3.5 text-gray-300 transition-transform shrink-0 ${
+                                  expandedCompany === c.companyname ? "rotate-180" : ""
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                               >
-                                View posting
-                              </a>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+
+                            {expandedCompany === c.companyname && (
+                              <div className="border-t bg-gray-50 px-4 pb-3 pt-2">
+                                {c.company_about && (
+                                  <p className="text-xs text-gray-600 mb-2">{c.company_about}</p>
+                                )}
+                                {c.contactname && (
+                                  <p className="text-xs text-gray-500 mb-2">
+                                    Contact: <span className="font-medium">{c.contactname}</span>
+                                    {c.contact_title && ` — ${c.contact_title}`}
+                                  </p>
+                                )}
+                                {rolesLoading ? (
+                                  <p className="text-gray-400 text-xs">Loading roles...</p>
+                                ) : roles.length > 0 && (
+                                  <div className="mt-1 space-y-1">
+                                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Open Roles</p>
+                                    {roles.map((role, i) => (
+                                      <div key={i}>
+                                        <p className="text-xs font-medium">{role.title}</p>
+                                        <p className="text-[11px] text-gray-500">
+                                          {role.location} &middot; {role.work_type}
+                                          {role.salary && ` · ${role.salary}`}
+                                        </p>
+                                        {role.url && (
+                                          <a href={role.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-500 hover:underline">
+                                            View posting
+                                          </a>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
-            {filteredCompanies.length > 50 && (
-              <p className="text-xs text-gray-400 text-center py-3">
-                Showing first 50 of {filteredCompanies.length} — use search to
-                narrow down
-              </p>
-            )}
+                );
+              });
+            })()}
           </div>
         )}
       </section>
