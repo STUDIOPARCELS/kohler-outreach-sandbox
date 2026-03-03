@@ -390,7 +390,7 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, Idaho and have a passion for skiing. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the ski and snow sports space.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have skied all my life, and I'm eager to combine my passion for skiing with my engineering background.
 
 {{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
@@ -414,7 +414,7 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, Idaho and have a passion for the outdoors. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the outdoor recreation and equipment industry.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have enjoyed the outdoors all my life, and I'm eager to combine my passion for the outdoors with my engineering background.
 
 {{CUSTOM_PARAGRAPH}}I have included my résumé and solocard — which links to my projects and areas of study. If you might be open to an entry-level BSME/EIT with my skillset, I would love the opportunity to interview with your team.
 
