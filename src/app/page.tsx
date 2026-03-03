@@ -376,7 +376,7 @@ export default function HomePage() {
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
   const [companiesLoading, setCompaniesLoading] = useState(true);
-  const [collapsedNiches, setCollapsedNiches] = useState<Set<string>>(new Set());
+  const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
 
   /* ── Load template + letters + companies ── */
   const loadData = useCallback(async () => {
@@ -531,9 +531,9 @@ export default function HomePage() {
     window.print();
   }
 
-  /* ── Toggle niche collapse ── */
+  /* ── Toggle niche between preview (3) and fully expanded ── */
   function toggleNiche(niche: string) {
-    setCollapsedNiches((prev) => {
+    setExpandedNiches((prev) => {
       const next = new Set(prev);
       if (next.has(niche)) next.delete(niche);
       else next.add(niche);
@@ -765,7 +765,10 @@ export default function HomePage() {
 
             function renderBentoBox(niche: string, items: CompanyRow[]) {
               const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
-              const isCollapsed = collapsedNiches.has(niche);
+              const PREVIEW_COUNT = 3;
+              const isFullyExpanded = expandedNiches.has(niche);
+              const visibleItems = isFullyExpanded ? items : items.slice(0, PREVIEW_COUNT);
+              const hiddenCount = items.length - PREVIEW_COUNT;
 
               return (
                 <div
@@ -796,23 +799,25 @@ export default function HomePage() {
                             {items.length} {items.length === 1 ? "company" : "companies"}
                           </p>
                         </div>
-                        <svg
-                          className={`w-4 h-4 text-white/70 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                        {hiddenCount > 0 && (
+                          <svg
+                            className={`w-4 h-4 text-white/70 transition-transform duration-300 ${isFullyExpanded ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )}
                       </div>
                     </div>
                   </button>
 
                   {/* Companies list */}
-                  {!isCollapsed && (() => {
+                  {(() => {
                     return (
                     <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04]`}>
-                      {items.map((c) => {
+                      {visibleItems.map((c) => {
                         globalIdx++;
                         const num = globalIdx;
                         const isExpanded = expandedCompany === c.companyname;
@@ -997,6 +1002,14 @@ export default function HomePage() {
                           </div>
                         );
                       })}
+                      {!isFullyExpanded && hiddenCount > 0 && (
+                        <button
+                          onClick={() => toggleNiche(niche)}
+                          className="w-full px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors flex items-center justify-center gap-1"
+                        >
+                          Show all {items.length} companies ({hiddenCount} more)
+                        </button>
+                      )}
                     </div>
                     );
                   })()}
