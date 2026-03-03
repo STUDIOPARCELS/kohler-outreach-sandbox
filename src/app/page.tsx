@@ -470,13 +470,13 @@ export default function HomePage() {
             >
               <div className="px-5 py-3.5 border-b border-gray-300 bg-gradient-to-r from-gray-100 to-gray-50 flex items-center justify-between">
                 <h2 className="text-sm font-bold text-gray-800">March 2026</h2>
-                <span className="text-[11px] font-semibold text-gray-500">{sentOrPrinted.length} letters sent</span>
+                <span className="text-xs font-semibold text-gray-500">{sentOrPrinted.length} letters sent</span>
               </div>
               <div className="p-4 bg-gradient-to-b from-gray-50/50 to-white">
                 {/* Day-of-week headers */}
                 <div className="grid grid-cols-7 mb-2">
                   {dayNames.map(d => (
-                    <div key={d} className="text-center text-[10px] font-bold text-gray-600 uppercase py-1.5">{d}</div>
+                    <div key={d} className="text-center text-xs font-bold text-gray-600 uppercase py-1.5">{d}</div>
                   ))}
                 </div>
                 {/* Calendar grid */}
@@ -499,13 +499,13 @@ export default function HomePage() {
                       >
                         {day}
                         {count > 0 && (
-                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-green-600 text-white text-[9px] font-bold px-1">
+                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold px-1">
                             {count}
                           </span>
                         )}
                         {/* Tooltip on hover */}
                         {count > 0 && (
-                          <div className="hidden group-hover:block absolute z-20 left-1/2 -translate-x-1/2 top-full mt-1 w-48 bg-gray-900 text-white rounded-lg p-2 text-[10px] text-left shadow-xl">
+                          <div className="hidden group-hover:block absolute z-20 left-1/2 -translate-x-1/2 top-full mt-1 w-48 bg-gray-900 text-white rounded-lg p-2 text-xs text-left shadow-xl">
                             <div className="font-bold mb-1">March {day} — {count} sent</div>
                             {entries!.slice(0, 5).map((e, j) => (
                               <div key={j} className="truncate text-gray-300">
@@ -607,7 +607,7 @@ export default function HomePage() {
                           <h3 className="font-bold text-sm text-white drop-shadow-sm">
                             {niche}
                           </h3>
-                          <p className="text-[11px] text-white/60 mt-0.5">
+                          <p className="text-xs text-white/60 mt-0.5">
                             {items.length} {items.length === 1 ? "company" : "companies"}
                           </p>
                         </div>
@@ -648,21 +648,21 @@ export default function HomePage() {
                               }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="shrink-0 w-5 h-5 text-[9px] rounded-full flex items-center justify-center font-bold bg-black/[0.06] text-gray-400">
+                                <span className="shrink-0 w-5 h-5 text-xs rounded-full flex items-center justify-center font-bold bg-black/[0.06] text-gray-400">
                                   {num}
                                 </span>
                                 <div className="min-w-0">
                                   <span className="font-semibold text-xs truncate block text-gray-800">
                                     {c.companyname}
                                   </span>
-                                  <span className="text-[10px] truncate block text-gray-400">
+                                  <span className="text-xs truncate block text-gray-400">
                                     {c.city}
                                   </span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 {letter && (
-                                  <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
+                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
                                     {letter.status.replace(/_/g, " ")}
                                   </span>
                                 )}
@@ -702,7 +702,7 @@ export default function HomePage() {
                                     {/* Contact selector */}
                                     {contacts.length > 0 && (
                                       <div className="mb-4">
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
                                           Contact
                                         </label>
                                         <select
@@ -732,13 +732,13 @@ export default function HomePage() {
                                           <div className="flex gap-2">
                                             <button
                                               onClick={() => { setEditing(true); setEditBody(assembled.body); }}
-                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
+                                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
                                             >
                                               Edit
                                             </button>
                                             <button
                                               onClick={() => printAndLog()}
-                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors"
+                                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors"
                                               style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
                                             >
                                               Print & Send
@@ -770,14 +770,14 @@ export default function HomePage() {
                                           <div className="flex gap-2">
                                             <button
                                               onClick={() => setEditing(false)}
-                                              className="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
+                                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
                                             >
                                               Cancel
                                             </button>
                                             <button
                                               onClick={saveLetter}
                                               disabled={saving}
-                                              className="px-4 py-1.5 text-[11px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                              className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                               style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}
                                             >
                                               {saving ? "Saving..." : "Save Letter"}
@@ -826,7 +826,7 @@ export default function HomePage() {
                             else next.add(niche);
                             return next;
                           })}
-                          className="w-full px-4 py-2 text-[11px] font-semibold text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors flex items-center justify-center gap-1"
+                          className="w-full px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors flex items-center justify-center gap-1"
                         >
                           {isFullyExpanded ? (
                             <>Show less</>
