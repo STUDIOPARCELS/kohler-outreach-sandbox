@@ -101,9 +101,9 @@ const NICHE_ORDER = [
 const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string }> = {
   "Acoustics / Audio / Musical Instruments": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-violet-900 to-purple-950",
-    border: "border-violet-300/60",
-    accent: "text-violet-900",
+    headerBg: "",
+    border: "border-rose-400/40",
+    accent: "text-rose-950",
   },
   "Skiing": {
     bg: "from-slate-50 to-gray-50",
@@ -571,9 +571,10 @@ export default function HomePage() {
                     className="w-full text-left"
                   >
                     <div
-                      className={`relative px-5 py-4 bg-gradient-to-r ${colors.headerBg}`}
+                      className={`relative px-5 py-4 ${colors.headerBg ? `bg-gradient-to-r ${colors.headerBg}` : ""}`}
                       style={{
                         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.1)",
+                        ...(!colors.headerBg ? { background: "linear-gradient(135deg, #5b2333 0%, #3d1522 50%, #2a0e18 100%)" } : {}),
                       }}
                     >
                       <div className="flex items-center justify-between">
