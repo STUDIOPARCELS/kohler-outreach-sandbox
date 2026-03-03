@@ -4,16 +4,19 @@ import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/Toast";
 
 /* ── Types ── */
-interface LetterCard {
+interface LetterRow {
   id: string;
   companyname: string;
   contactname?: string;
   contact_title?: string;
   contact_email?: string;
   custom_paragraph?: string;
-  subject_final?: string;
-  body_final?: string;
   status: string;
+}
+
+interface Template {
+  subject_template: string;
+  body_template: string;
 }
 
 interface Contact {
@@ -40,16 +43,50 @@ interface Role {
   date_posted: string;
 }
 
+/* ── Assemble a letter from template + data ── */
+function assembleLetter(
+  template: Template,
+  companyname: string,
+  customParagraph: string,
+  contactName?: string,
+  contactTitle?: string
+) {
+  const today = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  let body = template.body_template
+    .replace(/\{\{COMPANY\}\}/g, companyname)
+    .replace(/\{\{CUSTOM_PARAGRAPH\}\}/g, customParagraph || "")
+    .replace(/\{\{TODAY_DATE\}\}/g, today);
+
+  // Replace "Hiring Manager" with actual contact if available
+  if (contactName) {
+    body = body.replace(/Hiring Manager\n/g, `${contactName}\n${contactTitle || ""}\n`);
+    body = body.replace(/Dear Hiring Manager/g, `Dear ${contactName}`);
+  }
+
+  const subject = template.subject_template
+    .replace(/\{\{COMPANY\}\}/g, companyname);
+
+  return { subject, body };
+}
+
 /* ── Main Page ── */
 export default function HomePage() {
   const toast = useToast();
 
+  // Template
+  const [template, setTemplate] = useState<Template | null>(null);
+
   // Letter cards (from reachout_company_inserts)
-  const [letters, setLetters] = useState<LetterCard[]>([]);
-  const [selected, setSelected] = useState<LetterCard | null>(null);
+  const [letters, setLetters] = useState<LetterRow[]>([]);
+  const [selected, setSelected] = useState<LetterRow | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [editing, setEditing] = useState(false);
-  const [editBody, setEditBody] = useState("");
+  const [editParagraph, setEditParagraph] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Company browser
@@ -64,13 +101,19 @@ export default function HomePage() {
   const [lettersLoading, setLettersLoading] = useState(true);
   const [companiesLoading, setCompaniesLoading] = useState(true);
 
-  /* ── Load letters ── */
+  /* ── Load template + letters ── */
   const loadLetters = useCallback(async () => {
     try {
-      const res = await fetch("/api/queue");
-      const d = await res.json();
-      if (d.error) throw new Error(d.error);
-      setLetters(d);
+      const [tplRes, qRes] = await Promise.all([
+        fetch("/api/template"),
+        fetch("/api/queue"),
+      ]);
+      const tplData = await tplRes.json();
+      const qData = await qRes.json();
+
+      if (tplData && !tplData.error) setTemplate(tplData);
+      if (qData.error) throw new Error(qData.error);
+      setLetters(qData);
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
@@ -98,10 +141,10 @@ export default function HomePage() {
   }, [loadLetters, loadCompanies]);
 
   /* ── Select a letter card ── */
-  async function selectLetter(letter: LetterCard) {
+  async function selectLetter(letter: LetterRow) {
     setSelected(letter);
     setEditing(false);
-    setEditBody(letter.body_final || "");
+    setEditParagraph(letter.custom_paragraph || "");
     // Load contacts for this company
     try {
       const res = await fetch(
@@ -115,8 +158,8 @@ export default function HomePage() {
     }
   }
 
-  /* ── Save letter edits ── */
-  async function saveLetter() {
+  /* ── Save custom paragraph edits ── */
+  async function saveParagraph() {
     if (!selected) return;
     setSaving(true);
     try {
@@ -125,12 +168,12 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           companyname: selected.companyname,
-          body_final: editBody,
+          custom_paragraph: editParagraph,
         }),
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      setSelected({ ...selected, body_final: editBody });
+      setSelected({ ...selected, custom_paragraph: editParagraph });
       setEditing(false);
       toast("Letter saved");
       loadLetters();
@@ -143,8 +186,7 @@ export default function HomePage() {
 
   /* ── Print single letter ── */
   function printLetter() {
-    if (!selected) return;
-    window.open(`/print/letters?ids=${selected.id}`, "_blank");
+    window.print();
   }
 
   /* ── Load roles for a company ── */
@@ -187,12 +229,23 @@ export default function HomePage() {
     }
   };
 
+  /* ── Assembled letter for selected card ── */
+  const assembled = selected && template
+    ? assembleLetter(
+        template,
+        selected.companyname,
+        selected.custom_paragraph || "",
+        selected.contactname || (contacts.length > 0 ? contacts[0].contactname : undefined),
+        selected.contact_title || (contacts.length > 0 ? contacts[0].title : undefined)
+      )
+    : null;
+
   return (
     <div className="space-y-8">
       {/* ════════════════════════════════════════════
           SECTION 1: MY LETTERS
          ════════════════════════════════════════════ */}
-      <section>
+      <section className="no-print">
         <h2 className="text-xl font-bold mb-4">My Letters</h2>
 
         {lettersLoading ? (
@@ -253,7 +306,7 @@ export default function HomePage() {
                       )}
                       {!selected.contactname && contacts.length > 0 && (
                         <p className="text-xs text-gray-500">
-                          Suggested: {contacts[0].contactname} — {contacts[0].title}
+                          Contact: {contacts[0].contactname} — {contacts[0].title}
                         </p>
                       )}
                     </div>
@@ -263,7 +316,7 @@ export default function HomePage() {
                           <button
                             onClick={() => {
                               setEditing(true);
-                              setEditBody(selected.body_final || "");
+                              setEditParagraph(selected.custom_paragraph || "");
                             }}
                             className="px-3 py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300"
                           >
@@ -285,7 +338,7 @@ export default function HomePage() {
                             Cancel
                           </button>
                           <button
-                            onClick={saveLetter}
+                            onClick={saveParagraph}
                             disabled={saving}
                             className="px-3 py-1.5 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                           >
@@ -297,49 +350,44 @@ export default function HomePage() {
                   </div>
 
                   {/* Letter content */}
-                  <div
-                    style={{
-                      padding: "40px 48px",
-                      fontFamily: "Georgia, 'Times New Roman', serif",
-                      fontSize: "12pt",
-                      lineHeight: "1.7",
-                      minHeight: "400px",
-                    }}
-                  >
-                    {selected.subject_final && (
-                      <h4
-                        style={{
-                          fontSize: "13pt",
-                          fontWeight: "bold",
-                          marginBottom: "20px",
-                        }}
-                      >
-                        {selected.subject_final}
-                      </h4>
-                    )}
-
-                    {editing ? (
+                  {editing ? (
+                    <div className="p-6">
+                      <label className="block text-xs font-medium text-gray-500 mb-2">
+                        Custom paragraph (the personalized section of the letter):
+                      </label>
                       <textarea
-                        value={editBody}
-                        onChange={(e) => setEditBody(e.target.value)}
-                        className="w-full border rounded p-3 text-sm"
+                        value={editParagraph}
+                        onChange={(e) => setEditParagraph(e.target.value)}
+                        className="w-full border rounded-lg p-3 text-sm"
                         style={{
                           fontFamily: "Georgia, 'Times New Roman', serif",
                           fontSize: "12pt",
                           lineHeight: "1.7",
-                          minHeight: "350px",
+                          minHeight: "200px",
                         }}
                       />
-                    ) : selected.body_final ? (
-                      <div style={{ whiteSpace: "pre-wrap" }}>
-                        {selected.body_final}
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 italic">
-                        No letter content yet.
+                      <p className="text-xs text-gray-400 mt-2">
+                        This paragraph replaces {"{{CUSTOM_PARAGRAPH}}"} in the template.
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  ) : assembled ? (
+                    <div
+                      style={{
+                        padding: "40px 48px",
+                        fontFamily: "Georgia, 'Times New Roman', serif",
+                        fontSize: "12pt",
+                        lineHeight: "1.7",
+                        minHeight: "400px",
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {assembled.body}
+                    </div>
+                  ) : (
+                    <div className="p-12 text-center text-gray-400 italic">
+                      Template not loaded.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -347,10 +395,26 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* ── Print-only: full assembled letter ── */}
+      {selected && assembled && (
+        <div
+          className="hidden print:block"
+          style={{
+            padding: "1in",
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: "12pt",
+            lineHeight: "1.6",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {assembled.body}
+        </div>
+      )}
+
       {/* ════════════════════════════════════════════
           SECTION 2: COMPANIES & JOBS
          ════════════════════════════════════════════ */}
-      <section>
+      <section className="no-print">
         <h2 className="text-xl font-bold mb-4">Companies</h2>
 
         {/* Filters */}
