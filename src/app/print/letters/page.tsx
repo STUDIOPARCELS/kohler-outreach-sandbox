@@ -28,7 +28,8 @@ function assembleLetter(
   companyname: string,
   customParagraph: string,
   contactName?: string,
-  contactTitle?: string
+  contactTitle?: string,
+  companyAddress?: string
 ) {
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -39,7 +40,8 @@ function assembleLetter(
   let body = template.body_template
     .replace(/\{\{COMPANY\}\}/g, companyname)
     .replace(/\{\{CUSTOM_PARAGRAPH\}\}/g, customParagraph || "")
-    .replace(/\{\{TODAY_DATE\}\}/g, today);
+    .replace(/\{\{TODAY_DATE\}\}/g, today)
+    .replace(/\{\{COMPANY_ADDRESS\}\}/g, companyAddress || "");
 
   if (contactName) {
     const firstName = contactName.split(" ")[0];
@@ -47,6 +49,8 @@ function assembleLetter(
     body = body.replace("Hiring Manager\n", `${contactName}\n${titleLine}`);
     body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
   }
+
+  body = body.replace(/\n{3,}/g, "\n\n");
 
   return body;
 }

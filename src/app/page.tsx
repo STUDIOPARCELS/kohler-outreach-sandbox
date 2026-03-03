@@ -50,7 +50,8 @@ function assembleLetter(
   companyname: string,
   customParagraph: string,
   contactName?: string,
-  contactTitle?: string
+  contactTitle?: string,
+  companyAddress?: string
 ) {
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -61,7 +62,8 @@ function assembleLetter(
   let body = template.body_template
     .replace(/\{\{COMPANY\}\}/g, companyname)
     .replace(/\{\{CUSTOM_PARAGRAPH\}\}/g, customParagraph || "")
-    .replace(/\{\{TODAY_DATE\}\}/g, today);
+    .replace(/\{\{TODAY_DATE\}\}/g, today)
+    .replace(/\{\{COMPANY_ADDRESS\}\}/g, companyAddress || "");
 
   // Replace "Hiring Manager" with actual contact if available
   if (contactName) {
@@ -70,6 +72,9 @@ function assembleLetter(
     body = body.replace("Hiring Manager\n", `${contactName}\n${titleLine}`);
     body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
   }
+
+  // Clean up any blank lines from missing address
+  body = body.replace(/\n{3,}/g, "\n\n");
 
   const subject = template.subject_template
     .replace(/\{\{COMPANY\}\}/g, companyname);
@@ -88,6 +93,7 @@ export default function HomePage() {
   const [letters, setLetters] = useState<LetterRow[]>([]);
   const [selected, setSelected] = useState<LetterRow | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [companyAddress, setCompanyAddress] = useState("");
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState("");
   const [saving, setSaving] = useState(false);
@@ -147,14 +153,26 @@ export default function HomePage() {
   async function selectLetter(letter: LetterRow) {
     setSelected(letter);
     setEditing(false);
-    // Load contacts for this company
+    setCompanyAddress("");
+    // Load contacts and company data for this company
     try {
-      const res = await fetch(
-        `/api/contacts?companyname=${encodeURIComponent(letter.companyname)}`
-      );
-      const d = await res.json();
-      if (Array.isArray(d)) setContacts(d);
+      const [contRes, compRes] = await Promise.all([
+        fetch(`/api/contacts?companyname=${encodeURIComponent(letter.companyname)}`),
+        fetch(`/api/company?companyname=${encodeURIComponent(letter.companyname)}`),
+      ]);
+      const contData = await contRes.json();
+      const compData = await compRes.json();
+      if (Array.isArray(contData)) setContacts(contData);
       else setContacts([]);
+      // Build address string from company mailing fields
+      if (compData && !compData.error) {
+        const parts = [
+          compData.mailing_address1,
+          compData.mailing_address2,
+          [compData.mailing_city, compData.mailing_state, compData.mailing_zip].filter(Boolean).join(", "),
+        ].filter(Boolean);
+        setCompanyAddress(parts.join("\n"));
+      }
     } catch {
       setContacts([]);
     }
@@ -240,7 +258,8 @@ export default function HomePage() {
           selected.companyname,
           selected.custom_paragraph || "",
           selected.contactname || (contacts.length > 0 ? contacts[0].contactname : undefined),
-          selected.contact_title || (contacts.length > 0 ? contacts[0].title : undefined)
+          selected.contact_title || (contacts.length > 0 ? contacts[0].title : undefined),
+          companyAddress
         )
     : null;
 
