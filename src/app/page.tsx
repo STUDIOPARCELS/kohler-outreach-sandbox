@@ -95,90 +95,78 @@ const NICHE_ORDER = [
 ];
 
 /* ── Niche color themes ── */
-const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string; icon: string }> = {
+const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string }> = {
   "Acoustics / Audio / Musical Instruments": {
-    bg: "from-violet-50 to-purple-50",
-    headerBg: "from-violet-600 to-purple-700",
-    border: "border-violet-200",
-    accent: "text-violet-700",
-    icon: "🎵",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-violet-900 to-purple-950",
+    border: "border-violet-300/60",
+    accent: "text-violet-900",
   },
   "Skiing": {
-    bg: "from-sky-50 to-cyan-50",
-    headerBg: "from-sky-500 to-cyan-600",
-    border: "border-sky-200",
-    accent: "text-sky-700",
-    icon: "⛷️",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-sky-800 to-slate-900",
+    border: "border-sky-300/60",
+    accent: "text-sky-900",
   },
   "Outdoor Recreation & Equipment": {
-    bg: "from-emerald-50 to-green-50",
-    headerBg: "from-emerald-600 to-green-700",
-    border: "border-emerald-200",
-    accent: "text-emerald-700",
-    icon: "🏔️",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-emerald-900 to-green-950",
+    border: "border-emerald-300/60",
+    accent: "text-emerald-900",
   },
   "Woodworking / Furniture / Cabinetry / Prototyping": {
-    bg: "from-amber-50 to-orange-50",
-    headerBg: "from-amber-600 to-orange-700",
-    border: "border-amber-200",
-    accent: "text-amber-700",
-    icon: "🪵",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-amber-800 to-yellow-950",
+    border: "border-amber-300/60",
+    accent: "text-amber-900",
   },
   "Energy / Renewables / Power": {
-    bg: "from-yellow-50 to-amber-50",
-    headerBg: "from-yellow-500 to-amber-600",
-    border: "border-yellow-200",
-    accent: "text-yellow-700",
-    icon: "⚡",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-orange-800 to-amber-950",
+    border: "border-orange-300/60",
+    accent: "text-orange-900",
   },
   "MEP / HVAC / Building Systems": {
-    bg: "from-teal-50 to-cyan-50",
-    headerBg: "from-teal-600 to-cyan-700",
-    border: "border-teal-200",
-    accent: "text-teal-700",
-    icon: "🏗️",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-teal-800 to-teal-950",
+    border: "border-teal-300/60",
+    accent: "text-teal-900",
   },
   "Construction / Civil / Heavy Industry": {
-    bg: "from-slate-50 to-gray-100",
-    headerBg: "from-slate-600 to-gray-700",
-    border: "border-slate-300",
-    accent: "text-slate-700",
-    icon: "🔩",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-stone-700 to-stone-900",
+    border: "border-stone-300/60",
+    accent: "text-stone-800",
   },
   "Manufacturing / Automation / Product Design": {
-    bg: "from-indigo-50 to-blue-50",
-    headerBg: "from-indigo-600 to-blue-700",
-    border: "border-indigo-200",
-    accent: "text-indigo-700",
-    icon: "⚙️",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-indigo-900 to-blue-950",
+    border: "border-indigo-300/60",
+    accent: "text-indigo-900",
   },
   "Water / Environmental / Geotech": {
-    bg: "from-cyan-50 to-blue-50",
-    headerBg: "from-cyan-600 to-blue-600",
-    border: "border-cyan-200",
-    accent: "text-cyan-700",
-    icon: "💧",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-cyan-800 to-cyan-950",
+    border: "border-cyan-300/60",
+    accent: "text-cyan-900",
   },
   "Quantum / Deep Tech / Electronics / Robotics": {
-    bg: "from-rose-50 to-pink-50",
-    headerBg: "from-rose-600 to-pink-700",
-    border: "border-rose-200",
-    accent: "text-rose-700",
-    icon: "🤖",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-rose-900 to-pink-950",
+    border: "border-rose-300/60",
+    accent: "text-rose-900",
   },
   "Aerospace / Space": {
-    bg: "from-blue-950 to-indigo-900",
-    headerBg: "from-blue-800 to-indigo-900",
-    border: "border-blue-400",
-    accent: "text-blue-300",
-    icon: "🚀",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-blue-900 to-indigo-950",
+    border: "border-blue-300/60",
+    accent: "text-blue-900",
   },
   "Other": {
     bg: "from-gray-50 to-slate-50",
-    headerBg: "from-gray-500 to-slate-600",
-    border: "border-gray-200",
-    accent: "text-gray-600",
-    icon: "📋",
+    headerBg: "from-gray-700 to-slate-800",
+    border: "border-gray-300/60",
+    accent: "text-gray-700",
   },
 };
 
@@ -460,7 +448,6 @@ export default function HomePage() {
                 const items = grouped.get(niche)!;
                 const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
                 const isCollapsed = collapsedNiches.has(niche);
-                const isAerospace = niche === "Aerospace / Space";
 
                 return (
                   <div
@@ -483,16 +470,13 @@ export default function HomePage() {
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">{colors.icon}</span>
-                            <div>
-                              <h3 className="font-bold text-sm text-white drop-shadow-sm">
-                                {niche}
-                              </h3>
-                              <p className="text-[11px] text-white/70 mt-0.5">
-                                {items.length} {items.length === 1 ? "company" : "companies"}
-                              </p>
-                            </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-white drop-shadow-sm">
+                              {niche}
+                            </h3>
+                            <p className="text-[11px] text-white/60 mt-0.5">
+                              {items.length} {items.length === 1 ? "company" : "companies"}
+                            </p>
                           </div>
                           <svg
                             className={`w-4 h-4 text-white/70 transition-transform duration-300 ${isCollapsed ? "" : "rotate-180"}`}
@@ -525,16 +509,14 @@ export default function HomePage() {
                                 }`}
                               >
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                                    isAerospace ? "bg-white/10 text-blue-300" : "bg-black/[0.06] text-gray-400"
-                                  }`}>
+                                  <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-black/[0.06] text-gray-400">
                                     {num}
                                   </span>
                                   <div className="min-w-0">
-                                    <span className={`font-semibold text-sm truncate block ${isAerospace ? "text-white" : "text-gray-800"}`}>
+                                    <span className="font-semibold text-sm truncate block text-gray-800">
                                       {c.companyname}
                                     </span>
-                                    <span className={`text-[11px] truncate block ${isAerospace ? "text-blue-300/70" : "text-gray-400"}`}>
+                                    <span className="text-[11px] truncate block text-gray-400">
                                       {c.city}
                                     </span>
                                   </div>
@@ -546,7 +528,7 @@ export default function HomePage() {
                                     </span>
                                   )}
                                   <svg
-                                    className={`w-3.5 h-3.5 transition-transform duration-200 ${isAerospace ? "text-blue-400/50" : "text-gray-300"} ${isExpanded ? "rotate-180" : ""}`}
+                                    className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-300 ${isExpanded ? "rotate-180" : ""}`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
