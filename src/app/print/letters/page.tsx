@@ -39,7 +39,6 @@ function assembleLetter(
 
   let body = template.body_template
     .replace(/\{\{COMPANY\}\}/g, companyname)
-    .replace(/\{\{CUSTOM_PARAGRAPH\}\}/g, customParagraph || "")
     .replace(/\{\{TODAY_DATE\}\}/g, today)
     .replace(/\{\{COMPANY_ADDRESS\}\}/g, companyAddress || "");
 
@@ -49,6 +48,26 @@ function assembleLetter(
     body = body.replace("Hiring Manager\n", `${contactName}\n${titleLine}`);
     body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
   }
+
+  // Standardize wording
+  body = body.replace(/this passion/g, "my passion");
+  body = body.replace(
+    "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.",
+    "If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team."
+  );
+
+  // Remove duplicate paragraphs
+  const paras = body.split(/\n\n+/);
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const p of paras) {
+    const key = p.trim().toLowerCase().replace(/\s+/g, " ");
+    if (!key || !seen.has(key)) {
+      if (key) seen.add(key);
+      deduped.push(p);
+    }
+  }
+  body = deduped.join("\n\n");
 
   body = body.replace(/\n{3,}/g, "\n\n");
 
@@ -111,7 +130,7 @@ function PrintLettersContent() {
 
       {/* Letters */}
       {letters.map((letter, i) => {
-        const body = letter.body_final
+        const rawBody = letter.body_final
           ? letter.body_final
           : assembleLetter(
               template,
@@ -120,6 +139,18 @@ function PrintLettersContent() {
               letter.contactname,
               letter.contact_title
             );
+        // Deduplicate paragraphs in case body_final has dupes
+        const paras2 = rawBody.split(/\n\n+/);
+        const seen2 = new Set<string>();
+        const deduped2: string[] = [];
+        for (const p of paras2) {
+          const key = p.trim().toLowerCase().replace(/\s+/g, " ");
+          if (!key || !seen2.has(key)) {
+            if (key) seen2.add(key);
+            deduped2.push(p);
+          }
+        }
+        const body = deduped2.join("\n\n");
 
         return (
           <div
