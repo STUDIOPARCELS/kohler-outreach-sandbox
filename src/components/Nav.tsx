@@ -19,7 +19,7 @@ export default function Nav() {
     <nav className="no-print bg-gray-900 text-white">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
         <Link href="/outreach-list" className="font-bold text-lg tracking-tight">
-          Kohler Outreach
+          Kohler
         </Link>
         <button
           className="md:hidden p-2"

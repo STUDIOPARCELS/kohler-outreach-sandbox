@@ -396,36 +396,26 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <div className="no-print">
-        {/* ── Hero header ── */}
-        <div className="relative mb-8 rounded-2xl overflow-hidden"
-          style={{
-            background: "linear-gradient(135deg, #1e293b 0%, #334155 40%, #475569 100%)",
-            boxShadow: "0 20px 40px -12px rgba(0,0,0,0.35), 0 8px 20px -8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-          }}
-        >
-          <div className="absolute inset-0 opacity-[0.03]"
-            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
-          />
-          <div className="relative px-6 py-8 sm:px-8 sm:py-10">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Entry-Level BSME / EIT
-            </h1>
-            <p className="text-slate-300 mt-1.5 text-sm sm:text-base font-medium">
-              Denver Metro Outreach
-            </p>
-            <div className="flex items-center gap-3 mt-4">
-              <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
-                {filteredCompanies.length} companies
-              </span>
-              <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
-                {lettersMap.size} letters drafted
-              </span>
-              <span className="text-xs text-slate-400 bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm">
-                {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent
-              </span>
-            </div>
+        {/* ── ENTRY LEVEL header bento box ── */}
+        <div className="bg-gray-50 border border-gray-200 rounded-xl px-6 py-5 mb-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight uppercase">
+            ENTRY LEVEL
+          </h1>
+          <div className="flex items-center gap-3 mt-3">
+            <span className="text-xs text-gray-500 bg-white rounded-full px-3 py-1 border border-gray-200">
+              {filteredCompanies.length} companies
+            </span>
+            <span className="text-xs text-gray-500 bg-white rounded-full px-3 py-1 border border-gray-200">
+              {lettersMap.size} letters drafted
+            </span>
+            <span className="text-xs text-gray-500 bg-white rounded-full px-3 py-1 border border-gray-200">
+              {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent
+            </span>
           </div>
         </div>
+
+        {/* ── Gray divider line ── */}
+        <div className="border-b border-gray-300 my-5" />
 
         {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
