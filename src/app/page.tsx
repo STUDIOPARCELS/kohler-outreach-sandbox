@@ -600,7 +600,7 @@ export default function HomePage() {
 
                   {/* Companies list */}
                   {!isCollapsed && (
-                    <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04] ${fullWidth ? "columns-1 sm:columns-2 lg:columns-3 gap-0" : ""}`}>
+                    <div className={`bg-gradient-to-b ${colors.bg} divide-y divide-black/[0.04] ${fullWidth ? "columns-1 sm:columns-2 lg:columns-4 xl:columns-5 gap-0" : ""}`}>
                       {items.map((c) => {
                         globalIdx++;
                         const num = globalIdx;
@@ -610,23 +610,25 @@ export default function HomePage() {
                           <div key={c.companyname} className={fullWidth ? "break-inside-avoid" : ""}>
                             <button
                               onClick={() => expandCompany(c.companyname)}
-                              className={`w-full text-left px-5 py-3 flex items-center justify-between transition-all duration-200 ${
+                              className={`w-full text-left ${fullWidth ? "px-3 py-1.5" : "px-5 py-3"} flex items-center justify-between transition-all duration-200 ${
                                 isExpanded
                                   ? "bg-white/80 shadow-inner"
                                   : "hover:bg-white/50"
                               }`}
                             >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-black/[0.06] text-gray-400">
+                              <div className={`flex items-center ${fullWidth ? "gap-2" : "gap-3"} min-w-0`}>
+                                <span className={`shrink-0 ${fullWidth ? "w-5 h-5 text-[9px]" : "w-6 h-6 text-[10px]"} rounded-full flex items-center justify-center font-bold bg-black/[0.06] text-gray-400`}>
                                   {num}
                                 </span>
                                 <div className="min-w-0">
-                                  <span className="font-semibold text-sm truncate block text-gray-800">
+                                  <span className={`font-semibold ${fullWidth ? "text-xs" : "text-sm"} truncate block text-gray-800`}>
                                     {c.companyname}
                                   </span>
-                                  <span className="text-[11px] truncate block text-gray-400">
-                                    {c.city}
-                                  </span>
+                                  {!fullWidth && (
+                                    <span className="text-[11px] truncate block text-gray-400">
+                                      {c.city}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
