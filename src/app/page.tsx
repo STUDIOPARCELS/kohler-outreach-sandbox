@@ -36,16 +36,6 @@ interface CompanyRow {
   niche?: string;
 }
 
-interface Role {
-  company_name: string;
-  title: string;
-  location: string;
-  work_type: string;
-  salary: string;
-  url: string;
-  date_posted: string;
-}
-
 /* ── Assemble a letter from template + data ── */
 function assembleLetter(
   template: Template,
@@ -67,7 +57,6 @@ function assembleLetter(
     .replace(/\{\{TODAY_DATE\}\}/g, today)
     .replace(/\{\{COMPANY_ADDRESS\}\}/g, companyAddress || "");
 
-  // Replace "Hiring Manager" with actual contact if available
   if (contactName) {
     const firstName = contactName.split(" ")[0];
     const titleLine = contactTitle ? `${contactTitle}\n` : "";
@@ -75,7 +64,6 @@ function assembleLetter(
     body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
   }
 
-  // Clean up any blank lines from missing address
   body = body.replace(/\n{3,}/g, "\n\n");
 
   const subject = template.subject_template
@@ -84,6 +72,21 @@ function assembleLetter(
   return { subject, body };
 }
 
+const NICHE_ORDER = [
+  "Acoustics / Audio / Musical Instruments",
+  "Skiing",
+  "Outdoor Recreation & Equipment",
+  "Woodworking / Furniture / Cabinetry / Prototyping",
+  "Energy / Renewables / Power",
+  "MEP / HVAC / Building Systems",
+  "Construction / Civil / Heavy Industry",
+  "Manufacturing / Automation / Product Design",
+  "Water / Environmental / Geotech",
+  "Quantum / Deep Tech / Electronics / Robotics",
+  "Aerospace / Space",
+  "Other",
+];
+
 /* ── Main Page ── */
 export default function HomePage() {
   const toast = useToast();
@@ -91,55 +94,45 @@ export default function HomePage() {
   // Template
   const [template, setTemplate] = useState<Template | null>(null);
 
-  // Letter cards (from reachout_company_inserts)
-  const [letters, setLetters] = useState<LetterRow[]>([]);
-  const [selected, setSelected] = useState<LetterRow | null>(null);
+  // Letters map (companyname -> LetterRow)
+  const [lettersMap, setLettersMap] = useState<Map<string, LetterRow>>(new Map());
+
+  // Expanded company state
+  const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContactIdx, setSelectedContactIdx] = useState(0);
   const [companyAddress, setCompanyAddress] = useState("");
+  const [currentLetter, setCurrentLetter] = useState<LetterRow | null>(null);
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState("");
   const [saving, setSaving] = useState(false);
+  const [expandLoading, setExpandLoading] = useState(false);
 
   // Company browser
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
-  const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [rolesLoading, setRolesLoading] = useState(false);
-
-  // Loading states
-  const [lettersLoading, setLettersLoading] = useState(true);
   const [companiesLoading, setCompaniesLoading] = useState(true);
 
-  /* ── Load template + letters ── */
-  const loadLetters = useCallback(async () => {
+  /* ── Load template + letters + companies ── */
+  const loadData = useCallback(async () => {
     try {
-      const [tplRes, qRes] = await Promise.all([
+      const [tplRes, qRes, compRes] = await Promise.all([
         fetch("/api/template"),
         fetch("/api/queue"),
+        fetch("/api/outreach-list"),
       ]);
       const tplData = await tplRes.json();
       const qData = await qRes.json();
+      const compData = await compRes.json();
 
       if (tplData && !tplData.error) setTemplate(tplData);
-      if (qData.error) throw new Error(qData.error);
-      setLetters(qData);
-    } catch (e: unknown) {
-      toast((e as Error).message, "error");
-    } finally {
-      setLettersLoading(false);
-    }
-  }, [toast]);
-
-  /* ── Load companies ── */
-  const loadCompanies = useCallback(async () => {
-    try {
-      const res = await fetch("/api/outreach-list");
-      const d = await res.json();
-      if (d.error) throw new Error(d.error);
-      setCompanies(d);
+      if (!qData.error && Array.isArray(qData)) {
+        const map = new Map<string, LetterRow>();
+        for (const l of qData) map.set(l.companyname, l);
+        setLettersMap(map);
+      }
+      if (!compData.error) setCompanies(compData);
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
@@ -147,28 +140,30 @@ export default function HomePage() {
     }
   }, [toast]);
 
-  useEffect(() => {
-    loadLetters();
-    loadCompanies();
-  }, [loadLetters, loadCompanies]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  /* ── Select a letter card ── */
-  async function selectLetter(letter: LetterRow) {
-    setSelected(letter);
+  /* ── Expand a company: load contacts, address, and letter ── */
+  async function expandCompany(companyname: string) {
+    if (expandedCompany === companyname) {
+      setExpandedCompany(null);
+      setEditing(false);
+      return;
+    }
+    setExpandedCompany(companyname);
     setEditing(false);
-    setCompanyAddress("");
     setSelectedContactIdx(0);
-    // Load contacts and company data for this company
+    setExpandLoading(true);
+    setCurrentLetter(lettersMap.get(companyname) || null);
+
     try {
       const [contRes, compRes] = await Promise.all([
-        fetch(`/api/contacts?companyname=${encodeURIComponent(letter.companyname)}`),
-        fetch(`/api/company?companyname=${encodeURIComponent(letter.companyname)}`),
+        fetch(`/api/contacts?companyname=${encodeURIComponent(companyname)}`),
+        fetch(`/api/company?companyname=${encodeURIComponent(companyname)}`),
       ]);
       const contData = await contRes.json();
       const compData = await compRes.json();
       if (Array.isArray(contData)) setContacts(contData);
       else setContacts([]);
-      // Build address string from company mailing fields
       if (compData && !compData.error) {
         const parts = [
           compData.mailing_address1,
@@ -176,50 +171,30 @@ export default function HomePage() {
           [compData.mailing_city, compData.mailing_state, compData.mailing_zip].filter(Boolean).join(", "),
         ].filter(Boolean);
         setCompanyAddress(parts.join("\n"));
+      } else {
+        setCompanyAddress("");
       }
     } catch {
       setContacts([]);
-    }
-  }
-
-  /* ── Save full letter edits ── */
-  async function saveLetter() {
-    if (!selected) return;
-    setSaving(true);
-    try {
-      const res = await fetch("/api/draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          companyname: selected.companyname,
-          body_final: editBody,
-        }),
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error);
-      setSelected({ ...selected, body_final: editBody });
-      setEditing(false);
-      toast("Letter saved");
-      loadLetters();
-    } catch (e: unknown) {
-      toast((e as Error).message, "error");
+      setCompanyAddress("");
     } finally {
-      setSaving(false);
+      setExpandLoading(false);
     }
   }
 
-  /* ── Apply selected contact to the draft ── */
+  /* ── Apply selected contact ── */
   async function applyContact(idx: number) {
     setSelectedContactIdx(idx);
     const c = contacts[idx];
-    if (!c || !selected) return;
-    // Save the contact to the draft and clear body_final so it re-assembles
+    if (!c || !expandedCompany) return;
+    const letter = lettersMap.get(expandedCompany);
+    if (!letter) return;
     try {
       const res = await fetch("/api/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyname: selected.companyname,
+          companyname: expandedCompany,
           contactname: c.contactname,
           contact_title: c.title,
           contact_email: c.email,
@@ -228,44 +203,47 @@ export default function HomePage() {
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      setSelected({
-        ...selected,
+      const updated = {
+        ...letter,
         contactname: c.contactname,
         contact_title: c.title,
         contact_email: c.email,
         body_final: undefined,
-      });
+      };
+      setCurrentLetter(updated);
+      setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
       toast(`Contact set: ${c.contactname}`);
-      loadLetters();
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     }
   }
 
-  /* ── Print single letter ── */
-  function printLetter() {
-    window.print();
-  }
-
-  /* ── Load roles for a company ── */
-  async function toggleRoles(companyname: string) {
-    if (expandedCompany === companyname) {
-      setExpandedCompany(null);
-      return;
-    }
-    setExpandedCompany(companyname);
-    setRolesLoading(true);
+  /* ── Save letter edits ── */
+  async function saveLetter() {
+    if (!expandedCompany) return;
+    setSaving(true);
     try {
-      const res = await fetch(
-        `/api/relevant-roles?companyname=${encodeURIComponent(companyname)}`
-      );
+      const res = await fetch("/api/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyname: expandedCompany,
+          body_final: editBody,
+        }),
+      });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      setRoles(d);
+      if (currentLetter) {
+        const updated = { ...currentLetter, body_final: editBody };
+        setCurrentLetter(updated);
+        setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+      }
+      setEditing(false);
+      toast("Letter saved");
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
-      setRolesLoading(false);
+      setSaving(false);
     }
   }
 
@@ -277,6 +255,20 @@ export default function HomePage() {
     return true;
   });
 
+  /* ── Assembled letter for expanded company ── */
+  const assembled = expandedCompany && template && currentLetter
+    ? currentLetter.body_final
+      ? { subject: template.subject_template.replace(/\{\{COMPANY\}\}/g, expandedCompany), body: currentLetter.body_final }
+      : assembleLetter(
+          template,
+          expandedCompany,
+          currentLetter.custom_paragraph || "",
+          currentLetter.contactname || (contacts.length > 0 ? contacts[selectedContactIdx]?.contactname : undefined),
+          currentLetter.contact_title || (contacts.length > 0 ? contacts[selectedContactIdx]?.title : undefined),
+          companyAddress
+        )
+    : null;
+
   const statusColor = (s: string) => {
     switch (s) {
       case "draft": return "bg-gray-200 text-gray-700";
@@ -287,211 +279,10 @@ export default function HomePage() {
     }
   };
 
-  /* ── Assembled letter for selected card ── */
-  const assembled = selected && template
-    ? selected.body_final
-      ? { subject: template.subject_template.replace(/\{\{COMPANY\}\}/g, selected.companyname), body: selected.body_final }
-      : assembleLetter(
-          template,
-          selected.companyname,
-          selected.custom_paragraph || "",
-          selected.contactname || (contacts.length > 0 ? contacts[selectedContactIdx]?.contactname : undefined),
-          selected.contact_title || (contacts.length > 0 ? contacts[selectedContactIdx]?.title : undefined),
-          companyAddress
-        )
-    : null;
-
   return (
-    <div className="space-y-8">
-      {/* ════════════════════════════════════════════
-          SECTION 1: MY LETTERS
-         ════════════════════════════════════════════ */}
-      <section className="no-print">
-        <h2 className="text-xl font-bold mb-4">My Letters</h2>
-
-        {lettersLoading ? (
-          <p className="text-gray-400 text-sm">Loading...</p>
-        ) : letters.length === 0 ? (
-          <p className="text-gray-400 text-sm">No letters yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* ── Left: Letter cards grid ── */}
-            <div className="lg:col-span-1 space-y-2 max-h-[600px] overflow-y-auto pr-1">
-              {letters.map((l) => (
-                <button
-                  key={l.id}
-                  onClick={() => selectLetter(l)}
-                  className={`w-full text-left p-3 rounded-lg border transition-all ${
-                    selected?.id === l.id
-                      ? "border-blue-500 bg-blue-50 shadow-sm"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate">{l.companyname}</p>
-                      {l.contactname && (
-                        <p className="text-xs text-gray-500 truncate">
-                          {l.contactname}
-                          {l.contact_title && ` — ${l.contact_title}`}
-                        </p>
-                      )}
-                    </div>
-                    <span
-                      className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded ${statusColor(l.status)}`}
-                    >
-                      {l.status.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* ── Right: Letter preview ── */}
-            <div className="lg:col-span-2">
-              {!selected ? (
-                <div className="bg-white border rounded-lg p-12 text-center text-gray-400">
-                  Click a company to view the letter
-                </div>
-              ) : (
-                <div className="bg-white border rounded-lg overflow-hidden">
-                  {/* Toolbar */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold">{selected.companyname}</h3>
-                      {contacts.length > 1 ? (
-                        <select
-                          value={selectedContactIdx}
-                          onChange={(e) => applyContact(Number(e.target.value))}
-                          className="mt-1 text-xs border rounded px-2 py-1 bg-white max-w-[260px]"
-                        >
-                          {contacts.map((c, i) => (
-                            <option key={i} value={i}>
-                              {c.contactname}{c.title ? ` — ${c.title}` : ""}
-                            </option>
-                          ))}
-                        </select>
-                      ) : contacts.length === 1 ? (
-                        <p className="text-xs text-gray-500">
-                          To: {contacts[0].contactname}
-                          {contacts[0].title && ` — ${contacts[0].title}`}
-                        </p>
-                      ) : selected.contactname ? (
-                        <p className="text-xs text-gray-500">
-                          To: {selected.contactname}
-                          {selected.contact_title && ` — ${selected.contact_title}`}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="flex gap-2">
-                      {!editing ? (
-                        <>
-                          <button
-                            onClick={() => {
-                              setEditing(true);
-                              setEditBody(assembled?.body || "");
-                            }}
-                            className="px-3 py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={printLetter}
-                            className="px-3 py-1.5 text-xs font-medium rounded bg-gray-900 text-white hover:bg-black"
-                          >
-                            Print
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setEditing(false)}
-                            className="px-3 py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={saveLetter}
-                            disabled={saving}
-                            className="px-3 py-1.5 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                          >
-                            {saving ? "Saving..." : "Save"}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Letter content */}
-                  {editing ? (
-                    <div className="p-4">
-                      <textarea
-                        value={editBody}
-                        onChange={(e) => setEditBody(e.target.value)}
-                        className="w-full border rounded-lg p-4"
-                        style={{
-                          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                          fontSize: "11pt",
-                          lineHeight: "1.6",
-                          minHeight: "600px",
-                          whiteSpace: "pre-wrap",
-                        }}
-                      />
-                    </div>
-                  ) : assembled ? (
-                    <div
-                      style={{
-                        padding: "40px 48px",
-                        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                        fontSize: "12pt",
-                        lineHeight: "1.7",
-                        minHeight: "400px",
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {assembled.body}
-                    </div>
-                  ) : (
-                    <div className="p-12 text-center text-gray-400 italic">
-                      Template not loaded.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ── Print-only: full assembled letter ── */}
-      {selected && assembled && (
-        <div
-          className="hidden print:block"
-          style={{
-            padding: "0.75in 1in",
-            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "11pt",
-            lineHeight: "1.5",
-            whiteSpace: "pre-wrap",
-            maxHeight: "9.5in",
-            overflow: "hidden",
-          }}
-        >
-          {assembled.body}
-        </div>
-      )}
-      <style>{`
-        @media print {
-          @page { size: letter; margin: 0; }
-          body { margin: 0; padding: 0; }
-        }
-      `}</style>
-
-      {/* ════════════════════════════════════════════
-          SECTION 2: COMPANIES BY NICHE (Bento Boxes)
-         ════════════════════════════════════════════ */}
-      <section className="no-print">
-        <h2 className="text-xl font-bold mb-4">Companies</h2>
+    <div className="space-y-6">
+      <div className="no-print">
+        <h1 className="text-2xl font-bold mb-4">Kohler Outreach</h1>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -515,7 +306,7 @@ export default function HomePage() {
           </select>
         </div>
 
-        <p className="text-xs text-gray-400 mb-3">
+        <p className="text-xs text-gray-400 mb-4">
           {filteredCompanies.length} companies
         </p>
 
@@ -524,20 +315,6 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {(() => {
-              const NICHE_ORDER = [
-                "Acoustics / Audio / Musical Instruments",
-                "Skiing",
-                "Outdoor Recreation & Equipment",
-                "Woodworking / Furniture / Cabinetry / Prototyping",
-                "Energy / Renewables / Power",
-                "MEP / HVAC / Building Systems",
-                "Construction / Civil / Heavy Industry",
-                "Manufacturing / Automation / Product Design",
-                "Water / Environmental / Geotech",
-                "Quantum / Deep Tech / Electronics / Robotics",
-                "Aerospace / Space",
-                "Other",
-              ];
               const grouped = new Map<string, CompanyRow[]>();
               for (const c of filteredCompanies) {
                 const n = c.niche || "Other";
@@ -545,7 +322,6 @@ export default function HomePage() {
                 grouped.get(n)!.push(c);
               }
               const sortedNiches = NICHE_ORDER.filter((n) => grouped.has(n));
-              // Add any niches not in the predefined order
               Array.from(grouped.keys()).forEach((n) => {
                 if (!sortedNiches.includes(n)) sortedNiches.push(n);
               });
@@ -553,23 +329,24 @@ export default function HomePage() {
               return sortedNiches.map((niche) => {
                 const items = grouped.get(niche)!;
                 return (
-                  <div
-                    key={niche}
-                    className="bg-white rounded-xl border shadow-sm overflow-hidden"
-                  >
+                  <div key={niche} className="bg-white rounded-xl border shadow-sm overflow-hidden">
                     <div className="px-4 py-3 bg-gray-50 border-b">
                       <h3 className="font-semibold text-sm">{niche}</h3>
                       <p className="text-xs text-gray-400">{items.length} companies</p>
                     </div>
-                    <div className="divide-y max-h-[400px] overflow-y-auto">
+                    <div className="divide-y max-h-[500px] overflow-y-auto">
                       {items.map((c) => {
                         globalIdx++;
                         const num = globalIdx;
+                        const isExpanded = expandedCompany === c.companyname;
+                        const letter = lettersMap.get(c.companyname);
                         return (
                           <div key={c.companyname}>
                             <button
-                              onClick={() => toggleRoles(c.companyname)}
-                              className="w-full text-left px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                              onClick={() => expandCompany(c.companyname)}
+                              className={`w-full text-left px-4 py-2.5 flex items-center justify-between transition-colors ${
+                                isExpanded ? "bg-blue-50" : "hover:bg-gray-50"
+                              }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <span className="shrink-0 w-5 text-center text-[10px] font-medium text-gray-300">
@@ -582,49 +359,130 @@ export default function HomePage() {
                                   {c.city}
                                 </span>
                               </div>
-                              <svg
-                                className={`w-3.5 h-3.5 text-gray-300 transition-transform shrink-0 ${
-                                  expandedCompany === c.companyname ? "rotate-180" : ""
-                                }`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {letter && (
+                                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${statusColor(letter.status)}`}>
+                                    {letter.status.replace(/_/g, " ")}
+                                  </span>
+                                )}
+                                <svg
+                                  className={`w-3.5 h-3.5 text-gray-300 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
                             </button>
 
-                            {expandedCompany === c.companyname && (
-                              <div className="border-t bg-gray-50 px-4 pb-3 pt-2">
-                                {c.company_about && (
-                                  <p className="text-xs text-gray-600 mb-2">{c.company_about}</p>
-                                )}
-                                {c.contactname && (
-                                  <p className="text-xs text-gray-500 mb-2">
-                                    Contact: <span className="font-medium">{c.contactname}</span>
-                                    {c.contact_title && ` — ${c.contact_title}`}
-                                  </p>
-                                )}
-                                {rolesLoading ? (
-                                  <p className="text-gray-400 text-xs">Loading roles...</p>
-                                ) : roles.length > 0 && (
-                                  <div className="mt-1 space-y-1">
-                                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Open Roles</p>
-                                    {roles.map((role, i) => (
-                                      <div key={i}>
-                                        <p className="text-xs font-medium">{role.title}</p>
-                                        <p className="text-[11px] text-gray-500">
-                                          {role.location} &middot; {role.work_type}
-                                          {role.salary && ` · ${role.salary}`}
-                                        </p>
-                                        {role.url && (
-                                          <a href={role.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-500 hover:underline">
-                                            View posting
-                                          </a>
-                                        )}
+                            {isExpanded && (
+                              <div className="border-t bg-gray-50 px-4 pb-4 pt-3">
+                                {expandLoading ? (
+                                  <p className="text-gray-400 text-xs">Loading...</p>
+                                ) : (
+                                  <>
+                                    {/* Company info */}
+                                    {c.company_about && (
+                                      <p className="text-xs text-gray-600 mb-3">{c.company_about}</p>
+                                    )}
+
+                                    {/* Contact selector */}
+                                    {contacts.length > 0 && (
+                                      <div className="mb-3">
+                                        <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wide block mb-1">
+                                          Contact
+                                        </label>
+                                        <select
+                                          value={selectedContactIdx}
+                                          onChange={(e) => applyContact(Number(e.target.value))}
+                                          className="text-xs border rounded px-2 py-1.5 bg-white w-full max-w-xs"
+                                        >
+                                          {contacts.map((ct, i) => (
+                                            <option key={i} value={i}>
+                                              {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}
+                                            </option>
+                                          ))}
+                                        </select>
                                       </div>
-                                    ))}
-                                  </div>
+                                    )}
+
+                                    {/* Letter preview */}
+                                    {assembled && !editing && (
+                                      <div className="bg-white border rounded-lg overflow-hidden mt-2">
+                                        <div className="flex items-center justify-between px-3 py-2 border-b bg-white">
+                                          <span className="text-xs font-medium text-gray-500">Letter Preview</span>
+                                          <div className="flex gap-2">
+                                            <button
+                                              onClick={() => { setEditing(true); setEditBody(assembled.body); }}
+                                              className="px-2.5 py-1 text-[11px] font-medium rounded bg-gray-200 hover:bg-gray-300"
+                                            >
+                                              Edit
+                                            </button>
+                                            <button
+                                              onClick={() => window.print()}
+                                              className="px-2.5 py-1 text-[11px] font-medium rounded bg-gray-900 text-white hover:bg-black"
+                                            >
+                                              Print
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <div
+                                          style={{
+                                            padding: "24px 32px",
+                                            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                                            fontSize: "10pt",
+                                            lineHeight: "1.6",
+                                            whiteSpace: "pre-wrap",
+                                            maxHeight: "400px",
+                                            overflowY: "auto",
+                                          }}
+                                        >
+                                          {assembled.body}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Edit mode */}
+                                    {editing && (
+                                      <div className="mt-2">
+                                        <textarea
+                                          value={editBody}
+                                          onChange={(e) => setEditBody(e.target.value)}
+                                          className="w-full border rounded-lg p-3 text-xs"
+                                          style={{
+                                            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                                            fontSize: "10pt",
+                                            lineHeight: "1.5",
+                                            minHeight: "400px",
+                                            whiteSpace: "pre-wrap",
+                                          }}
+                                        />
+                                        <div className="flex gap-2 mt-2">
+                                          <button
+                                            onClick={() => setEditing(false)}
+                                            className="px-3 py-1.5 text-xs font-medium rounded bg-gray-200 hover:bg-gray-300"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={saveLetter}
+                                            disabled={saving}
+                                            className="px-3 py-1.5 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                                          >
+                                            {saving ? "Saving..." : "Save"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* No letter yet */}
+                                    {!assembled && !editing && (
+                                      <p className="text-xs text-gray-400 italic mt-2">
+                                        No letter draft for this company yet.
+                                      </p>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
@@ -638,7 +496,31 @@ export default function HomePage() {
             })()}
           </div>
         )}
-      </section>
+      </div>
+
+      {/* ── Print-only: full assembled letter ── */}
+      {assembled && (
+        <div
+          className="hidden print:block"
+          style={{
+            padding: "0.75in 1in",
+            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+            fontSize: "11pt",
+            lineHeight: "1.5",
+            whiteSpace: "pre-wrap",
+            maxHeight: "9.5in",
+            overflow: "hidden",
+          }}
+        >
+          {assembled.body}
+        </div>
+      )}
+      <style>{`
+        @media print {
+          @page { size: letter; margin: 0; }
+          body { margin: 0; padding: 0; }
+        }
+      `}</style>
     </div>
   );
 }
