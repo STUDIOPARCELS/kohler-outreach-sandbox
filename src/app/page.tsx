@@ -394,6 +394,39 @@ export default function HomePage() {
       } else {
         setCompanyAddress("");
       }
+
+      // Auto-create draft if contacts exist but no letter
+      const existingLetter = lettersMap.get(companyname);
+      if (!existingLetter && Array.isArray(contData) && contData.length > 0) {
+        const bestContact = contData.find((c: Contact) => c.contactname !== "(no results)") || contData[0];
+        if (bestContact && bestContact.contactname !== "(no results)") {
+          try {
+            const draftRes = await fetch("/api/draft", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                companyname,
+                contactname: bestContact.contactname,
+                contact_title: bestContact.title,
+                contact_email: bestContact.email,
+              }),
+            });
+            const draftData = await draftRes.json();
+            if (!draftData.error) {
+              const newLetter: LetterRow = {
+                id: draftData.id || "",
+                companyname,
+                contactname: bestContact.contactname,
+                contact_title: bestContact.title,
+                contact_email: bestContact.email,
+                status: "draft",
+              };
+              setCurrentLetter(newLetter);
+              setLettersMap((prev) => { const m = new Map(prev); m.set(companyname, newLetter); return m; });
+            }
+          } catch { /* non-critical */ }
+        }
+      }
     } catch {
       setContacts([]);
       setCompanyAddress("");
