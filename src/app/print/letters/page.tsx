@@ -130,27 +130,13 @@ function PrintLettersContent() {
 
       {/* Letters */}
       {letters.map((letter, i) => {
-        const rawBody = letter.body_final
-          ? letter.body_final
-          : assembleLetter(
+        const body = assembleLetter(
               template,
               letter.companyname,
-              letter.custom_paragraph || "",
+              "",
               letter.contactname,
               letter.contact_title
             );
-        // Deduplicate paragraphs in case body_final has dupes
-        const paras2 = rawBody.split(/\n\n+/);
-        const seen2 = new Set<string>();
-        const deduped2: string[] = [];
-        for (const p of paras2) {
-          const key = p.trim().toLowerCase().replace(/\s+/g, " ");
-          if (!key || !seen2.has(key)) {
-            if (key) seen2.add(key);
-            deduped2.push(p);
-          }
-        }
-        const body = deduped2.join("\n\n");
 
         return (
           <div
