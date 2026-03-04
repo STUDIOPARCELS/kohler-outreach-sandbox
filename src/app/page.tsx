@@ -254,25 +254,25 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within the energy sector."
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within the energy sector."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
-    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation, and I'm eager to apply these thermal and fluid analysis skills in building systems engineering."
+    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation, and I'm eager to apply these skills in building systems engineering."
   ),
   "Construction / Civil / Heavy Industry": nicheTemplate(
-    "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects, and I'm eager to apply that hands-on building experience alongside my engineering background."
+    "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects, and I'm eager to apply that experience alongside my engineering background."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within the environmental engineering sector."
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within the environmental engineering sector."
   ),
   "Aerospace / Space": nicheTemplate(
     "My father had a Cessna 172 and I've always been fascinated with aircraft, and I am eager to combine that interest with my engineering background."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "My senior capstone involved designing electromechanical systems with 3D-printed interfaces, and I'm eager to apply that mechatronics experience alongside my mechanical engineering background."
+    "My senior capstone involved designing electromechanical systems with 3D-printed interfaces, and I'm eager to apply that experience alongside my engineering background."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
-    "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication, and I'm eager to apply my prototyping and DFM skills in a manufacturing environment."
+    "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication, and I'm eager to apply this experience in a manufacturing environment."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
     "I have been studying and performing classical piano for the past three years. I also completed an adaptive bass guitar for my senior capstone, and I'm eager to combine this passion for audio and acoustics with my engineering background."
@@ -290,13 +290,13 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities, giving me direct experience in human-centered mechanical design, and I'm eager to apply that mindset to medical device engineering."
   ),
   "Food / Beverage Manufacturing": nicheTemplate(
-    "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work, and I'm eager to apply these manufacturing skills in food production engineering."
+    "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work, and I'm eager to apply this experience in food production."
   ),
   "Staffing / Recruiting": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within your organization."
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within your organization."
   ),
   "Real Estate / Facilities": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within your organization."
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within your organization."
   ),
 };
 
