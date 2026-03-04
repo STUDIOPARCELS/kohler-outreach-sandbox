@@ -637,7 +637,7 @@ export default function HomePage() {
       case "ready_to_print": return "bg-yellow-400/20 text-yellow-800 border border-yellow-300";
       case "printed": return "bg-blue-400/20 text-blue-800 border border-blue-300";
       case "sent": return "bg-green-400/20 text-green-800 border border-green-300";
-      case "emailed": return "bg-purple-400/20 text-purple-800 border border-purple-300";
+      case "emailed": return "bg-sky-400/20 text-sky-800 border border-sky-300";
       default: return "bg-gray-100 text-gray-500 border border-gray-200";
     }
   };
@@ -696,7 +696,7 @@ export default function HomePage() {
                 <button
                   onClick={backfillEmails}
                   disabled={backfilling}
-                  className="text-xs font-bold bg-purple-500 hover:bg-purple-600 disabled:bg-purple-400 text-white rounded-full px-3 py-1 transition-all flex items-center gap-1.5"
+                  className="text-xs font-bold bg-sky-500 hover:bg-sky-600 disabled:bg-sky-400 text-white rounded-full px-3 py-1 transition-all flex items-center gap-1.5"
                   style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
                 >
                   {backfilling ? (
@@ -1052,7 +1052,7 @@ export default function HomePage() {
                                           <div className="flex items-center gap-3">
                                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Letter Preview</span>
                                             {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
-                                              <span className="text-xs text-purple-600 font-medium">
+                                              <span className="text-xs text-sky-600 font-medium">
                                                 → {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
                                               </span>
                                             )}
@@ -1075,7 +1075,7 @@ export default function HomePage() {
                                               <button
                                                 onClick={() => emailLetter()}
                                                 disabled={emailing}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
                                                 style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
                                               >
                                                 {emailing ? (
