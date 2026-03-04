@@ -21,8 +21,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_APP_PASSWORD;
+    // Auth with Lisa's Gmail, send as "Kohler Wood", reply-to goes to Kohler
+    const gmailUser = process.env.GMAIL_USER;       // Lisa's Gmail
+    const gmailPass = process.env.GMAIL_APP_PASSWORD; // App password for Lisa's Gmail
+    const replyTo = process.env.REPLY_TO_EMAIL || "akwood1@mines.edu";
 
     if (!gmailUser || !gmailPass) {
       return NextResponse.json(
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    // Build attachments array for Nodemailer
+    // Build attachments
     const attachments: { filename: string; content: Buffer; contentType?: string }[] = [];
 
     // Fetch resume PDF
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
       // SOLOcard is optional
     }
 
-    // Create Gmail SMTP transport
+    // Gmail SMTP — auth as Lisa, display as Kohler, replies go to Kohler
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -90,9 +92,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Send email
     const info = await transporter.sendMail({
       from: `"Kohler Wood" <${gmailUser}>`,
+      replyTo: `"Kohler Wood" <${replyTo}>`,
       to,
       subject: subject || "Introduction — Andrew (Kohler) Wood III, BSME/EIT",
       html: htmlBody,
@@ -118,6 +120,7 @@ export async function POST(req: NextRequest) {
         action: "email_sent",
         details: JSON.stringify({
           to,
+          reply_to: replyTo,
           message_id: info.messageId,
           attachments: attachments.map((a) => a.filename),
         }),
