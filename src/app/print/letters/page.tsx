@@ -9,6 +9,11 @@ interface LetterRow {
   contact_title?: string;
   custom_paragraph?: string;
   body_final?: string;
+  mailing_address1?: string;
+  mailing_address2?: string;
+  mailing_city?: string;
+  mailing_state?: string;
+  mailing_zip?: string;
 }
 
 interface Template {
@@ -81,6 +86,7 @@ function PrintLettersContent() {
   const [template, setTemplate] = useState<Template | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [includeEnvelopes, setIncludeEnvelopes] = useState(true);
 
   const load = useCallback(async () => {
     try {
@@ -108,6 +114,27 @@ function PrintLettersContent() {
   if (loading) return <p className="p-8 text-gray-500">Loading letters...</p>;
   if (letters.length === 0 || !template) return <p className="p-8 text-red-500">No letters found for the selected IDs.</p>;
 
+  const senderName = profile?.full_name || "Kohler Wood";
+  const senderAddress = "720 N 1st Ave";
+  const senderCityStateZip = "Ketchum, ID 83340";
+
+  function hasAddress(letter: LetterRow) {
+    return letter.mailing_address1 && letter.mailing_address1.trim() !== "" && !letter.mailing_address1.startsWith("Denver office");
+  }
+
+  function formatRecipient(letter: LetterRow) {
+    const lines: string[] = [];
+    if (letter.contactname) lines.push(letter.contactname);
+    lines.push(letter.companyname);
+    if (letter.mailing_address1) lines.push(letter.mailing_address1);
+    if (letter.mailing_address2) lines.push(letter.mailing_address2);
+    const csz = [letter.mailing_city, letter.mailing_state].filter(Boolean).join(", ");
+    if (csz || letter.mailing_zip) lines.push(`${csz} ${letter.mailing_zip || ""}`.trim());
+    return lines;
+  }
+
+  const envelopeCount = letters.filter(hasAddress).length;
+
   return (
     <>
       {/* Print controls */}
@@ -118,6 +145,15 @@ function PrintLettersContent() {
         >
           Print Letters ({letters.length})
         </button>
+        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={includeEnvelopes}
+            onChange={(e) => setIncludeEnvelopes(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          Include envelopes ({envelopeCount} with addresses)
+        </label>
         <button
           onClick={() => window.close()}
           className="text-sm text-gray-500 hover:text-gray-700"
@@ -128,7 +164,7 @@ function PrintLettersContent() {
 
       <div className="no-print h-16" />
 
-      {/* Letters */}
+      {/* Letters + optional envelopes */}
       {letters.map((letter, i) => {
         const body = assembleLetter(
               template,
@@ -138,24 +174,69 @@ function PrintLettersContent() {
               letter.contact_title
             );
 
+        const showEnvelope = includeEnvelopes && hasAddress(letter);
+        const recipientLines = formatRecipient(letter);
+
         return (
-          <div
-            key={i}
-            className="letter-page"
-            style={{
-              pageBreakAfter: i < letters.length - 1 ? "always" : "auto",
-              padding: "0.75in 1in",
-              minHeight: "9.5in",
-              maxHeight: "10in",
-              position: "relative",
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              fontSize: "11pt",
-              lineHeight: "1.5",
-              overflow: "hidden",
-            }}
-          >
-            {/* Body with preserved line breaks */}
-            <div style={{ whiteSpace: "pre-wrap" }}>{body}</div>
+          <div key={i}>
+            {/* Letter page */}
+            <div
+              className="letter-page"
+              style={{
+                pageBreakAfter: (showEnvelope || i < letters.length - 1) ? "always" : "auto",
+                padding: "0.75in 1in",
+                minHeight: "9.5in",
+                maxHeight: "10in",
+                position: "relative",
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: "11pt",
+                lineHeight: "1.5",
+                overflow: "hidden",
+              }}
+            >
+              {/* Body with preserved line breaks */}
+              <div style={{ whiteSpace: "pre-wrap" }}>{body}</div>
+            </div>
+
+            {/* Envelope page (#10: 4.125in × 9.5in, printed landscape on letter paper) */}
+            {showEnvelope && (
+              <div
+                className="envelope-page"
+                style={{
+                  pageBreakAfter: i < letters.length - 1 ? "always" : "auto",
+                  width: "9.5in",
+                  height: "4.125in",
+                  padding: "0.4in 0.6in",
+                  position: "relative",
+                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                  fontSize: "11pt",
+                  lineHeight: "1.4",
+                  boxSizing: "border-box",
+                }}
+              >
+                {/* Return address — top left */}
+                <div style={{ fontSize: "9pt", color: "#555", lineHeight: "1.3" }}>
+                  <div style={{ fontWeight: 600 }}>{senderName}</div>
+                  <div>{senderAddress}</div>
+                  <div>{senderCityStateZip}</div>
+                </div>
+
+                {/* Recipient — centered, slightly below middle */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "1.8in",
+                    left: "3.8in",
+                    fontSize: "12pt",
+                    lineHeight: "1.4",
+                  }}
+                >
+                  {recipientLines.map((line, li) => (
+                    <div key={li} style={{ fontWeight: li === 0 ? 600 : 400 }}>{line}</div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
@@ -164,6 +245,9 @@ function PrintLettersContent() {
         @media print {
           @page { size: letter; margin: 0; }
           body { margin: 0; padding: 0; }
+          .envelope-page {
+            page-break-before: always;
+          }
         }
       `}</style>
     </>

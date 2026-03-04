@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/Toast";
 
 /* ── Types ── */
@@ -320,6 +320,8 @@ export default function HomePage() {
   const [tierFilter, setTierFilter] = useState("");
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
+  const gridRef = useRef<HTMLDivElement>(null);
+  const orderedNichesRef = useRef<string[]>([]);
 
   /* ── Load template + letters + companies ── */
   const loadData = useCallback(async () => {
@@ -475,11 +477,25 @@ export default function HomePage() {
   }
 
   /* ── Toggle niche between preview (3) and fully expanded ── */
+  /* When one box expands, all boxes in the same grid row expand too */
   function toggleNiche(niche: string) {
+    const niches = orderedNichesRef.current;
+    let cols = 1;
+    if (gridRef.current) {
+      const style = getComputedStyle(gridRef.current);
+      cols = style.gridTemplateColumns.split(" ").length;
+    }
+    const idx = niches.indexOf(niche);
+    const rowStart = Math.floor(idx / cols) * cols;
+    const rowNiches = niches.slice(rowStart, rowStart + cols);
+
     setExpandedNiches((prev) => {
       const next = new Set(prev);
-      if (next.has(niche)) next.delete(niche);
-      else next.add(niche);
+      const expanding = !next.has(niche);
+      for (const n of rowNiches) {
+        if (expanding) next.add(n);
+        else next.delete(n);
+      }
       return next;
     });
   }
@@ -695,6 +711,8 @@ export default function HomePage() {
             if (grouped.has("Other") && grouped.get("Other")!.length > 0) {
               if (!orderedNiches.includes("Other")) orderedNiches.push("Other");
             }
+
+            orderedNichesRef.current = orderedNiches;
 
             let globalIdx = 0;
 
@@ -940,7 +958,7 @@ export default function HomePage() {
             }
 
             return (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {orderedNiches.map((niche) => {
                   const items = grouped.get(niche);
                   if (!items || items.length === 0) return null;
