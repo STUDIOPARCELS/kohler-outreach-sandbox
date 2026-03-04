@@ -923,8 +923,8 @@ export default function HomePage() {
                         </h3>
                         <p className="text-xs text-white/60 mt-0.5">
                           {items.length} {items.length === 1 ? "company" : "companies"}
-                          {emailCount > 0 && <span className="text-sky-300 ml-1.5">({emailCount} ✉)</span>}
-                          {sentCount > 0 && <span className="text-green-300 ml-1.5">({sentCount} sent)</span>}
+                          {emailCount > 0 && <span className="text-sky-300 ml-1"> · {emailCount} with email</span>}
+                          {sentCount > 0 && <span className="text-green-300 ml-1"> · {sentCount} sent</span>}
                         </p>
                       </div>
                     </div>
