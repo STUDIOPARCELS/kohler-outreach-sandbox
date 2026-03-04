@@ -257,7 +257,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I would welcome the chance to contribute to your team."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
-    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation, and I would welcome the chance to put that to work on your projects."
+    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
   ),
   "Construction / Civil / Heavy Industry": nicheTemplate(
     "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects."
@@ -287,7 +287,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I grew up in Sun Valley, ID and have spent my life in the outdoors — the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
-    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to bring that craft to your shop would be a dream come true."
+    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to work in woodworking every day would be a dream come true."
   ),
   "Medical / Biotech": nicheTemplate(
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I'd welcome the chance to apply that experience in medical device engineering."
