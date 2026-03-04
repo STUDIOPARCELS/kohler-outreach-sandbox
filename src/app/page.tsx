@@ -440,8 +440,6 @@ export default function HomePage() {
     setSelectedContactIdx(idx);
     const c = contacts[idx];
     if (!c || !expandedCompany) return;
-    const letter = lettersMap.get(expandedCompany);
-    if (!letter) return;
     try {
       const res = await fetch("/api/draft", {
         method: "POST",
@@ -456,13 +454,15 @@ export default function HomePage() {
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      const updated = {
-        ...letter,
+      const letter = lettersMap.get(expandedCompany);
+      const updated: LetterRow = {
+        ...(letter || { id: d.id || "", companyname: expandedCompany, status: "draft" }),
         contactname: c.contactname,
         contact_title: c.title,
         contact_email: c.email,
         body_final: undefined,
       };
+      if (d.id) updated.id = d.id;
       setCurrentLetter(updated);
       setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
       toast(`Contact set: ${c.contactname}`);
@@ -709,7 +709,7 @@ export default function HomePage() {
                   OUTREACH | MISSION CONTROL
                 </h1>
                 <p className="text-slate-300 mt-1 text-xs sm:text-base font-medium uppercase tracking-wide">
-                  ENTRY LEVEL BSME / EIT
+                  ENTRY LEVEL BSME / EIT · DENVER METRO
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -719,46 +719,6 @@ export default function HomePage() {
                 <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
                   {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed" || l.status === "emailed").length} sent
                 </span>
-                <button
-                  onClick={batchResearchAll}
-                  disabled={batchResearching}
-                  className="text-xs font-bold bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 text-white rounded-full px-3 py-1 transition-all flex items-center gap-1.5"
-                  style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
-                >
-                  {batchResearching ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Researching...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      Batch Research
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={backfillEmails}
-                  disabled={backfilling}
-                  className="text-xs font-bold bg-sky-500 hover:bg-sky-600 disabled:bg-sky-400 text-white rounded-full px-3 py-1 transition-all flex items-center gap-1.5"
-                  style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
-                >
-                  {backfilling ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Backfilling...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      Backfill Emails
-                    </>
-                  )}
-                </button>
               </div>
             </div>
           </div>
@@ -766,17 +726,6 @@ export default function HomePage() {
 
         {/* ── Gray divider line ── */}
         <div className="border-b border-gray-300 my-5" />
-
-        {/* ── Batch research status ── */}
-        {batchStatus && (
-          <div className={`mb-4 px-4 py-3 rounded-xl text-xs font-medium border ${
-            batchStatus.includes("Error") ? "bg-red-50 text-red-700 border-red-200" :
-            batchStatus.includes("rate limit") ? "bg-amber-50 text-amber-700 border-amber-200" :
-            "bg-green-50 text-green-700 border-green-200"
-          }`}>
-            {batchStatus}
-          </div>
-        )}
 
         {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
