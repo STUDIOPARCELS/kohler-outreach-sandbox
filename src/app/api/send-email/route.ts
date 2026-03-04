@@ -88,8 +88,8 @@ export async function POST(req: NextRequest) {
         ${signatureImg}
 
         <div style="margin-top:8px; font-family:'Helvetica Neue',Arial,sans-serif;">
-          <p style="margin:0; font-size:14px; font-weight:bold; color:#1a1a1a;">Kohler Wood, EIT</p>
-          <p style="margin:2px 0 0 0; font-size:12px; color:#666;">Mechanical Engineer — Colorado School of Mines</p>
+          <p style="margin:0; font-size:14px; font-weight:bold; color:#1a1a1a;">Kohler Wood</p>
+          <p style="margin:2px 0 0 0; font-size:12px; color:#666;">Lakewood, Colorado 80226</p>
           <p style="margin:8px 0 0 0; font-size:12px; color:#333;">
             <a href="tel:2087204635" style="color:#333; text-decoration:none;">208-720-4635</a>
           </p>
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
       from: `"Kohler Wood" <${gmailUser}>`,
       replyTo: `"Kohler Wood" <${replyTo}>`,
       to,
-      subject: subject || "Mechanical Engineer — Colorado School of Mines, EIT",
+      subject: subject || "Lakewood, Colorado 80226, EIT",
       html: htmlBody,
       attachments,
     });
