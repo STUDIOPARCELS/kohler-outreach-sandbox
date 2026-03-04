@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         companyname,
         contactname: name,
         title: p.current_title || "",
-        email: (teaser.emails?.[0] ?? "") as string,
+        email: ((teaser.emails?.[0] ?? "") as string).includes("@") ? (teaser.emails?.[0] as string) : "",
         linkedin: p.linkedin_url || "",
         phone: (teaser.phones?.[0] ?? "") as string,
         notes: `RocketReach ${new Date().toISOString().split("T")[0]}`,
