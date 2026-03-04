@@ -1053,52 +1053,52 @@ export default function HomePage() {
                                           boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08), 0 2px 6px -2px rgba(0,0,0,0.04)",
                                         }}
                                       >
-                                        <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gradient-to-r from-gray-50 to-white">
-                                          <div className="flex items-center gap-3">
+                                        <div className="px-4 py-2.5 border-b bg-gradient-to-r from-gray-50 to-white">
+                                          <div className="flex items-center justify-between">
                                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Letter Preview</span>
-                                            {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
-                                              <span className="text-xs text-sky-600 font-medium">
-                                                → {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
-                                              </span>
-                                            )}
-                                          </div>
-                                          <div className="flex gap-2">
-                                            <button
-                                              onClick={() => { setEditing(true); setEditBody(assembled.body); }}
-                                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
-                                            >
-                                              Edit
-                                            </button>
-                                            <button
-                                              onClick={() => printAndLog()}
-                                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors"
-                                              style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
-                                            >
-                                              Print & Send
-                                            </button>
-                                            {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
+                                            <div className="flex gap-2">
                                               <button
-                                                onClick={() => emailLetter()}
-                                                disabled={emailing}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                                onClick={() => { setEditing(true); setEditBody(assembled.body); }}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
+                                              >
+                                                Edit
+                                              </button>
+                                              <button
+                                                onClick={() => printAndLog()}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors"
                                                 style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
                                               >
-                                                {emailing ? (
-                                                  <>
-                                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    Sending...
-                                                  </>
-                                                ) : (
-                                                  <>
-                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                    </svg>
-                                                    Email + Resume
-                                                  </>
-                                                )}
+                                                Print & Send
                                               </button>
-                                            )}
+                                              {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
+                                                <button
+                                                  onClick={() => emailLetter()}
+                                                  disabled={emailing}
+                                                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                                  style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+                                                >
+                                                  {emailing ? (
+                                                    <>
+                                                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                      Sending...
+                                                    </>
+                                                  ) : (
+                                                    <>
+                                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                      </svg>
+                                                      Email + Resume
+                                                    </>
+                                                  )}
+                                                </button>
+                                              )}
+                                            </div>
                                           </div>
+                                          {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
+                                            <div className="mt-1.5 text-xs text-sky-600 font-medium truncate">
+                                              → {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
+                                            </div>
+                                          )}
                                         </div>
                                         <div
                                           className="bg-white"
