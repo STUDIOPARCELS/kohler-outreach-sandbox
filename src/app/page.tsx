@@ -215,9 +215,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the energy sector.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the energy sector.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -239,9 +239,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the building systems sector.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the building systems sector.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -263,9 +263,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. My background includes metal fabrication, and I am eager to put my skills to work in the heavy construction industry.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. My background includes metal fabrication, and I have hands-on experience taking CAD designs from concept through prototype and fabrication. I am eager to put these skills to work in the heavy construction industry.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -287,9 +287,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the environmental sector.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the environmental sector.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -311,9 +311,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the aerospace industry.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the aerospace industry.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -335,9 +335,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the robotics space.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the robotics space.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -359,9 +359,9 @@ Dear Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the manufacturing sector.
+I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the manufacturing sector.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -385,7 +385,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the audio and musical instrument industry.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -409,7 +409,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have skied all my life, and I'm eager to combine my passion for skiing with my engineering background.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -433,7 +433,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have enjoyed the outdoors all my life, and I'm eager to combine my passion for the outdoors with my engineering background.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -457,7 +457,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. I spent the last year designing and prototyping custom woodworking projects, and I am eager to put these skills to work in the woodworking and prototyping industry.
 
-I have hands-on experience taking CAD designs from concept through prototype and fabrication. I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
