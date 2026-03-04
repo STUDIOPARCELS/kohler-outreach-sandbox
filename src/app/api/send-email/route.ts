@@ -1,7 +1,12 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync } from "fs";
-import { join } from "path";
+
+// Get the base URL for fetching public assets
+function getBaseUrl(req: NextRequest): string {
+  const host = req.headers.get("host") || "kohler-outreach.vercel.app";
+  const proto = req.headers.get("x-forwarded-proto") || "https";
+  return `${proto}://${host}`;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,6 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const baseUrl = getBaseUrl(req);
+
     // Convert plain text letter to HTML
     const htmlBody = `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 650px;">
@@ -36,22 +43,38 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    // Read resume PDF from bundled public folder
-    let resumeBase64 = "";
+    // Fetch resume PDF via URL (readFileSync doesn't work on Vercel serverless)
+    const attachments: { filename: string; content: string }[] = [];
+
     try {
-      const pdfPath = join(process.cwd(), "public", "KOHLER_WOOD_RESUME.pdf");
-      const pdfBuffer = readFileSync(pdfPath);
-      resumeBase64 = pdfBuffer.toString("base64");
+      const pdfRes = await fetch(`${baseUrl}/KOHLER_WOOD_RESUME.pdf`);
+      if (pdfRes.ok) {
+        const pdfBuffer = await pdfRes.arrayBuffer();
+        const resumeBase64 = Buffer.from(pdfBuffer).toString("base64");
+        attachments.push({
+          filename: "Kohler_Wood_Resume.pdf",
+          content: resumeBase64,
+        });
+      } else {
+        console.error("Resume PDF fetch failed:", pdfRes.status);
+      }
     } catch (e) {
-      console.error("Failed to read resume PDF:", e);
+      console.error("Failed to fetch resume PDF:", e);
     }
 
-    const attachments: { filename: string; content: string }[] = [];
-    if (resumeBase64) {
-      attachments.push({
-        filename: "Kohler_Wood_Resume.pdf",
-        content: resumeBase64,
-      });
+    // Fetch SOLOcard icon if it exists
+    try {
+      const cardRes = await fetch(`${baseUrl}/SOLOCARD_KOHLER.png`);
+      if (cardRes.ok) {
+        const cardBuffer = await cardRes.arrayBuffer();
+        const cardBase64 = Buffer.from(cardBuffer).toString("base64");
+        attachments.push({
+          filename: "Kohler_Wood_SOLOcard.png",
+          content: cardBase64,
+        });
+      }
+    } catch {
+      // SOLOcard is optional — skip silently if not found
     }
 
     // Send via Resend
@@ -107,7 +130,7 @@ export async function POST(req: NextRequest) {
         details: JSON.stringify({
           to,
           resend_id: resendData.id,
-          has_resume: !!resumeBase64,
+          attachments: attachments.map(a => a.filename),
         }),
       });
     } catch {
