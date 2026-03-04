@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 
 // Get the base URL for fetching public assets
 function getBaseUrl(req: NextRequest): string {
@@ -20,12 +21,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
+    const gmailUser = process.env.GMAIL_USER;
+    const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+    if (!gmailUser || !gmailPass) {
       return NextResponse.json(
         {
           error:
-            "RESEND_API_KEY not configured. Add it in Vercel → Settings → Environment Variables.",
+            "Gmail credentials not configured. Add GMAIL_USER and GMAIL_APP_PASSWORD in Vercel → Settings → Environment Variables.",
         },
         { status: 503 }
       );
@@ -43,17 +46,18 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    // Fetch resume PDF via URL (readFileSync doesn't work on Vercel serverless)
-    const attachments: { filename: string; content: string }[] = [];
+    // Build attachments array for Nodemailer
+    const attachments: { filename: string; content: Buffer; contentType?: string }[] = [];
 
+    // Fetch resume PDF
     try {
       const pdfRes = await fetch(`${baseUrl}/KOHLER_WOOD_RESUME.pdf`);
       if (pdfRes.ok) {
-        const pdfBuffer = await pdfRes.arrayBuffer();
-        const resumeBase64 = Buffer.from(pdfBuffer).toString("base64");
+        const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
         attachments.push({
           filename: "Kohler_Wood_Resume.pdf",
-          content: resumeBase64,
+          content: pdfBuffer,
+          contentType: "application/pdf",
         });
       } else {
         console.error("Resume PDF fetch failed:", pdfRes.status);
@@ -62,53 +66,38 @@ export async function POST(req: NextRequest) {
       console.error("Failed to fetch resume PDF:", e);
     }
 
-    // Fetch SOLOcard icon if it exists
+    // Fetch SOLOcard image if it exists
     try {
       const cardRes = await fetch(`${baseUrl}/SOLOCARD_KOHLER.png`);
       if (cardRes.ok) {
-        const cardBuffer = await cardRes.arrayBuffer();
-        const cardBase64 = Buffer.from(cardBuffer).toString("base64");
+        const cardBuffer = Buffer.from(await cardRes.arrayBuffer());
         attachments.push({
           filename: "Kohler_Wood_SOLOcard.png",
-          content: cardBase64,
+          content: cardBuffer,
+          contentType: "image/png",
         });
       }
     } catch {
-      // SOLOcard is optional — skip silently if not found
+      // SOLOcard is optional
     }
 
-    // Send via Resend
-    const fromEmail =
-      process.env.FROM_EMAIL || "Kohler Wood <kohler@kohler.solokit.app>";
-
-    const resendRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    // Create Gmail SMTP transport
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
       },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [to],
-        subject:
-          subject ||
-          `Introduction — Andrew (Kohler) Wood III, BSME/EIT`,
-        html: htmlBody,
-        attachments,
-      }),
     });
 
-    const resendData = await resendRes.json();
-
-    if (!resendRes.ok) {
-      return NextResponse.json(
-        {
-          error: resendData.message || "Resend API error",
-          details: resendData,
-        },
-        { status: resendRes.status }
-      );
-    }
+    // Send email
+    const info = await transporter.sendMail({
+      from: `"Kohler Wood" <${gmailUser}>`,
+      to,
+      subject: subject || "Introduction — Andrew (Kohler) Wood III, BSME/EIT",
+      html: htmlBody,
+      attachments,
+    });
 
     // Update letter status to "emailed"
     if (letterId) {
@@ -129,16 +118,22 @@ export async function POST(req: NextRequest) {
         action: "email_sent",
         details: JSON.stringify({
           to,
-          resend_id: resendData.id,
-          attachments: attachments.map(a => a.filename),
+          message_id: info.messageId,
+          attachments: attachments.map((a) => a.filename),
         }),
       });
     } catch {
       /* non-critical */
     }
 
-    return NextResponse.json({ success: true, id: resendData.id });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      messageId: info.messageId,
+      attachments: attachments.map((a) => a.filename),
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Send email error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
