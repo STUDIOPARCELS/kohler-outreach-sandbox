@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       from: `"Kohler Wood" <${gmailUser}>`,
       replyTo: `"Kohler Wood" <${replyTo}>`,
       to,
-      subject: subject || "Introduction — Andrew (Kohler) Wood III, BSME/EIT",
+      subject: subject || "Mechanical Engineer — Colorado School of Mines, EIT",
       html: htmlBody,
       attachments,
     });

@@ -574,7 +574,7 @@ export default function HomePage() {
           to: emailConfirm.to,
           companyname: expandedCompany,
           contactname: emailConfirm.contactname,
-          subject: `Introduction — Andrew (Kohler) Wood III, BSME/EIT`,
+          subject: `Mechanical Engineer — Colorado School of Mines, EIT`,
           body: assembled.body,
           letterId: currentLetter.id,
         }),
@@ -1231,7 +1231,7 @@ export default function HomePage() {
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
-                <p className="text-sm text-gray-700 mt-0.5">Introduction — Andrew (Kohler) Wood III, BSME/EIT</p>
+                <p className="text-sm text-gray-700 mt-0.5">Mechanical Engineer — Colorado School of Mines, EIT</p>
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attachments</span>
