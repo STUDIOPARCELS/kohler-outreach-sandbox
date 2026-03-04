@@ -275,16 +275,16 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
-    "I have been studying and performing classical piano for the past three years. I also completed an adaptive bass guitar for my senior capstone, and I'm eager to combine this passion for audio and acoustics with my engineering background."
+    "I have been studying and performing classical piano for the past three years, and I also completed an adaptive bass guitar for my senior capstone — the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Skiing": nicheTemplate(
-    "I grew up in Sun Valley, ID and have skied all my life, and I'm eager to combine my passion for skiing with my engineering background."
+    "I grew up in Sun Valley, ID and have skied all my life — the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Outdoor Recreation & Equipment": nicheTemplate(
-    "I grew up in Sun Valley, ID and have enjoyed playing in the outdoors all my life, and I'm eager to combine my passion for the outdoors with my engineering background."
+    "I grew up in Sun Valley, ID and have spent my life in the outdoors — the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
-    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet, and I would love to combine my passion for woodworking with my background in engineering."
+    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to bring that craft to your shop would be a dream come true."
   ),
   "Medical / Biotech": nicheTemplate(
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities, giving me direct experience in human-centered mechanical design, and I'm eager to apply that mindset to medical device engineering."
