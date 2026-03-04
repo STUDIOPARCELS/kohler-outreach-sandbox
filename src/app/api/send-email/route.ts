@@ -66,6 +66,15 @@ export async function POST(req: NextRequest) {
       }
     } catch { /* skip if not available */ }
 
+    // Check for handwritten signature image
+    let signatureImg = "<br/>";
+    try {
+      const sigRes = await fetch(`${baseUrl}/KOHLER_SIGNATURE.png`, { method: "HEAD" });
+      if (sigRes.ok) {
+        signatureImg = `<img src="${baseUrl}/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="200" style="display:block; margin:8px 0;" />`;
+      }
+    } catch { /* skip */ }
+
     // Convert plain text to HTML with proper email signature
     const htmlBody = `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 650px;">
@@ -76,27 +85,22 @@ export async function POST(req: NextRequest) {
 
         <p style="margin: 24px 0 4px 0;">Sincerely,</p>
 
-        <!-- Email Signature -->
-        <table cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; font-family:'Helvetica Neue',Arial,sans-serif;">
-          <tr>
-            <td style="padding-right:16px; vertical-align:top;">
-              ${solocardImg}
-            </td>
-            <td style="vertical-align:top;">
-              <p style="margin:0; font-size:14px; font-weight:bold; color:#1a1a1a;">Kohler Wood, EIT</p>
-              <p style="margin:2px 0 0 0; font-size:12px; color:#666;">Mechanical Engineer — Colorado School of Mines</p>
-              <p style="margin:8px 0 0 0; font-size:12px; color:#333;">
-                <a href="tel:2087204635" style="color:#333; text-decoration:none;">208-720-4635</a>
-              </p>
-              <p style="margin:2px 0 0 0; font-size:12px;">
-                <a href="mailto:akwood1@mines.edu" style="color:#2563eb; text-decoration:none;">akwood1@mines.edu</a>
-              </p>
-              <p style="margin:6px 0 0 0; font-size:12px;">
-                <a href="https://kohler.solokit.app" style="color:#2563eb; text-decoration:none;">kohler.solokit.app</a>
-              </p>
-            </td>
-          </tr>
-        </table>
+        ${signatureImg}
+
+        <div style="margin-top:8px; font-family:'Helvetica Neue',Arial,sans-serif;">
+          <p style="margin:0; font-size:14px; font-weight:bold; color:#1a1a1a;">Kohler Wood, EIT</p>
+          <p style="margin:2px 0 0 0; font-size:12px; color:#666;">Mechanical Engineer — Colorado School of Mines</p>
+          <p style="margin:8px 0 0 0; font-size:12px; color:#333;">
+            <a href="tel:2087204635" style="color:#333; text-decoration:none;">208-720-4635</a>
+          </p>
+          <p style="margin:2px 0 0 0; font-size:12px;">
+            <a href="mailto:akwood1@mines.edu" style="color:#2563eb; text-decoration:none;">akwood1@mines.edu</a>
+          </p>
+          <p style="margin:6px 0 0 0; font-size:12px;">
+            <a href="https://kohler.solokit.app" style="color:#2563eb; text-decoration:none;">kohler.solokit.app</a>
+          </p>
+          ${solocardImg ? `<div style="margin-top:10px;">${solocardImg}</div>` : ""}
+        </div>
       </div>
     `;
 
