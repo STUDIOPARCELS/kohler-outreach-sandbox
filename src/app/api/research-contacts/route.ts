@@ -23,21 +23,21 @@ export async function POST(req: NextRequest) {
             "Engineering Manager",
             "Director of Engineering",
             "VP Engineering",
-            "President",
-            "Owner",
-            "Founder",
-            "CEO",
-            "General Manager",
-            "Operations Manager",
-            "Plant Manager",
-            "Principal Engineer",
+            "VP of Engineering",
             "Chief Engineer",
+            "Principal Engineer",
             "Lead Engineer",
-            "Project Manager",
-            "-Recruiter",
-            "-HR",
-            "-Human Resources",
-            "-Talent Acquisition",
+            "Senior Engineer",
+            "Mechanical Engineer",
+            "Design Engineer",
+            "Manufacturing Engineer",
+            "Project Engineer",
+            "Plant Manager",
+            "Operations Manager",
+            "General Manager",
+            "-Recruiter", "-HR", "-Human Resources",
+            "-Talent Acquisition", "-Staffing",
+            "-Sales", "-Marketing", "-Account Executive",
           ],
           location: ["Colorado"],
         },
@@ -49,7 +49,6 @@ export async function POST(req: NextRequest) {
 
     if (!searchRes.ok) {
       const errText = await searchRes.text();
-      console.error("RocketReach search error:", searchRes.status, errText);
       return NextResponse.json(
         { error: `RocketReach error ${searchRes.status}: ${errText.slice(0, 200)}` },
         { status: 500 }
@@ -57,8 +56,14 @@ export async function POST(req: NextRequest) {
     }
 
     const searchData = await searchRes.json();
-    const profiles = searchData.profiles || [];
+    if (searchData.code === "throttled") {
+      return NextResponse.json(
+        { error: "RocketReach rate limit hit. Try again in ~40 minutes." },
+        { status: 429 }
+      );
+    }
 
+    const profiles = searchData.profiles || [];
     if (profiles.length === 0) {
       return NextResponse.json({ contacts: [], message: "No results on RocketReach for this company in Colorado." });
     }
@@ -117,7 +122,6 @@ export async function POST(req: NextRequest) {
       message: `Found ${profiles.length} people, saved ${saved.length} contacts.`,
     });
   } catch (e: unknown) {
-    console.error("Research contacts error:", e);
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }
