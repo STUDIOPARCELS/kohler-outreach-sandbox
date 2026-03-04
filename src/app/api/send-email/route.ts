@@ -11,7 +11,7 @@ function getBaseUrl(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { to, companyname, contactname, subject, body, letterId } =
+    const { to, companyname, contactname, subject, body, letterId, niche } =
       await req.json();
 
     if (!to || !body) {
@@ -52,8 +52,16 @@ export async function POST(req: NextRequest) {
       emailBody = emailBody.substring(0, sincerelyIdx).trim();
     }
 
-    // Build SOLOcard image tag if the file exists
-    const solocardUrl = `${baseUrl}/SOLOCARD_KOHLER.gif`;
+    // Select SOLOcard based on niche — craft niches get cabinet, others get headshot
+    const craftNiches = [
+      "Woodworking / Furniture / Cabinetry / Prototyping",
+      "Acoustics / Audio / Musical Instruments",
+      "Outdoor Recreation & Equipment",
+      "Skiing",
+      "Manufacturing / Automation / Product Design",
+    ];
+    const solocardFile = craftNiches.includes(niche) ? "SOLOCARD_CRAFT.gif" : "SOLOCARD_PRO.gif";
+    const solocardUrl = `${baseUrl}/${solocardFile}`;
     let solocardImg = "";
     try {
       const checkRes = await fetch(solocardUrl, { method: "HEAD" });
@@ -124,9 +132,9 @@ export async function POST(req: NextRequest) {
       console.error("Failed to fetch resume PDF:", e);
     }
 
-    // Fetch SOLOcard image if it exists
+    // Fetch SOLOcard GIF if it exists
     try {
-      const cardRes = await fetch(`${baseUrl}/SOLOCARD_KOHLER.gif`);
+      const cardRes = await fetch(`${baseUrl}/${solocardFile}`);
       if (cardRes.ok) {
         const cardBuffer = Buffer.from(await cardRes.arrayBuffer());
         attachments.push({

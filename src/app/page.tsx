@@ -37,6 +37,7 @@ interface CompanyRow {
   contact_title?: string;
   company_about?: string;
   niche?: string;
+  email?: string;
 }
 
 /* ── Remove duplicate paragraphs from a letter body ── */
@@ -897,6 +898,7 @@ export default function HomePage() {
               const visibleItems = isFullyExpanded ? items : items.slice(0, PREVIEW_COUNT);
               const hiddenCount = items.length - PREVIEW_COUNT;
               const sentCount = items.filter(c => { const l = lettersMap.get(c.companyname); return l && (l.status === "sent" || l.status === "printed" || l.status === "emailed"); }).length;
+              const emailCount = items.filter(c => c.email).length;
 
               return (
                 <div
@@ -921,6 +923,7 @@ export default function HomePage() {
                         </h3>
                         <p className="text-xs text-white/60 mt-0.5">
                           {items.length} {items.length === 1 ? "company" : "companies"}
+                          {emailCount > 0 && <span className="text-sky-300 ml-1.5">({emailCount} ✉)</span>}
                           {sentCount > 0 && <span className="text-green-300 ml-1.5">({sentCount} sent)</span>}
                         </p>
                       </div>
@@ -960,7 +963,7 @@ export default function HomePage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                {letter?.contact_email && (
+                                {(c.email || letter?.contact_email) && (
                                   <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                   </svg>
