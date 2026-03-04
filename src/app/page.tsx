@@ -229,9 +229,9 @@ const DEFAULT_COLORS = NICHE_COLORS["Real Estate / Facilities"];
 function nicheTemplate(nicheParagraph: string): string {
   return `{{TODAY_DATE}}
 
+Hiring Manager
 {{COMPANY}}
 {{COMPANY_ADDRESS}}
-Hiring Manager
 
 Dear Hiring Manager,
 
@@ -374,7 +374,7 @@ export default function HomePage() {
         const parts = [
           compData.mailing_address1,
           compData.mailing_address2,
-          [compData.mailing_city, compData.mailing_state, compData.mailing_zip].filter(Boolean).join(", "),
+          [compData.mailing_city, compData.mailing_state].filter(Boolean).join(", ") + (compData.mailing_zip ? " " + compData.mailing_zip : ""),
         ].filter(Boolean);
         setCompanyAddress(parts.join("\n"));
       } else {
