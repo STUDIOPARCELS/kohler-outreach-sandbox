@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Build SOLOcard image tag if the file exists
-    const solocardUrl = `${baseUrl}/SOLOCARD_KOHLER.png`;
+    const solocardUrl = `${baseUrl}/SOLOCARD_KOHLER.gif`;
     let solocardImg = "";
     try {
       const checkRes = await fetch(solocardUrl, { method: "HEAD" });
@@ -126,13 +126,13 @@ export async function POST(req: NextRequest) {
 
     // Fetch SOLOcard image if it exists
     try {
-      const cardRes = await fetch(`${baseUrl}/SOLOCARD_KOHLER.png`);
+      const cardRes = await fetch(`${baseUrl}/SOLOCARD_KOHLER.gif`);
       if (cardRes.ok) {
         const cardBuffer = Buffer.from(await cardRes.arrayBuffer());
         attachments.push({
-          filename: "Kohler_Wood_SOLOcard.png",
+          filename: "Kohler_Wood_SOLOcard.gif",
           content: cardBuffer,
-          contentType: "image/png",
+          contentType: "image/gif",
         });
       }
     } catch {
