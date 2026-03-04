@@ -273,10 +273,10 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I would welcome the chance to contribute to your team."
   ),
   "Aerospace / Space": nicheTemplate(
-    "My father had a Cessna 172 and I've always been fascinated by aircraft — that early exposure is part of what drives my engineering interest today."
+    "My father had a Cessna 172 — that early exposure is part of what drives my engineering interest."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "I've competed in robotics and designed electromechanical systems with 3D-printed interfaces for my senior capstone — I'd welcome the chance to contribute to your team."
+    "I've designed electromechanical systems with 3D-printed interfaces for my senior capstone — I'd welcome the chance to contribute to your team."
   ),
   "Automotive / Vehicles": nicheTemplate(
     "I've had a passion for automobiles since I was young — the chance to engineer in the automotive industry would be a dream come true."
@@ -285,7 +285,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
-    "I have been studying and performing classical piano for the past three years, and I also completed an adaptive bass guitar for my senior capstone — the chance to engineer products I'd love to use would be a dream come true."
+    "I've studied and performed classical piano for three years and built an adaptive bass guitar for my senior capstone — the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Skiing": nicheTemplate(
     "I grew up in Sun Valley, ID and have skied all my life — the chance to engineer products I'd love to use would be a dream come true."
@@ -300,7 +300,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I'd welcome the chance to apply that experience in medical device engineering."
   ),
   "Food / Beverage Manufacturing": nicheTemplate(
-    "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work, and I'm eager to apply this experience in food production."
+    "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
   ),
 };
 
