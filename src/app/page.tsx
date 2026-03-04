@@ -266,10 +266,13 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I would welcome the chance to contribute to your team."
   ),
   "Aerospace / Space": nicheTemplate(
-    "My father had a Cessna 172 and I've always been drawn to aircraft — that early exposure is part of what drives my engineering interest today."
+    "My father had a Cessna 172 and I've always been fascinated by aircraft — that early exposure is part of what drives my engineering interest today."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "My senior capstone involved designing electromechanical systems with 3D-printed interfaces, and I'd welcome the chance to bring that experience to your team."
+    "I've competed in robotics and designed electromechanical systems with 3D-printed interfaces for my senior capstone — I'd welcome the chance to contribute to your team."
+  ),
+  "Automotive / Vehicles": nicheTemplate(
+    "I've had a passion for automobiles and have been designing them since I was young — the chance to engineer in the automotive industry would be a dream come true."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
     "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
@@ -287,7 +290,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to bring that craft to your shop would be a dream come true."
   ),
   "Medical / Biotech": nicheTemplate(
-    "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities, giving me direct experience in human-centered mechanical design, and I'm eager to apply that mindset to medical device engineering."
+    "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I'd welcome the chance to apply that experience in medical device engineering."
   ),
   "Food / Beverage Manufacturing": nicheTemplate(
     "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work, and I'm eager to apply this experience in food production."
