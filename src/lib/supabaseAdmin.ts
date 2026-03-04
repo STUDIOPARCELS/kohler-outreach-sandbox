@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Use KOHLER_* env vars first (immune to Supabase integration overrides),
+// then fall back to standard names
+const url = process.env.KOHLER_SUPABASE_URL || process.env.SUPABASE_URL;
+const key =
+  process.env.KOHLER_SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !key) {
   throw new Error(
