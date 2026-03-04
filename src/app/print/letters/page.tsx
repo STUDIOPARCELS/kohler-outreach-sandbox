@@ -133,7 +133,7 @@ function PrintLettersContent() {
         const body = assembleLetter(
               template,
               letter.companyname,
-              "",
+              letter.custom_paragraph || "",
               letter.contactname,
               letter.contact_title
             );

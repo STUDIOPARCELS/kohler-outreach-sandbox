@@ -122,7 +122,10 @@ const NICHE_ORDER = [
   "Water / Environmental / Geotech",
   "Quantum / Deep Tech / Electronics / Robotics",
   "Aerospace / Space",
-  "Other",
+  "Medical / Biotech",
+  "Food / Beverage Manufacturing",
+  "Staffing / Recruiting",
+  "Real Estate / Facilities",
 ];
 
 /* ── Niche color themes ── */
@@ -193,7 +196,25 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
     border: "border-blue-300/60",
     accent: "text-blue-900",
   },
-  "Other": {
+  "Medical / Biotech": {
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-red-800 to-rose-950",
+    border: "border-red-300/60",
+    accent: "text-red-900",
+  },
+  "Food / Beverage Manufacturing": {
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-lime-800 to-green-950",
+    border: "border-lime-300/60",
+    accent: "text-lime-900",
+  },
+  "Staffing / Recruiting": {
+    bg: "from-gray-50 to-slate-50",
+    headerBg: "from-violet-800 to-purple-950",
+    border: "border-violet-300/60",
+    accent: "text-violet-900",
+  },
+  "Real Estate / Facilities": {
     bg: "from-gray-50 to-slate-50",
     headerBg: "from-gray-700 to-slate-800",
     border: "border-gray-300/60",
@@ -201,273 +222,82 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
 };
 
-const DEFAULT_COLORS = NICHE_COLORS["Other"];
+const DEFAULT_COLORS = NICHE_COLORS["Real Estate / Facilities"];
 
 /* ── Niche-specific letter body templates ── */
+/* ── Helper to build a full letter body from a niche paragraph ── */
+function nicheTemplate(nicheParagraph: string): string {
+  return `{{TODAY_DATE}}
+
+{{COMPANY}}
+{{COMPANY_ADDRESS}}
+Hiring Manager
+
+Dear Hiring Manager,
+
+I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I am writing because I am interested in the work you are doing at {{COMPANY}}. ${nicheParagraph}
+
+I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+
+Thank you so much for your time, and I hope to hear from you!
+
+Sincerely,
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`;
+}
+
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
-  "Energy / Renewables / Power": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the energy sector.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "MEP / HVAC / Building Systems": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the building systems sector.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Construction / Civil / Heavy Industry": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. My background includes metal fabrication, and I have hands-on experience taking CAD designs from concept through prototype and fabrication. I am eager to put these skills to work in the heavy construction industry.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Water / Environmental / Geotech": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the environmental sector.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Aerospace / Space": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the aerospace industry.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Quantum / Deep Tech / Electronics / Robotics": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the robotics space.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Manufacturing / Automation / Product Design": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I am eager to put these skills to work in the manufacturing sector.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Acoustics / Audio / Musical Instruments": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I am eager to put my skills to work in the audio and musical instrument industry.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Skiing": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have skied all my life, and I'm eager to combine my passion for skiing with my engineering background.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Outdoor Recreation & Equipment": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I grew up in Sun Valley, ID and have enjoyed the outdoors all my life, and I'm eager to combine my passion for the outdoors with my engineering background.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
-
-  "Woodworking / Furniture / Cabinetry / Prototyping": `{{TODAY_DATE}}
-
-{{COMPANY}}
-{{COMPANY_ADDRESS}}
-Hiring Manager
-
-Dear Hiring Manager,
-
-I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
-
-I am writing because I am interested in the work you are doing at {{COMPANY}}. I spent the last year designing and prototyping custom woodworking projects, and I am eager to put these skills to work in the woodworking and prototyping industry.
-
-I have included my résumé and card — which links to my projects and areas of study. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
-
-Thank you so much for your time, and I hope to hear from you!
-
-Sincerely,
-
-
-Kohler Wood, EIT
-208-720-4635
-Lakewood, CO
-akwood1@mines.edu`,
+  "Energy / Renewables / Power": nicheTemplate(
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within the energy sector."
+  ),
+  "MEP / HVAC / Building Systems": nicheTemplate(
+    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation, and I'm eager to apply these thermal and fluid analysis skills in building systems engineering."
+  ),
+  "Construction / Civil / Heavy Industry": nicheTemplate(
+    "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects, and I'm eager to apply that hands-on building experience alongside my engineering background."
+  ),
+  "Water / Environmental / Geotech": nicheTemplate(
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within the environmental engineering sector."
+  ),
+  "Aerospace / Space": nicheTemplate(
+    "My father had a Cessna 172 and I've always been fascinated with aircraft, and I am eager to combine that interest with my engineering background."
+  ),
+  "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
+    "My senior capstone involved designing electromechanical systems with 3D-printed interfaces, and I'm eager to apply that mechatronics experience alongside my mechanical engineering background."
+  ),
+  "Manufacturing / Automation / Product Design": nicheTemplate(
+    "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication, and I'm eager to apply my prototyping and DFM skills in a manufacturing environment."
+  ),
+  "Acoustics / Audio / Musical Instruments": nicheTemplate(
+    "I have been studying and performing classical piano for the past three years. I also completed an adaptive bass guitar for my senior capstone, and I'm eager to combine this passion for audio and acoustics with my engineering background."
+  ),
+  "Skiing": nicheTemplate(
+    "I grew up in Sun Valley, ID and have skied all my life, and I'm eager to combine my passion for skiing with my engineering background."
+  ),
+  "Outdoor Recreation & Equipment": nicheTemplate(
+    "I grew up in Sun Valley, ID and have enjoyed playing in the outdoors all my life, and I'm eager to combine my passion for the outdoors with my engineering background."
+  ),
+  "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
+    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet, and I would love to combine my passion for woodworking with my background in engineering."
+  ),
+  "Medical / Biotech": nicheTemplate(
+    "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities, giving me direct experience in human-centered mechanical design, and I'm eager to apply that mindset to medical device engineering."
+  ),
+  "Food / Beverage Manufacturing": nicheTemplate(
+    "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work, and I'm eager to apply these manufacturing skills in food production engineering."
+  ),
+  "Staffing / Recruiting": nicheTemplate(
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within your organization."
+  ),
+  "Real Estate / Facilities": nicheTemplate(
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply my SolidWorks, simulation, and manufacturing skills within your organization."
+  ),
 };
 
 /* ── Main Page ── */
