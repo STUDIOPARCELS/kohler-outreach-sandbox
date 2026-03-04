@@ -322,6 +322,7 @@ export default function HomePage() {
   const [researching, setResearching] = useState(false);
   const [batchResearching, setBatchResearching] = useState(false);
   const [batchStatus, setBatchStatus] = useState("");
+  const [emailing, setEmailing] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
@@ -518,6 +519,41 @@ export default function HomePage() {
   }
 
   /* ── Print and auto-log as sent ── */
+  async function emailLetter() {
+    if (!expandedCompany || !currentLetter || !assembled) return;
+    const contact = contacts[selectedContactIdx];
+    const email = currentLetter.contact_email || contact?.email;
+    if (!email) {
+      toast("No email address for this contact", "error");
+      return;
+    }
+    setEmailing(true);
+    try {
+      const res = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: email,
+          companyname: expandedCompany,
+          contactname: currentLetter.contactname || contact?.contactname,
+          subject: `Introduction — Andrew (Kohler) Wood III, BSME/EIT`,
+          body: assembled.body,
+          letterId: currentLetter.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast(`Email sent to ${email}`);
+      const updated = { ...currentLetter, status: "emailed", sent_at: new Date().toISOString() };
+      setCurrentLetter(updated);
+      setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+    } catch (e: unknown) {
+      toast((e as Error).message, "error");
+    } finally {
+      setEmailing(false);
+    }
+  }
+
   async function printAndLog() {
     if (!expandedCompany || !currentLetter) { window.print(); return; }
     try {
@@ -575,6 +611,7 @@ export default function HomePage() {
       case "ready_to_print": return "bg-yellow-400/20 text-yellow-800 border border-yellow-300";
       case "printed": return "bg-blue-400/20 text-blue-800 border border-blue-300";
       case "sent": return "bg-green-400/20 text-green-800 border border-green-300";
+      case "emailed": return "bg-purple-400/20 text-purple-800 border border-purple-300";
       default: return "bg-gray-100 text-gray-500 border border-gray-200";
     }
   };
@@ -608,7 +645,7 @@ export default function HomePage() {
                   {lettersMap.size} letters drafted
                 </span>
                 <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
-                  {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} sent
+                  {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed" || l.status === "emailed").length} sent
                 </span>
                 <button
                   onClick={batchResearchAll}
@@ -652,7 +689,7 @@ export default function HomePage() {
         {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
           const allLetters = Array.from(lettersMap.values());
-          const sentOrPrinted = allLetters.filter(l => l.sent_at || l.printed_at || l.status === "sent" || l.status === "printed");
+          const sentOrPrinted = allLetters.filter(l => l.sent_at || l.printed_at || l.status === "sent" || l.status === "printed" || l.status === "emailed");
 
           // Group sent letters by day-of-month for March 2026
           const sentByDay = new Map<number, { companyname: string; contactname?: string }[]>();
@@ -801,7 +838,7 @@ export default function HomePage() {
               const isFullyExpanded = expandedNiches.has(niche);
               const visibleItems = isFullyExpanded ? items : items.slice(0, PREVIEW_COUNT);
               const hiddenCount = items.length - PREVIEW_COUNT;
-              const sentCount = items.filter(c => { const l = lettersMap.get(c.companyname); return l && (l.status === "sent" || l.status === "printed"); }).length;
+              const sentCount = items.filter(c => { const l = lettersMap.get(c.companyname); return l && (l.status === "sent" || l.status === "printed" || l.status === "emailed"); }).length;
 
               return (
                 <div
@@ -966,7 +1003,14 @@ export default function HomePage() {
                                         }}
                                       >
                                         <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gradient-to-r from-gray-50 to-white">
-                                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Letter Preview</span>
+                                          <div className="flex items-center gap-3">
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Letter Preview</span>
+                                            {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
+                                              <span className="text-xs text-purple-600 font-medium">
+                                                → {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
+                                              </span>
+                                            )}
+                                          </div>
                                           <div className="flex gap-2">
                                             <button
                                               onClick={() => { setEditing(true); setEditBody(assembled.body); }}
@@ -981,6 +1025,28 @@ export default function HomePage() {
                                             >
                                               Print & Send
                                             </button>
+                                            {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
+                                              <button
+                                                onClick={() => emailLetter()}
+                                                disabled={emailing}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                                style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+                                              >
+                                                {emailing ? (
+                                                  <>
+                                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    Sending...
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                    </svg>
+                                                    Email + Resume
+                                                  </>
+                                                )}
+                                              </button>
+                                            )}
                                           </div>
                                         </div>
                                         <div
