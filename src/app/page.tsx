@@ -254,25 +254,25 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within the energy sector."
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I would welcome the chance to contribute to your team."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
-    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation, and I'm eager to apply these skills in building systems engineering."
+    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation, and I would welcome the chance to put that to work on your projects."
   ),
   "Construction / Civil / Heavy Industry": nicheTemplate(
-    "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects, and I'm eager to apply that experience alongside my engineering background."
+    "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within the environmental engineering sector."
+    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I would welcome the chance to contribute to your team."
   ),
   "Aerospace / Space": nicheTemplate(
-    "My father had a Cessna 172 and I've always been fascinated with aircraft, and I am eager to combine that interest with my engineering background."
+    "My father had a Cessna 172 and I've always been drawn to aircraft — that early exposure is part of what drives my engineering interest today."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "My senior capstone involved designing electromechanical systems with 3D-printed interfaces, and I'm eager to apply that experience alongside my engineering background."
+    "My senior capstone involved designing electromechanical systems with 3D-printed interfaces, and I'd welcome the chance to bring that experience to your team."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
-    "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication, and I'm eager to apply this experience in a manufacturing environment."
+    "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
     "I have been studying and performing classical piano for the past three years. I also completed an adaptive bass guitar for my senior capstone, and I'm eager to combine this passion for audio and acoustics with my engineering background."
@@ -291,12 +291,6 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
   ),
   "Food / Beverage Manufacturing": nicheTemplate(
     "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work, and I'm eager to apply this experience in food production."
-  ),
-  "Staffing / Recruiting": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within your organization."
-  ),
-  "Real Estate / Facilities": nicheTemplate(
-    "I have hands-on experience taking CAD designs from concept through prototype and fabrication, and I'm eager to apply these skills within your organization."
   ),
 };
 
