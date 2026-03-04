@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const RR_API_KEY = "ac2b96kfab306c1fce8fda977e8fc6262f0f17a";
 const RR_BASE = "https://api.rocketreach.co";
 const BATCH_SIZE = 20;
-const DELAY_MS = 3000;
+const DELAY_MS = 2000;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -236,4 +236,4 @@ export async function GET(req: NextRequest) {
 // Allow POST too for manual triggers
 export const POST = GET;
 
-export const maxDuration = 300;
+export const maxDuration = 60;

@@ -15,16 +15,7 @@ async function lookupPerson(
   employer: string
 ): Promise<{ email: string; linkedin: string; phone: string } | null> {
   try {
-    const res = await fetch(`${RR_BASE}/v2/api/person/lookup`, {
-      method: "GET",
-      headers: { "Api-Key": RR_API_KEY },
-      // Use query params for GET
-    });
-    // Actually, person/lookup uses query params or POST body
-    // Let's use the POST search with tighter constraints instead
-    // to match name + employer and get emails from the profile
-
-    // Fallback: use search endpoint with name + employer
+    // First try search by name + employer to get teaser data (free)
     const searchRes = await fetch(`${RR_BASE}/v2/api/search`, {
       method: "POST",
       headers: {
@@ -205,4 +196,4 @@ export async function POST(req: NextRequest) {
   });
 }
 
-export const maxDuration = 300;
+export const maxDuration = 60;
