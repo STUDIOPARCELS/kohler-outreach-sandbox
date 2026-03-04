@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     try {
       const sigRes = await fetch(`${baseUrl}/KOHLER_SIGNATURE.png`, { method: "HEAD" });
       if (sigRes.ok) {
-        signatureImg = `<img src="${baseUrl}/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="200" style="display:block; margin:8px 0;" />`;
+        signatureImg = `<img src="${baseUrl}/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="200" style="display:block; margin:4px 0;" />`;
       }
     } catch { /* skip */ }
 
@@ -83,20 +83,20 @@ export async function POST(req: NextRequest) {
           .map((p: string) => `<p style="margin: 0 0 12px 0;">${p.replace(/\n/g, "<br>")}</p>`)
           .join("")}
 
-        <p style="margin: 24px 0 4px 0;">Sincerely,</p>
+        <p style="margin: 16px 0 0 0;">Sincerely,</p>
 
         ${signatureImg}
 
-        <div style="margin-top:8px; font-family:'Helvetica Neue',Arial,sans-serif;">
+        <div style="margin-top:4px; font-family:'Helvetica Neue',Arial,sans-serif;">
           <p style="margin:0; font-size:14px; font-weight:bold; color:#1a1a1a;">Kohler Wood</p>
-          <p style="margin:2px 0 0 0; font-size:12px; color:#666;">Lakewood, Colorado 80226</p>
-          <p style="margin:8px 0 0 0; font-size:12px; color:#333;">
+          <p style="margin:0; font-size:12px; color:#666;">Lakewood, Colorado 80226</p>
+          <p style="margin:0; font-size:12px; color:#333;">
             <a href="tel:2087204635" style="color:#333; text-decoration:none;">208-720-4635</a>
           </p>
-          <p style="margin:2px 0 0 0; font-size:12px;">
+          <p style="margin:0; font-size:12px;">
             <a href="mailto:akwood1@mines.edu" style="color:#2563eb; text-decoration:none;">akwood1@mines.edu</a>
           </p>
-          <p style="margin:6px 0 0 0; font-size:12px;">
+          <p style="margin:0; font-size:12px;">
             <a href="https://kohler.solokit.app" style="color:#2563eb; text-decoration:none;">kohler.solokit.app</a>
           </p>
           ${solocardImg ? `<div style="margin-top:10px;">${solocardImg}</div>` : ""}
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
       from: `"Kohler Wood" <${gmailUser}>`,
       replyTo: `"Kohler Wood" <${replyTo}>`,
       to,
-      subject: subject || "Lakewood, Colorado 80226, EIT",
+      subject: subject || "Mechanical Engineer — Colorado School of Mines, EIT",
       html: htmlBody,
       attachments,
     });
