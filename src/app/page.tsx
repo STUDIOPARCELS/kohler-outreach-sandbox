@@ -324,6 +324,7 @@ export default function HomePage() {
   const [batchStatus, setBatchStatus] = useState("");
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
+  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string} | null>(null);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
@@ -545,7 +546,7 @@ export default function HomePage() {
   }
 
   /* ── Print and auto-log as sent ── */
-  async function emailLetter() {
+  function emailLetter() {
     if (!expandedCompany || !currentLetter || !assembled) return;
     const contact = contacts[selectedContactIdx];
     const email = currentLetter.contact_email || contact?.email;
@@ -553,15 +554,26 @@ export default function HomePage() {
       toast("No email address for this contact", "error");
       return;
     }
+    // Show confirmation dialog
+    setEmailConfirm({
+      to: email,
+      contactname: currentLetter.contactname || contact?.contactname || "",
+      companyname: expandedCompany,
+    });
+  }
+
+  async function confirmSendEmail() {
+    if (!emailConfirm || !expandedCompany || !currentLetter || !assembled) return;
+    setEmailConfirm(null);
     setEmailing(true);
     try {
       const res = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: email,
+          to: emailConfirm.to,
           companyname: expandedCompany,
-          contactname: currentLetter.contactname || contact?.contactname,
+          contactname: emailConfirm.contactname,
           subject: `Introduction — Andrew (Kohler) Wood III, BSME/EIT`,
           body: assembled.body,
           letterId: currentLetter.id,
@@ -569,7 +581,7 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      toast(`Email sent to ${email}`);
+      toast(`Email sent to ${emailConfirm.to}`);
       const updated = { ...currentLetter, status: "emailed", sent_at: new Date().toISOString() };
       setCurrentLetter(updated);
       setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
@@ -1199,6 +1211,62 @@ export default function HomePage() {
           })()
         )}
       </div>
+
+      {/* ── Email Confirmation Dialog ── */}
+      {emailConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm no-print">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-sky-500 to-sky-600">
+              <h3 className="text-white font-bold text-base">Confirm Email</h3>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">To</span>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.contactname}</p>
+                <p className="text-sm text-sky-600">{emailConfirm.to}</p>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company</span>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.companyname}</p>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
+                <p className="text-sm text-gray-700 mt-0.5">Introduction — Andrew (Kohler) Wood III, BSME/EIT</p>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attachments</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <span className="text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-2.5 py-0.5 font-medium">📄 Resume PDF</span>
+                  <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-0.5 font-medium">🪪 SOLOcard</span>
+                </div>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">From</span>
+                <p className="text-sm text-gray-700 mt-0.5">Kohler Wood (kwood12802@gmail.com)</p>
+                <p className="text-xs text-gray-400">Reply-to: akwood1@mines.edu</p>
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+              <button
+                onClick={() => setEmailConfirm(null)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSendEmail}
+                className="px-5 py-2 text-sm font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors flex items-center gap-2"
+                style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Send Email
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Print-only: full assembled letter ── */}
       {assembled && (
