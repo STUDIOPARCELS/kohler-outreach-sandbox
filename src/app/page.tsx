@@ -114,6 +114,7 @@ const NICHE_ORDER = [
   "Acoustics / Audio / Musical Instruments",
   "Skiing",
   "Outdoor Recreation & Equipment",
+  "Automotive / Vehicles",
   "Woodworking / Furniture / Cabinetry / Prototyping",
   "Energy / Renewables / Power",
   "MEP / HVAC / Building Systems",
@@ -147,6 +148,12 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
     headerBg: "from-emerald-900 to-green-950",
     border: "border-emerald-300/60",
     accent: "text-emerald-900",
+  },
+  "Automotive / Vehicles": {
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-zinc-800 to-neutral-900",
+    border: "border-zinc-300/60",
+    accent: "text-zinc-900",
   },
   "Woodworking / Furniture / Cabinetry / Prototyping": {
     bg: "from-slate-50 to-gray-50",
@@ -312,6 +319,7 @@ export default function HomePage() {
   const [editBody, setEditBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [expandLoading, setExpandLoading] = useState(false);
+  const [researching, setResearching] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
@@ -450,6 +458,40 @@ export default function HomePage() {
       toast((e as Error).message, "error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  /* ── Research contacts via RocketReach ── */
+  async function researchContacts(companyname: string) {
+    setResearching(true);
+    try {
+      const res = await fetch("/api/research-contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyname }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast(data.message || "Research complete");
+
+      // Reload contacts for this company
+      const contRes = await fetch(`/api/contacts?companyname=${encodeURIComponent(companyname)}`);
+      const contData = await contRes.json();
+      if (Array.isArray(contData)) setContacts(contData);
+
+      // Reload letters
+      const qRes = await fetch("/api/queue");
+      const qData = await qRes.json();
+      if (!qData.error && Array.isArray(qData)) {
+        const map = new Map<string, LetterRow>();
+        for (const l of qData) map.set(l.companyname, l);
+        setLettersMap(map);
+        setCurrentLetter(map.get(companyname) || null);
+      }
+    } catch (e: unknown) {
+      toast((e as Error).message, "error");
+    } finally {
+      setResearching(false);
     }
   }
 
@@ -828,6 +870,40 @@ export default function HomePage() {
                                       </div>
                                     )}
 
+                                    {/* No contacts yet — show Research button */}
+                                    {contacts.length === 0 && (
+                                      <div className="mb-4 p-4 rounded-xl border border-dashed border-amber-300 bg-amber-50/50">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span className="text-xs font-semibold text-amber-800">No contacts yet</span>
+                                          </div>
+                                          <button
+                                            onClick={() => researchContacts(c.companyname)}
+                                            disabled={researching}
+                                            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-all flex items-center gap-1.5"
+                                            style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.15)" }}
+                                          >
+                                            {researching ? (
+                                              <>
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Researching...
+                                              </>
+                                            ) : (
+                                              <>
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                                Research Contacts
+                                              </>
+                                            )}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
                                     {/* Letter preview */}
                                     {assembled && !editing && (
                                       <div
@@ -909,13 +985,13 @@ export default function HomePage() {
                                     )}
 
                                     {/* No letter yet */}
-                                    {!assembled && !editing && (
+                                    {!assembled && !editing && contacts.length > 0 && (
                                       <div className="flex items-center gap-2 py-3 px-4 rounded-xl bg-gray-50 border border-dashed border-gray-200 mt-2">
                                         <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                         <p className="text-xs text-gray-400 italic">
-                                          No letter draft for this company yet.
+                                          Contact found — letter will generate when you select one above.
                                         </p>
                                       </div>
                                     )}
