@@ -38,10 +38,17 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = getBaseUrl(req);
 
-    // Convert plain text letter to HTML
+    // Strip postal header for email — start at "Dear [Name]"
+    let emailBody = body;
+    const dearIdx = emailBody.indexOf("Dear ");
+    if (dearIdx > 0) {
+      emailBody = emailBody.substring(dearIdx);
+    }
+
+    // Convert plain text to HTML
     const htmlBody = `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 650px;">
-        ${body
+        ${emailBody
           .split("\n\n")
           .map((p: string) => `<p style="margin: 0 0 12px 0;">${p.replace(/\n/g, "<br>")}</p>`)
           .join("")}
