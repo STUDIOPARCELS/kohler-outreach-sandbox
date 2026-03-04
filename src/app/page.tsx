@@ -948,6 +948,11 @@ export default function HomePage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
+                                {letter?.contact_email && (
+                                  <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Has email">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                )}
                                 {letter && (
                                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
                                     {letter.status.replace(/_/g, " ")}
@@ -999,7 +1004,7 @@ export default function HomePage() {
                                         >
                                           {contacts.map((ct, i) => (
                                             <option key={i} value={i}>
-                                              {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}
+                                              {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}{ct.email ? ` ✉ ${ct.email}` : " (no email)"}
                                             </option>
                                           ))}
                                         </select>
