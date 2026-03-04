@@ -476,23 +476,10 @@ export default function HomePage() {
   /* ── Toggle niche between preview (3) and fully expanded ── */
   /* When one box expands, all boxes in the same grid row expand too */
   function toggleNiche(niche: string) {
-    const niches = orderedNichesRef.current;
-    let cols = 1;
-    if (gridRef.current) {
-      const style = getComputedStyle(gridRef.current);
-      cols = style.gridTemplateColumns.split(" ").length;
-    }
-    const idx = niches.indexOf(niche);
-    const rowStart = Math.floor(idx / cols) * cols;
-    const rowNiches = niches.slice(rowStart, rowStart + cols);
-
     setExpandedNiches((prev) => {
       const next = new Set(prev);
-      const expanding = !next.has(niche);
-      for (const n of rowNiches) {
-        if (expanding) next.add(n);
-        else next.delete(n);
-      }
+      if (next.has(niche)) next.delete(niche);
+      else next.add(niche);
       return next;
     });
   }
