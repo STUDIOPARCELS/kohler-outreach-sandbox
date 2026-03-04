@@ -322,6 +322,7 @@ export default function HomePage() {
   const [researching, setResearching] = useState(false);
   const [batchResearching, setBatchResearching] = useState(false);
   const [batchStatus, setBatchStatus] = useState("");
+  const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
@@ -481,6 +482,31 @@ export default function HomePage() {
       toast(msg, "error");
     } finally {
       setBatchResearching(false);
+    }
+  }
+
+  /* ── Backfill missing emails for existing contacts ── */
+  async function backfillEmails() {
+    setBackfilling(true);
+    setBatchStatus("Backfilling missing emails...");
+    try {
+      const res = await fetch("/api/backfill-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 20 }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const msg = `Backfill: ${data.updated} emails found out of ${data.processed} contacts. ${data.remaining} still missing.`;
+      setBatchStatus(msg);
+      toast(msg);
+      await loadData();
+    } catch (e: unknown) {
+      const msg = (e as Error).message;
+      setBatchStatus(`Backfill error: ${msg}`);
+      toast(msg, "error");
+    } finally {
+      setBackfilling(false);
     }
   }
 
@@ -664,6 +690,26 @@ export default function HomePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                       Batch Research
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={backfillEmails}
+                  disabled={backfilling}
+                  className="text-xs font-bold bg-purple-500 hover:bg-purple-600 disabled:bg-purple-400 text-white rounded-full px-3 py-1 transition-all flex items-center gap-1.5"
+                  style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
+                >
+                  {backfilling ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Backfilling...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      Backfill Emails
                     </>
                   )}
                 </button>
