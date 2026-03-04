@@ -1240,7 +1240,6 @@ export default function HomePage() {
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attachments</span>
                 <div className="flex flex-wrap gap-2 mt-1">
                   <span className="text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-2.5 py-0.5 font-medium">📄 Resume PDF</span>
-                  <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-0.5 font-medium">🪪 SOLOcard</span>
                 </div>
               </div>
               <div>

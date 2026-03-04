@@ -11,7 +11,7 @@ function getBaseUrl(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { to, companyname, contactname, subject, body, letterId, niche } =
+    const { to, companyname, contactname, subject, body, letterId } =
       await req.json();
 
     if (!to || !body) {
@@ -52,28 +52,6 @@ export async function POST(req: NextRequest) {
       emailBody = emailBody.substring(0, sincerelyIdx).trim();
     }
 
-    // Select SOLOcard based on niche — craft niches get cabinet, others get headshot
-    const craftNiches = [
-      "Woodworking / Furniture / Cabinetry / Prototyping",
-      "Acoustics / Audio / Musical Instruments",
-      "Outdoor Recreation & Equipment",
-      "Skiing",
-      "Manufacturing / Automation / Product Design",
-    ];
-    const solocardFile = craftNiches.includes(niche) ? "SOLOCARD_CRAFT.gif" : "SOLOCARD_PRO.gif";
-    const solocardUrl = `${baseUrl}/${solocardFile}`;
-    let solocardImg = "";
-    try {
-      const checkRes = await fetch(solocardUrl, { method: "HEAD" });
-      if (checkRes.ok) {
-        solocardImg = `
-          <a href="https://kohler.solokit.app" style="display:inline-block; margin-top:8px;">
-            <img src="${solocardUrl}" alt="Kohler Wood SOLOcard" width="180" style="border-radius:12px; border:1px solid #e0e0e0;" />
-          </a>
-        `;
-      }
-    } catch { /* skip if not available */ }
-
     // Check for handwritten signature image
     let signatureImg = "<br/>";
     try {
@@ -107,7 +85,6 @@ export async function POST(req: NextRequest) {
           <p style="margin:0; font-size:12px;">
             <a href="https://kohler.solokit.app" style="color:#2563eb; text-decoration:none;">kohler.solokit.app</a>
           </p>
-          ${solocardImg ? `<div style="margin-top:10px;">${solocardImg}</div>` : ""}
         </div>
       </div>
     `;
@@ -130,21 +107,6 @@ export async function POST(req: NextRequest) {
       }
     } catch (e) {
       console.error("Failed to fetch resume PDF:", e);
-    }
-
-    // Fetch SOLOcard GIF if it exists
-    try {
-      const cardRes = await fetch(`${baseUrl}/${solocardFile}`);
-      if (cardRes.ok) {
-        const cardBuffer = Buffer.from(await cardRes.arrayBuffer());
-        attachments.push({
-          filename: "Kohler_Wood_SOLOcard.gif",
-          content: cardBuffer,
-          contentType: "image/gif",
-        });
-      }
-    } catch {
-      // SOLOcard is optional
     }
 
     // Gmail SMTP — auth as Lisa, display as Kohler, replies go to Kohler
