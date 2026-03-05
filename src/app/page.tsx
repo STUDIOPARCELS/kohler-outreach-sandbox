@@ -55,6 +55,13 @@ function deduplicateParagraphs(text: string): string {
   return out.join("\n\n");
 }
 
+/* ── Clean company name for letter body — strip Corp, Inc., LLC, etc. ── */
+function cleanCompanyName(name: string): string {
+  return name
+    .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|Incorporated|LLC|L\.L\.C\.|Ltd\.?|Limited|Co\.?|Company|SE\s*&\s*Co\.\s*KG|PLC|LP|L\.P\.)$/i, "")
+    .trim();
+}
+
 /* ── Assemble a letter from template + data ── */
 function assembleLetter(
   template: Template,
@@ -71,11 +78,13 @@ function assembleLetter(
     day: "numeric",
   });
 
+  const displayName = cleanCompanyName(companyname);
+
   // Use niche-specific template if available, otherwise fall back to default
   const bodyTemplate = (niche && NICHE_BODY_TEMPLATES[niche]) || template.body_template;
 
   let body = bodyTemplate
-    .replace(/\{\{COMPANY\}\}/g, companyname)
+    .replace(/\{\{COMPANY\}\}/g, displayName)
     .replace(/\{\{TODAY_DATE\}\}/g, today)
     .replace(/\{\{COMPANY_ADDRESS\}\}/g, companyAddress || "");
 
@@ -83,7 +92,7 @@ function assembleLetter(
     const firstName = contactName.split(" ")[0];
     const titleLine = contactTitle ? `${contactTitle}\n` : "";
     body = body.replace("Hiring Manager\n", `${contactName}\n${titleLine}`);
-    body = body.replace("Dear Hiring Manager", `Dear ${firstName}`);
+    body = body.replace("Hello Hiring Manager", `Hello ${firstName}`);
   }
 
   // Standardize wording across all templates (including database default)
@@ -241,7 +250,7 @@ Hiring Manager
 {{COMPANY}}
 {{COMPANY_ADDRESS}}
 
-Dear Hiring Manager,
+Hello Hiring Manager,
 
 I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
@@ -1234,7 +1243,7 @@ export default function HomePage() {
                 <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">
                   {(() => {
                     let preview = emailConfirm.body;
-                    const dearIdx = preview.indexOf("Dear ");
+                    const dearIdx = preview.indexOf("Hello ");
                     if (dearIdx > 0) preview = preview.substring(dearIdx);
                     return preview;
                   })()}

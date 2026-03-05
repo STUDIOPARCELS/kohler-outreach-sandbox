@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     // Strip postal header for email — start at "Dear [Name]"
     let emailBody = body;
-    const dearIdx = emailBody.indexOf("Dear ");
+    const dearIdx = emailBody.indexOf("Hello ");
     if (dearIdx > 0) {
       emailBody = emailBody.substring(dearIdx);
     }
