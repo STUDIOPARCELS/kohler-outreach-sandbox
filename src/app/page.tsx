@@ -268,7 +268,7 @@ Thank you so much for your time, and I hope to hear from you!
 Sincerely,
 
 
-Kohler Wood, EIT
+Kohler Wood
 208-720-4635
 Lakewood, CO
 akwood1@mines.edu`;
@@ -346,6 +346,9 @@ export default function HomePage() {
   const [findingEmail, setFindingEmail] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
+  const [contactSearch, setContactSearch] = useState("");
+  const [locationSearch, setLocationSearch] = useState("");
+  const [keywordSearch, setKeywordSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
@@ -723,16 +726,21 @@ export default function HomePage() {
   const filteredCompanies = companies.filter((c) => {
     if (compSearch) {
       const q = compSearch.toLowerCase();
-      const matchesAny = [
-        c.companyname,
-        c.contactname,
-        c.email,
-        c.city,
-        c.contact_title,
-        c.company_about,
-        c.niche,
-      ].some(field => field && field.toLowerCase().includes(q));
-      if (!matchesAny) return false;
+      if (!c.companyname?.toLowerCase().includes(q)) return false;
+    }
+    if (contactSearch) {
+      const q = contactSearch.toLowerCase();
+      const match = [c.contactname, c.contact_title, c.email].some(f => f && f.toLowerCase().includes(q));
+      if (!match) return false;
+    }
+    if (locationSearch) {
+      const q = locationSearch.toLowerCase();
+      if (!c.city?.toLowerCase().includes(q)) return false;
+    }
+    if (keywordSearch) {
+      const q = keywordSearch.toLowerCase();
+      const match = [c.companyname, c.contactname, c.email, c.city, c.contact_title, c.company_about, c.niche].some(f => f && f.toLowerCase().includes(q));
+      if (!match) return false;
     }
     if (tierFilter && c.tier !== Number(tierFilter)) return false;
     return true;
@@ -921,7 +929,7 @@ export default function HomePage() {
                           count > 0
                             ? "bg-green-200 text-green-900 font-bold ring-1 ring-green-400 shadow-sm"
                             : isToday
-                            ? "bg-blue-100 text-blue-900 font-semibold ring-1 ring-blue-400 shadow-sm"
+                            ? "bg-green-100 text-green-900 font-semibold ring-1 ring-green-500 shadow-sm"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
@@ -957,20 +965,28 @@ export default function HomePage() {
           );
         })()}
 
-        {/* ── Filters ── */}
-        <div className="flex gap-3 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search companies, contacts, emails, cities..."
-              value={compSearch}
-              onChange={(e) => setCompSearch(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-            />
-          </div>
+        {/* ── Search Filters ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+          <input
+            type="text" placeholder="Company..." value={compSearch}
+            onChange={(e) => setCompSearch(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
+          />
+          <input
+            type="text" placeholder="Contact / Email..." value={contactSearch}
+            onChange={(e) => setContactSearch(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+          />
+          <input
+            type="text" placeholder="City..." value={locationSearch}
+            onChange={(e) => setLocationSearch(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition-all"
+          />
+          <input
+            type="text" placeholder="Keyword..." value={keywordSearch}
+            onChange={(e) => setKeywordSearch(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-gray-500/20 focus:border-gray-400 transition-all"
+          />
         </div>
 
         {companiesLoading ? (
@@ -1236,9 +1252,17 @@ export default function HomePage() {
                                                           onClick={() => {
                                                             const idx = contacts.indexOf(ct);
                                                             if (idx >= 0) applyContact(idx);
-                                                            setTimeout(() => {
-                                                              setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: assembled?.body || "" });
-                                                            }, 100);
+                                                            // Generate fresh body for this specific contact
+                                                            const freshBody = template ? assembleLetter(
+                                                              template,
+                                                              expandedCompany || "",
+                                                              "",
+                                                              ct.contactname,
+                                                              ct.title,
+                                                              companyAddress,
+                                                              companies.find(co => co.companyname === expandedCompany)?.niche
+                                                            ).body : "";
+                                                            setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
                                                           }}
                                                           className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-colors text-left"
                                                         >
