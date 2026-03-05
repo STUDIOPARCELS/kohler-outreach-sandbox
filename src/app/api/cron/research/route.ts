@@ -109,6 +109,24 @@ async function searchAndSave(companyname: string): Promise<{
         notes: `RocketReach ${new Date().toISOString().split("T")[0]}`,
       };
 
+      // If no real email from teaser, do person lookup
+      if (!row.email) {
+        try {
+          const lookupRes = await fetch(
+            `${RR_BASE}/v2/api/person/lookup?name=${encodeURIComponent(name)}&current_employer=${encodeURIComponent(companyname)}`,
+            { headers: { "Api-Key": RR_API_KEY } }
+          );
+          if (lookupRes.ok) {
+            const ld = await lookupRes.json();
+            row.email = ld.current_work_email
+              || ld.current_personal_email
+              || (ld.emails?.find((e: { email: string }) => e.email?.includes("@"))?.email)
+              || "";
+          }
+          await new Promise(r => setTimeout(r, 1000));
+        } catch { /* continue */ }
+      }
+
       const { data: existing } = await supabaseAdmin
         .from("contacts")
         .select("id")

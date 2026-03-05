@@ -769,7 +769,7 @@ export default function HomePage() {
     <div className="space-y-6">
       <div className="no-print">
         {/* ── ENTRY LEVEL header bento box ── */}
-        <div className="relative rounded-2xl overflow-hidden mb-0"
+        <div className="relative rounded-2xl mb-0"
           style={{
             background: "linear-gradient(135deg, #1e293b 0%, #334155 40%, #475569 100%)",
             boxShadow: "0 20px 40px -12px rgba(0,0,0,0.35), 0 8px 20px -8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",

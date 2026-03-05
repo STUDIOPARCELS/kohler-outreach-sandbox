@@ -74,11 +74,33 @@ export async function POST(req: NextRequest) {
       if (!name) continue;
       const teaser = p.teaser || {};
 
+      // Try teaser email first
+      let email = ((teaser.emails?.[0] ?? "") as string).includes("@") ? (teaser.emails?.[0] as string) : "";
+
+      // If no real email from teaser, do a person lookup to get work email
+      if (!email) {
+        try {
+          const lookupRes = await fetch(
+            `${RR_BASE}/v2/api/person/lookup?name=${encodeURIComponent(name)}&current_employer=${encodeURIComponent(companyname)}`,
+            { headers: { "Api-Key": RR_API_KEY } }
+          );
+          if (lookupRes.ok) {
+            const lookupData = await lookupRes.json();
+            email = lookupData.current_work_email
+              || lookupData.current_personal_email
+              || (lookupData.emails?.find((e: { email: string }) => e.email?.includes("@"))?.email)
+              || "";
+          }
+          // Small delay to avoid rate limiting
+          await new Promise(r => setTimeout(r, 1000));
+        } catch { /* person lookup failed, continue without email */ }
+      }
+
       const contactRow = {
         companyname,
         contactname: name,
         title: p.current_title || "",
-        email: ((teaser.emails?.[0] ?? "") as string).includes("@") ? (teaser.emails?.[0] as string) : "",
+        email,
         linkedin: p.linkedin_url || "",
         phone: (teaser.phones?.[0] ?? "") as string,
         notes: `RocketReach ${new Date().toISOString().split("T")[0]}`,
