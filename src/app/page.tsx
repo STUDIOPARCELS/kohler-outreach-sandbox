@@ -68,9 +68,7 @@ function cleanCompanyName(name: string): string {
   const words = clean.split(/\s+/);
   if (words.length >= 2) {
     const productSuffixes = [
-      "Skis", "Ski", "Cycles", "Bikes", "Vehicles", "Motors", "Acoustics",
-      "Amplifiers", "Technologies", "Systems", "Solutions", "Industries",
-      "Products", "Services", "Associates", "Partners", "Group",
+      "Skis", "Ski", "Cycles", "Bikes", "Vehicles", "Motors",
     ];
     const lastWord = words[words.length - 1];
     if (productSuffixes.some(s => s.toLowerCase() === lastWord.toLowerCase())) {
@@ -1302,16 +1300,6 @@ export default function HomePage() {
                                                             </div>
                                                             <div className="text-xs text-sky-600 font-medium">{ct.email}</div>
                                                           </button>
-                                                          <a
-                                                            href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(ct.contactname + " " + (expandedCompany || ""))}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="px-2 py-3 text-xs font-semibold rounded-lg bg-yellow-400 text-yellow-900 hover:bg-yellow-500 transition-colors whitespace-nowrap shrink-0"
-                                                            title="Verify this contact on LinkedIn"
-                                                          >
-                                                            Verify
-                                                          </a>
                                                         </div>
                                                       ))}
                                                     </div>
@@ -1321,8 +1309,8 @@ export default function HomePage() {
                                                       <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block mb-1">No email</label>
                                                       {noEmailContacts.map((ct, i) => (
                                                         <div key={i} className="flex items-center justify-between px-4 py-2 rounded-lg">
-                                                          <div className="text-xs text-gray-400">{ct.contactname}{ct.title ? ` — ${ct.title}` : ""}</div>
-                                                          <button onClick={() => { setSelectedContactIdx(contacts.indexOf(ct)); findEmail(); }} disabled={findingEmail} className="px-2 py-1 text-xs font-semibold rounded bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50">{findingEmail ? "..." : "Find Email"}</button>
+                                                          <div className="text-xs text-gray-400 flex-1 min-w-0 mr-2">{ct.contactname}{ct.title ? ` — ${ct.title}` : ""}</div>
+                                                          <button onClick={() => { setSelectedContactIdx(contacts.indexOf(ct)); findEmail(); }} disabled={findingEmail} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 whitespace-nowrap shrink-0 w-24 text-center">{findingEmail ? "..." : "Find Email"}</button>
                                                         </div>
                                                       ))}
                                                     </div>
