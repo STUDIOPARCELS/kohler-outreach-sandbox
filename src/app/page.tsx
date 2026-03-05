@@ -99,7 +99,7 @@ function assembleLetter(
   // Standardize wording across all templates (including database default)
   body = body.replace(
     "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.",
-    "If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team."
+    "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team."
   );
 
   // Remove duplicate paragraphs (safety net)
@@ -261,7 +261,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. ${nicheParagraph}
 
-Here is a link to my projects and areas of study: kohler.solokit.app. I have also included my résumé. If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team.
+Here is a link to my projects and areas of study: kohler.solokit.app. I have also included my résumé. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
