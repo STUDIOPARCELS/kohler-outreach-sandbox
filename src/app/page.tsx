@@ -122,26 +122,31 @@ function assembleLetter(
 }
 
 const NICHE_ORDER = [
-  "Acoustics / Audio / Musical Instruments",
+  "TEST",
   "Skiing",
+  "Acoustics / Audio / Musical Instruments",
   "Outdoor Recreation & Equipment",
   "Automotive / Vehicles",
   "Woodworking / Furniture / Cabinetry / Prototyping",
   "Energy / Renewables / Power",
   "Manufacturing / Automation / Product Design",
   "Quantum / Deep Tech / Electronics / Robotics",
+  "Construction / Civil / Heavy Industry",
   "MEP / HVAC / Building Systems",
   "Water / Environmental / Geotech",
-  "Construction / Civil / Heavy Industry",
   "Aerospace / Space",
   "Medical / Biotech",
   "Food / Beverage Manufacturing",
-  "Staffing / Recruiting",
-  "Real Estate / Facilities",
 ];
 
 /* ── Niche color themes ── */
 const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string }> = {
+  "TEST": {
+    bg: "from-orange-50 to-amber-50",
+    headerBg: "from-orange-500 to-amber-600",
+    border: "border-orange-400/40",
+    accent: "text-orange-950",
+  },
   "Acoustics / Audio / Musical Instruments": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "",
@@ -906,12 +911,7 @@ export default function HomePage() {
             onClick={async () => {
               await fetch("/api/seed-test", { method: "POST" });
               await loadData();
-              setCompSearch("");
-              // Find and expand LISA WOOD STUDIO directly
-              setTimeout(() => {
-                expandCompany("LISA WOOD STUDIO");
-              }, 500);
-              toast("Test company loaded");
+              toast("Test company seeded");
             }}
             className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200 transition-colors whitespace-nowrap"
           >

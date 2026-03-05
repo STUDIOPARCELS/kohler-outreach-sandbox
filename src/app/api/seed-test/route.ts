@@ -7,7 +7,7 @@ export async function POST() {
     companyname: "LISA WOOD STUDIO",
     tier: 1,
     city: "Boise",
-    niche: "Manufacturing / Automation / Product Design",
+    niche: "TEST",
     mailing_address1: "1020 E Warm Springs Ave",
     mailing_city: "Boise",
     mailing_state: "ID",
