@@ -282,7 +282,7 @@ I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${ni
 
 I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
 
-Thank you so much for your time!
+Thank you for your time, and I hope to hear from you!
 
 Sincerely,
 
@@ -1257,6 +1257,17 @@ export default function HomePage() {
                           {isFullyExpanded ? "Show less" : `Show remaining ${hiddenCount} companies`}
                         </button>
                       )}
+                      <a
+                        href={`https://www.google.com/search?q=${encodeURIComponent(niche.split(" / ")[0] + " mechanical engineering companies Denver Colorado")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full px-4 py-2 text-xs font-semibold text-amber-600 hover:text-amber-800 hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5 border-t border-gray-100"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Find New Leads
+                      </a>
                     </div>
                     );
                   })()}
