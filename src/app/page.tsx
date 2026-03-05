@@ -66,6 +66,10 @@ function cleanCompanyName(name: string): string {
   // Strip product/category suffixes that sound awkward in "the work you're doing at [X]"
   // But only if the name has 2+ words (don't strip single-word names)
   const words = clean.split(/\s+/);
+  // Special overrides
+  const overrides: Record<string, string> = { "York Space Systems": "York" };
+  if (overrides[clean]) return overrides[clean];
+  
   const keepFull = ["YG Acoustics", "Boulder Amplifiers", "Blue Origin", "Air Squared", "Acoustical Elements", "Wave Engineering"];
   if (words.length >= 2 && !keepFull.some(k => k.toLowerCase() === clean.toLowerCase())) {
     const productSuffixes = [
@@ -287,6 +291,8 @@ Thank you for your time, and I hope to hear from you!
 Sincerely,
 
 
+
+
 Kohler Wood
 208-720-4635
 Lakewood, CO
@@ -361,8 +367,8 @@ export default function HomePage() {
   const [batchStatus, setBatchStatus] = useState("");
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
-  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string} | null>(null);
-  const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string} | null>(null);
+  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean} | null>(null);
+  const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string; editing?: boolean} | null>(null);
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
@@ -1091,6 +1097,17 @@ export default function HomePage() {
                           {sentCount > 0 && <span className="text-green-300 ml-1"> · {sentCount} sent</span>}
                         </p>
                       </div>
+                      {niche !== "TEST" && (
+                        <button
+                          onClick={() => toast("Find New Leads — coming soon")}
+                          className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                          title="Find new companies in this niche"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1257,17 +1274,6 @@ export default function HomePage() {
                           {isFullyExpanded ? "Show less" : `Show remaining ${hiddenCount} companies`}
                         </button>
                       )}
-                      <a
-                        href={`https://www.google.com/search?q=${encodeURIComponent(niche.split(" / ")[0] + " mechanical engineering companies Denver Colorado")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full px-4 py-2 text-xs font-semibold text-amber-600 hover:text-amber-800 hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5 border-t border-gray-100"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Find New Leads
-                      </a>
                     </div>
                     );
                   })()}
@@ -1311,18 +1317,27 @@ export default function HomePage() {
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
-                <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {(() => {
-                    let preview = emailConfirm.body;
-                    const dearIdx = preview.indexOf("Hello ");
-                    if (dearIdx > 0) preview = preview.substring(dearIdx);
-                    preview = preview.replace(
-                      "I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
-                      "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
-                    );
-                    return preview;
-                  })()}
-                </div>
+                {emailConfirm.editing ? (
+                  <textarea
+                    value={emailConfirm.body}
+                    onChange={(e) => setEmailConfirm({ ...emailConfirm, body: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-sky-200 p-3 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none text-xs text-gray-700 leading-relaxed"
+                    style={{ minHeight: "250px", whiteSpace: "pre-wrap" }}
+                  />
+                ) : (
+                  <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {(() => {
+                      let preview = emailConfirm.body;
+                      const dearIdx = preview.indexOf("Hello ");
+                      if (dearIdx > 0) preview = preview.substring(dearIdx);
+                      preview = preview.replace(
+                        "I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
+                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
+                      );
+                      return preview;
+                    })()}
+                  </div>
+                )}
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attachments</span>
@@ -1343,6 +1358,14 @@ export default function HomePage() {
               >
                 Cancel
               </button>
+              {!emailConfirm.editing && (
+                <button
+                  onClick={() => setEmailConfirm({ ...emailConfirm, editing: true })}
+                  className="px-4 py-2 text-sm font-semibold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  Edit
+                </button>
+              )}
               <button
                 onClick={confirmSendEmail}
                 className="px-5 py-2 text-sm font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors flex items-center gap-2"
@@ -1376,26 +1399,41 @@ export default function HomePage() {
               </div>
               <div>
                 <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Letter Body</span>
-                <div className="mt-1 bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-[50vh] overflow-y-auto" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
-                  {letterConfirm.body.split("kohler.solokit.app").map((part, idx, arr) => (
-                    <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
-                  ))}
-                </div>
+                {letterConfirm.editing ? (
+                  <textarea
+                    value={letterConfirm.body}
+                    onChange={(e) => setLetterConfirm({ ...letterConfirm, body: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-green-200 p-4 focus:ring-2 focus:ring-green-500/20 focus:border-green-400 focus:outline-none"
+                    style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", minHeight: "400px", whiteSpace: "pre-wrap" }}
+                  />
+                ) : (
+                  <div className="mt-1 bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-[50vh] overflow-y-auto" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                    {letterConfirm.body.split("kohler.solokit.app").map((part, idx, arr) => (
+                      <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
               <button onClick={() => setLetterConfirm(null)} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Close</button>
-              <button onClick={() => { setLetterConfirm(null); setEditing(true); setEditBody(letterConfirm.body); }} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Edit</button>
-              <button
-                onClick={() => { setLetterConfirm(null); printAndLog(); }}
-                className="px-5 py-2 text-sm font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors flex items-center gap-2"
-                style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Print
-              </button>
+              {letterConfirm.editing ? (
+                <button onClick={async () => { setEditBody(letterConfirm.body); await saveLetter(); setLetterConfirm({ ...letterConfirm, editing: false }); }} disabled={saving} className="px-5 py-2 text-sm font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors">{saving ? "Saving..." : "Save"}</button>
+              ) : (
+                <>
+                  <button onClick={() => setLetterConfirm({ ...letterConfirm, editing: true })} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Edit</button>
+                  <button
+                    onClick={() => { setLetterConfirm(null); printAndLog(); }}
+                    className="px-5 py-2 text-sm font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors flex items-center gap-2"
+                    style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Print
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
