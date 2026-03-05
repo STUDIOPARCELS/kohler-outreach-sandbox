@@ -385,14 +385,12 @@ export default function HomePage() {
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
   const [addLeadNiche, setAddLeadNiche] = useState<string | null>(null);
-  const [addLeadMode, setAddLeadMode] = useState<"manual" | "search">("search");
-  const [addLeadName, setAddLeadName] = useState("");
-  const [addLeadCity, setAddLeadCity] = useState("Denver");
-  const [addLeadAddress, setAddLeadAddress] = useState("");
-  const [addLeadAbout, setAddLeadAbout] = useState("");
-  const [addLeadLoading, setAddLeadLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<{found: number; added: number; alreadyExisted: number; message: string} | null>(null);
-  const [backfillingAddresses, setBackfillingAddresses] = useState(false);
+  const [addLeadSearch, setAddLeadSearch] = useState("");
+  const [addLeadResults, setAddLeadResults] = useState<{name: string; address: string; address1: string; city: string; state: string; zip: string; types: string | null; rating: number | null; place_id: string}[]>([]);
+  const [addLeadSearching, setAddLeadSearching] = useState(false);
+  const [addLeadAdding, setAddLeadAdding] = useState<string | null>(null);
+  const [deletingCompany, setDeletingCompany] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [contactSearch, setContactSearch] = useState("");
@@ -684,9 +682,30 @@ export default function HomePage() {
     });
   }
 
-  async function addLead() {
-    if (!addLeadNiche || !addLeadName.trim()) return;
-    setAddLeadLoading(true);
+  async function searchPlaces() {
+    if (!addLeadSearch.trim()) return;
+    setAddLeadSearching(true);
+    setAddLeadResults([]);
+    try {
+      const res = await fetch("/api/search-places", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: addLeadSearch.trim() }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setAddLeadResults(data.results || []);
+      if ((data.results || []).length === 0) toast("No results found for that search", "error");
+    } catch (e: unknown) {
+      toast((e as Error).message, "error");
+    } finally {
+      setAddLeadSearching(false);
+    }
+  }
+
+  async function addLeadFromResult(result: typeof addLeadResults[0]) {
+    if (!addLeadNiche) return;
+    setAddLeadAdding(result.place_id);
     try {
       const res = await fetch("/api/find-leads", {
         method: "POST",
@@ -695,71 +714,51 @@ export default function HomePage() {
           niche: addLeadNiche,
           mode: "manual",
           company: {
-            name: addLeadName.trim(),
-            city: addLeadCity.trim() || "Denver",
-            address1: addLeadAddress.trim() || null,
-            about: addLeadAbout.trim() || null,
+            name: result.name,
+            city: result.city,
+            address1: result.address1,
+            state: result.state,
+            zip: result.zip,
           },
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       if (data.alreadyExists) {
-        toast(`${addLeadName} already exists`, "error");
+        toast(`${result.name} already exists`, "error");
       } else {
-        toast(data.message || `Added ${addLeadName}`);
-        setAddLeadNiche(null);
+        toast(data.message || `Added ${result.name}`);
+        // Remove from results so it's clear it was added
+        setAddLeadResults(prev => prev.filter(r => r.place_id !== result.place_id));
         await loadData();
       }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
-      setAddLeadLoading(false);
+      setAddLeadAdding(null);
     }
   }
 
-  async function autoSearchLeads() {
-    if (!addLeadNiche) return;
-    setAddLeadLoading(true);
-    setSearchResults(null);
+  async function deleteCompany(companyname: string) {
+    setDeletingCompany(companyname);
     try {
-      const res = await fetch("/api/find-leads", {
-        method: "POST",
+      const res = await fetch("/api/delete-company", {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ niche: addLeadNiche, mode: "search" }),
+        body: JSON.stringify({ companyname }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setSearchResults(data);
-      toast(data.message || `Found ${data.added} new companies`);
-      if (data.added > 0) await loadData();
+      toast(`Removed ${companyname}`);
+      setDeleteConfirm(null);
+      if (expandedCompany === companyname) setExpandedCompany(null);
+      // Remove from local state immediately
+      setCompanies(prev => prev.filter(c => c.companyname !== companyname));
+      setLettersMap(prev => { const m = new Map(prev); m.delete(companyname); return m; });
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
-      setAddLeadLoading(false);
-    }
-  }
-
-  async function backfillAddresses() {
-    setBackfillingAddresses(true);
-    setBatchStatus("Backfilling missing addresses via Google Places...");
-    try {
-      const res = await fetch("/api/backfill-addresses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit: 50 }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setBatchStatus(data.message);
-      toast(data.message);
-      await loadData();
-    } catch (e: unknown) {
-      const msg = (e as Error).message;
-      setBatchStatus(`Address backfill error: ${msg}`);
-      toast(msg, "error");
-    } finally {
-      setBackfillingAddresses(false);
+      setDeletingCompany(null);
     }
   }
 
@@ -1110,33 +1109,6 @@ export default function HomePage() {
           );
         })()}
 
-        {/* ── Batch Actions ── */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <button
-            onClick={batchResearchAll}
-            disabled={batchResearching}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-all flex items-center gap-1.5"
-          >
-            {batchResearching ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Researching...</> : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg> Research Missing Contacts</>}
-          </button>
-          <button
-            onClick={backfillEmails}
-            disabled={backfilling}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-all flex items-center gap-1.5"
-          >
-            {backfilling ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Backfilling...</> : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> Backfill Emails</>}
-          </button>
-          <button
-            onClick={backfillAddresses}
-            disabled={backfillingAddresses}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-all flex items-center gap-1.5"
-          >
-            {backfillingAddresses ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Finding...</> : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg> Backfill Addresses</>}
-          </button>
-          {batchStatus && (
-            <span className="text-xs text-gray-500 ml-2 truncate max-w-[300px]">{batchStatus}</span>
-          )}
-        </div>
 
         {/* ── Search Filters ── */}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2 mb-6">
@@ -1244,12 +1216,8 @@ export default function HomePage() {
                         <button
                           onClick={() => {
                             setAddLeadNiche(niche);
-                            setAddLeadMode("search");
-                            setAddLeadName("");
-                            setAddLeadCity("Denver");
-                            setAddLeadAddress("");
-                            setAddLeadAbout("");
-                            setSearchResults(null);
+                            setAddLeadSearch("");
+                            setAddLeadResults([]);
                           }}
                           className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
                           title="Find new companies in this niche"
@@ -1337,12 +1305,40 @@ export default function HomePage() {
                                   </div>
                                 ) : (
                                   <>
-                                    {/* Company name + address */}
+                                    {/* Company name + address + delete */}
                                     <div className="mb-3 flex items-start justify-between">
                                       <div>
                                         <h4 className="text-sm font-bold text-gray-900">{c.companyname}</h4>
                                         {companyAddress && <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line">{companyAddress}</p>}
                                       </div>
+                                      {deleteConfirm === c.companyname ? (
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                          <span className="text-xs text-red-600 font-semibold">Remove?</span>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); deleteCompany(c.companyname); }}
+                                            disabled={deletingCompany === c.companyname}
+                                            className="px-2 py-1 text-xs font-bold rounded-md bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                                          >
+                                            {deletingCompany === c.companyname ? "..." : "Yes"}
+                                          </button>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setDeleteConfirm(null); }}
+                                            className="px-2 py-1 text-xs font-semibold rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                                          >
+                                            No
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm(c.companyname); }}
+                                          className="text-gray-300 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-50 shrink-0"
+                                          title="Remove company"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          </svg>
+                                        </button>
+                                      )}
                                     </div>
 
                                     {/* Company description */}
@@ -1657,143 +1653,95 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── Add Lead Dialog ── */}
+      {/* ── Find New Leads Dialog ── */}
       {addLeadNiche && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm no-print">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm no-print" onClick={() => setAddLeadNiche(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header with close X */}
             <div
-              className={`px-6 py-4 ${NICHE_COLORS[addLeadNiche]?.headerBg ? `bg-gradient-to-r ${NICHE_COLORS[addLeadNiche].headerBg}` : ""}`}
+              className={`px-5 py-4 ${NICHE_COLORS[addLeadNiche]?.headerBg ? `bg-gradient-to-r ${NICHE_COLORS[addLeadNiche].headerBg}` : ""} shrink-0 flex items-center justify-between`}
               style={!NICHE_COLORS[addLeadNiche]?.headerBg ? { background: "linear-gradient(135deg, #334155, #1e293b)" } : undefined}
             >
-              <h3 className="text-white font-bold text-base flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                Find Leads · {addLeadNiche}
+                Find Companies · {addLeadNiche}
               </h3>
-            </div>
-            {/* Tab switcher */}
-            <div className="flex border-b border-gray-200">
-              <button
-                onClick={() => { setAddLeadMode("search"); setSearchResults(null); }}
-                className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${addLeadMode === "search" ? "text-sky-600 border-b-2 border-sky-500 bg-sky-50/50" : "text-gray-400 hover:text-gray-600"}`}
-              >
-                <span className="flex items-center justify-center gap-1.5">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                  Auto-Search
-                </span>
-              </button>
-              <button
-                onClick={() => setAddLeadMode("manual")}
-                className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${addLeadMode === "manual" ? "text-sky-600 border-b-2 border-sky-500 bg-sky-50/50" : "text-gray-400 hover:text-gray-600"}`}
-              >
-                <span className="flex items-center justify-center gap-1.5">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                  Manual Add
-                </span>
+              <button onClick={() => setAddLeadNiche(null)} className="text-white/60 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="px-6 py-5 space-y-3">
-              {addLeadMode === "search" ? (
-                <>
-                  <p className="text-sm text-gray-600">
-                    Search Google Places for <span className="font-semibold">{addLeadNiche}</span> companies in the Denver metro area. Duplicates are automatically filtered.
-                  </p>
-                  {searchResults && (
-                    <div className={`p-3 rounded-xl border ${searchResults.added > 0 ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}>
-                      <p className="text-xs font-semibold text-gray-800">{searchResults.message}</p>
-                      {searchResults.found > 0 && (
-                        <div className="flex gap-4 mt-2">
-                          <span className="text-xs text-gray-500">Found: {searchResults.found}</span>
-                          <span className="text-xs text-gray-500">Existed: {searchResults.alreadyExisted}</span>
-                          <span className="text-xs font-bold text-green-700">Added: {searchResults.added}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-400">Requires GOOGLE_PLACES_API_KEY in Vercel env. Contacts auto-researched via RocketReach.</p>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company Name *</label>
-                    <input
-                      type="text"
-                      value={addLeadName}
-                      onChange={(e) => setAddLeadName(e.target.value)}
-                      placeholder="e.g. Rocky Mountain Fabrication"
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">City</label>
-                      <input
-                        type="text"
-                        value={addLeadCity}
-                        onChange={(e) => setAddLeadCity(e.target.value)}
-                        placeholder="Denver"
-                        className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Street Address</label>
-                      <input
-                        type="text"
-                        value={addLeadAddress}
-                        onChange={(e) => setAddLeadAddress(e.target.value)}
-                        placeholder="123 Main St"
-                        className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">About (optional)</label>
-                    <input
-                      type="text"
-                      value={addLeadAbout}
-                      onChange={(e) => setAddLeadAbout(e.target.value)}
-                      placeholder="What does this company do?"
-                      className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400">Contacts will be auto-researched via RocketReach after adding.</p>
-                </>
-              )}
-            </div>
-            <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
-              <button
-                onClick={() => { setAddLeadNiche(null); setSearchResults(null); }}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                {searchResults?.added ? "Done" : "Cancel"}
-              </button>
-              {addLeadMode === "search" ? (
+
+            {/* Search input */}
+            <div className="px-5 py-4 border-b border-gray-100 shrink-0">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={addLeadSearch}
+                  onChange={(e) => setAddLeadSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") searchPlaces(); }}
+                  placeholder="Search company name in Denver metro..."
+                  className="flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
+                  autoFocus
+                />
                 <button
-                  onClick={autoSearchLeads}
-                  disabled={addLeadLoading}
-                  className="px-5 py-2 text-sm font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-2"
+                  onClick={searchPlaces}
+                  disabled={addLeadSearching || !addLeadSearch.trim()}
+                  className="px-4 py-2.5 text-sm font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5 shrink-0"
                 >
-                  {addLeadLoading ? (
-                    <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Searching...</>
+                  {addLeadSearching ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg> Search Denver Metro</>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   )}
+                  Search
                 </button>
-              ) : (
-                <button
-                  onClick={addLead}
-                  disabled={addLeadLoading || !addLeadName.trim()}
-                  className="px-5 py-2 text-sm font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-2"
-                >
-                  {addLeadLoading ? (
-                    <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Adding...</>
-                  ) : (
-                    <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg> Add Company</>
-                  )}
-                </button>
+              </div>
+            </div>
+
+            {/* Results list */}
+            <div className="overflow-y-auto flex-1 px-2 py-2">
+              {addLeadResults.length === 0 && !addLeadSearching && (
+                <div className="text-center py-10 px-4">
+                  <svg className="w-10 h-10 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <p className="text-sm text-gray-400">Search for a company to see results</p>
+                  <p className="text-xs text-gray-300 mt-1">e.g. "metal fabrication" or "Powder7"</p>
+                </div>
               )}
+              {addLeadSearching && (
+                <div className="flex items-center justify-center py-10 gap-2">
+                  <div className="w-5 h-5 border-2 border-gray-200 border-t-sky-500 rounded-full animate-spin" />
+                  <span className="text-sm text-gray-400">Searching Google Places...</span>
+                </div>
+              )}
+              {addLeadResults.map((r) => (
+                <div
+                  key={r.place_id}
+                  className="flex items-start gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-gray-900">{r.name}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{r.address}</div>
+                    {r.types && <div className="text-xs text-gray-400 mt-0.5">{r.types}</div>}
+                    {r.rating && <div className="text-xs text-amber-500 mt-0.5">★ {r.rating}</div>}
+                  </div>
+                  <button
+                    onClick={() => addLeadFromResult(r)}
+                    disabled={addLeadAdding === r.place_id}
+                    className="shrink-0 px-3 py-1.5 text-xs font-bold rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-all flex items-center gap-1.5 opacity-80 group-hover:opacity-100"
+                  >
+                    {addLeadAdding === r.place_id ? (
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    )}
+                    Add
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
