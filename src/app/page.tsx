@@ -991,22 +991,22 @@ export default function HomePage() {
         {/* ── Search Filters ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
           <input
-            type="text" placeholder="Company..." value={compSearch}
+            type="text" placeholder="Company Search" value={compSearch}
             onChange={(e) => setCompSearch(e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
           />
           <input
-            type="text" placeholder="Contact / Email..." value={contactSearch}
+            type="text" placeholder="Contact / Email Search" value={contactSearch}
             onChange={(e) => setContactSearch(e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
           />
           <input
-            type="text" placeholder="City..." value={locationSearch}
+            type="text" placeholder="City Search" value={locationSearch}
             onChange={(e) => setLocationSearch(e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition-all"
           />
           <input
-            type="text" placeholder="Keyword..." value={keywordSearch}
+            type="text" placeholder="Keyword Search" value={keywordSearch}
             onChange={(e) => setKeywordSearch(e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-gray-500/20 focus:border-gray-400 transition-all"
           />
