@@ -29,7 +29,7 @@ export async function POST() {
 
   // Insert test contacts
   const testContacts = [
-    { companyname: "LISA WOOD STUDIO", contactname: "Lisa Wood", title: "Creative Director", email: "317lrw@gmail.com" },
+    { companyname: "LISA WOOD STUDIO", contactname: "Lisa Wood", title: "", email: "317lrw@gmail.com" },
     { companyname: "LISA WOOD STUDIO", contactname: "Hallie Stapleton", title: "", email: "hallie.stapleton@nxtthingrpo.com" },
     { companyname: "LISA WOOD STUDIO", contactname: "Kohler Wood", title: "", email: "kwood12802@gmail.com" },
   ];

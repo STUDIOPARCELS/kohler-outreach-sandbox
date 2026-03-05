@@ -1129,43 +1129,6 @@ export default function HomePage() {
                                       </div>
                                     )}
 
-                                    {/* Contact selector */}
-                                    {contacts.length > 0 && (
-                                      <div className="mb-4">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
-                                          Contact
-                                        </label>
-                                        <div className="flex gap-2 items-center">
-                                          <select
-                                            value={selectedContactIdx}
-                                            onChange={(e) => applyContact(Number(e.target.value))}
-                                            className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white flex-1 max-w-sm shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                                          >
-                                            {contacts.map((ct, i) => (
-                                              <option key={i} value={i}>
-                                                {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}{ct.email ? ` ✉ ${ct.email}` : " (no email)"}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          {contacts[selectedContactIdx] && !contacts[selectedContactIdx].email && (
-                                            <button
-                                              onClick={findEmail}
-                                              disabled={findingEmail}
-                                              className="px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors whitespace-nowrap flex items-center gap-1"
-                                            >
-                                              {findingEmail ? (
-                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                              ) : (
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                </svg>
-                                              )}
-                                              Find Email
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
 
                                     {/* No contacts yet — show Research button */}
                                     {contacts.length === 0 && (
@@ -1184,134 +1147,124 @@ export default function HomePage() {
                                             style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.15)" }}
                                           >
                                             {researching ? (
-                                              <>
-                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                Researching...
-                                              </>
+                                              <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Researching...</>
                                             ) : (
-                                              <>
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                </svg>
-                                                Research Contacts
-                                              </>
+                                              <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg> Research Contacts</>
                                             )}
                                           </button>
                                         </div>
                                       </div>
                                     )}
 
-                                    {/* Tabbed Letter/Email view */}
-                                    {assembled && (
+                                    {/* Tabbed Physical Letter / Email */}
+                                    {contacts.length > 0 && (
                                       <div className="rounded-xl overflow-hidden border border-gray-200 mt-2" style={{ boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08)" }}>
-                                        {/* Tabs */}
                                         <div className="flex">
                                           <button
                                             onClick={() => { setLetterTab("letter"); setEditing(false); }}
-                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tl-xl text-white ${
-                                              letterTab === "letter"
-                                                ? "bg-green-700"
-                                                : "bg-green-700/40"
-                                            }`}
-                                          >
-                                            Physical Letter
-                                          </button>
+                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tl-xl text-white ${letterTab === "letter" || letterTab === ("letter_preview" as "letter") ? "bg-green-700" : "bg-green-700/40"}`}
+                                          >Physical Letter</button>
                                           <button
                                             onClick={() => { setLetterTab("email"); setEditing(false); }}
-                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tr-xl text-white ${
-                                              letterTab === "email"
-                                                ? "bg-blue-600"
-                                                : "bg-blue-600/40"
-                                            }`}
-                                          >
-                                            Email
-                                          </button>
+                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tr-xl text-white ${letterTab === "email" ? "bg-blue-600" : "bg-blue-600/40"}`}
+                                          >Email</button>
                                         </div>
 
-                                        {/* Physical Letter tab */}
+                                        {/* Physical Letter — contact list */}
                                         {letterTab === "letter" && (
-                                          <>
-                                            {!editing ? (
-                                              <>
-                                                <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50/50">
-                                                  <button
-                                                    onClick={() => { setEditing(true); setEditBody(assembled.body); }}
-                                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200"
-                                                  >
-                                                    Edit
-                                                  </button>
-                                                  <button
-                                                    onClick={() => printAndLog()}
-                                                    className="px-4 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors flex items-center gap-1.5"
-                                                    style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
-                                                  >
-                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                                    </svg>
-                                                    Print
-                                                  </button>
-                                                </div>
-                                                <div className="bg-white" style={{ padding: "16px", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap", maxHeight: "400px", overflowY: "auto" }}>
-                                                  {assembled.body}
-                                                </div>
-                                              </>
-                                            ) : (
-                                              <>
-                                                <div className="flex items-center justify-between px-4 py-2 border-b bg-blue-50/50">
-                                                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Editing</span>
-                                                  <div className="flex gap-2">
-                                                    <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200">Cancel</button>
-                                                    <button onClick={saveLetter} disabled={saving} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors" style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}>{saving ? "Saving..." : "Save"}</button>
+                                          <div className="p-4 bg-white">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Send to</label>
+                                            <div className="space-y-1">
+                                              {contacts.map((ct, i) => (
+                                                <button key={i}
+                                                  onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview" as "letter"); }}
+                                                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-left"
+                                                >
+                                                  <div>
+                                                    <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
+                                                    {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
                                                   </div>
-                                                </div>
-                                                <textarea
-                                                  value={editBody}
-                                                  onChange={(e) => setEditBody(e.target.value)}
-                                                  className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none"
-                                                  style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontSize: "10pt", lineHeight: "1.5", minHeight: "400px", whiteSpace: "pre-wrap" }}
-                                                />
-                                              </>
+                                                  <div className="text-xs text-gray-400 text-right max-w-[160px] truncate">{companyAddress || c.city || ""}</div>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Physical Letter — preview after selecting contact */}
+                                        {letterTab === ("letter_preview" as "letter") && assembled && (
+                                          <>
+                                            <div className="px-4 py-2 border-b bg-gray-50/50 flex items-center justify-between">
+                                              <button onClick={() => setLetterTab("letter")} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Contacts</button>
+                                              <div className="flex gap-2">
+                                                {!editing ? (
+                                                  <>
+                                                    <button onClick={() => { setEditing(true); setEditBody(assembled.body); }} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Edit</button>
+                                                    <button onClick={() => printAndLog()} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 flex items-center gap-1.5" style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
+                                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg> Print
+                                                    </button>
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Cancel</button>
+                                                    <button onClick={saveLetter} disabled={saving} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
+                                                  </>
+                                                )}
+                                              </div>
+                                            </div>
+                                            {!editing ? (
+                                              <div className="bg-white" style={{ padding: "16px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap", maxHeight: "400px", overflowY: "auto" }}>{assembled.body}</div>
+                                            ) : (
+                                              <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.5", minHeight: "400px", whiteSpace: "pre-wrap" }} />
                                             )}
                                           </>
                                         )}
 
-                                        {/* Email tab */}
+                                        {/* Email — contact list */}
                                         {letterTab === "email" && (
                                           <div className="p-4 bg-white">
                                             {(() => {
                                               const emailContacts = contacts.filter(ct => ct.email);
-                                              if (emailContacts.length === 0) {
-                                                return (
-                                                  <p className="text-xs text-gray-400 italic text-center py-6">No contacts with email addresses. Use Find Email to look one up.</p>
-                                                );
-                                              }
+                                              const noEmailContacts = contacts.filter(ct => !ct.email);
                                               return (
                                                 <div className="space-y-3">
                                                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Send to</label>
-                                                  <div className="space-y-1">
-                                                    {emailContacts.map((ct, i) => (
-                                                      <button
-                                                        key={i}
-                                                        onClick={() => {
-                                                          const idx = contacts.indexOf(ct);
-                                                          if (idx >= 0) setSelectedContactIdx(idx);
-                                                          setEmailConfirm({
-                                                            to: ct.email,
-                                                            contactname: ct.contactname,
-                                                            companyname: expandedCompany || "",
-                                                            body: assembled.body,
-                                                          });
-                                                        }}
-                                                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-colors text-left"
-                                                      >
-                                                        <div>
-                                                          <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
-                                                          <div className="text-xs text-gray-500">{ct.title || ""}</div>
+                                                  {emailContacts.length > 0 && (
+                                                    <div className="space-y-1">
+                                                      {emailContacts.map((ct, i) => (
+                                                        <button key={i}
+                                                          onClick={() => {
+                                                            const idx = contacts.indexOf(ct);
+                                                            if (idx >= 0) applyContact(idx);
+                                                            setTimeout(() => {
+                                                              setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: assembled?.body || "" });
+                                                            }, 100);
+                                                          }}
+                                                          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-colors text-left"
+                                                        >
+                                                          <div>
+                                                            <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
+                                                            {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
+                                                          </div>
+                                                          <div className="text-xs text-sky-600 font-medium">{ct.email}</div>
+                                                        </button>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                  {noEmailContacts.length > 0 && (
+                                                    <div className={emailContacts.length > 0 ? "pt-2 border-t" : ""}>
+                                                      <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block mb-1">No email</label>
+                                                      {noEmailContacts.map((ct, i) => (
+                                                        <div key={i} className="flex items-center justify-between px-4 py-2 rounded-lg">
+                                                          <div className="text-xs text-gray-400">{ct.contactname}{ct.title ? ` — ${ct.title}` : ""}</div>
+                                                          <button onClick={() => { setSelectedContactIdx(contacts.indexOf(ct)); findEmail(); }} disabled={findingEmail} className="px-2 py-1 text-xs font-semibold rounded bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50">{findingEmail ? "..." : "Find Email"}</button>
                                                         </div>
-                                                        <div className="text-xs text-sky-600 font-medium">{ct.email}</div>
-                                                      </button>
-                                                    ))}
-                                                  </div>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                  {emailContacts.length === 0 && noEmailContacts.length === 0 && (
+                                                    <p className="text-xs text-gray-400 italic text-center py-4">No contacts yet</p>
+                                                  )}
                                                 </div>
                                               );
                                             })()}
@@ -1320,17 +1273,6 @@ export default function HomePage() {
                                       </div>
                                     )}
 
-                                    {/* No letter yet */}
-                                    {!assembled && !editing && contacts.length > 0 && (
-                                      <div className="flex items-center gap-2 py-3 px-4 rounded-xl bg-gray-50 border border-dashed border-gray-200 mt-2">
-                                        <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        <p className="text-xs text-gray-400 italic">
-                                          Contact found — letter will generate when you select one above.
-                                        </p>
-                                      </div>
-                                    )}
                                   </>
                                 )}
                               </div>
