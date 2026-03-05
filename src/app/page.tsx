@@ -261,7 +261,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. ${nicheParagraph}
 
-Here is a link to my projects and areas of study: kohler.solokit.app. I have also included my résumé. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team.
+My résumé is included. My projects and areas of study can be viewed here: kohler.solokit.app. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
