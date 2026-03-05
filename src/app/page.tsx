@@ -333,6 +333,8 @@ export default function HomePage() {
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState("");
   const [letterTab, setLetterTab] = useState<"letter" | "email">("letter");
+  const [showMailedList, setShowMailedList] = useState(false);
+  const [showEmailedList, setShowEmailedList] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandLoading, setExpandLoading] = useState(false);
   const [researching, setResearching] = useState(false);
@@ -780,15 +782,55 @@ export default function HomePage() {
                   <div className="text-2xl font-bold text-white">{companies.length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Companies</div>
                 </div>
-                <div className="text-center px-4 py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[90px]">
+                <div className="text-center px-4 py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[90px] relative">
                   <div className="text-2xl font-bold text-white">{lettersMap.size}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Letters</div>
-                  <div className="text-xs text-green-300 font-semibold mt-0.5">{Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed</div>
+                  <button onClick={() => { setShowMailedList(!showMailedList); setShowEmailedList(false); }} className="text-xs text-green-300 font-semibold mt-0.5 hover:text-green-200 cursor-pointer">
+                    {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed
+                  </button>
+                  {showMailedList && (() => {
+                    const mailed = Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed");
+                    return (
+                      <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 min-w-[280px] max-h-60 overflow-y-auto">
+                        <div className="px-3 py-2 border-b bg-gray-50 rounded-t-xl">
+                          <span className="text-xs font-bold text-gray-500 uppercase">{mailed.length} Letters Mailed</span>
+                        </div>
+                        {mailed.length === 0 ? (
+                          <p className="text-xs text-gray-400 px-3 py-4 text-center">No letters mailed yet</p>
+                        ) : mailed.map((l, i) => (
+                          <div key={i} className="px-3 py-2 border-b last:border-0 hover:bg-gray-50">
+                            <div className="text-xs font-semibold text-gray-900">{l.companyname}</div>
+                            <div className="text-xs text-gray-500">{l.contactname}{l.sent_at ? ` · ${new Date(l.sent_at).toLocaleDateString()}` : ""}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
-                <div className="text-center px-4 py-3 bg-sky-500/20 rounded-xl border border-sky-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[90px]">
+                <div className="text-center px-4 py-3 bg-sky-500/20 rounded-xl border border-sky-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[90px] relative">
                   <div className="text-2xl font-bold text-white">{companies.filter(c => c.email).length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Emails</div>
-                  <div className="text-xs text-sky-300 font-semibold mt-0.5">{Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} sent</div>
+                  <button onClick={() => { setShowEmailedList(!showEmailedList); setShowMailedList(false); }} className="text-xs text-sky-300 font-semibold mt-0.5 hover:text-sky-200 cursor-pointer">
+                    {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} sent
+                  </button>
+                  {showEmailedList && (() => {
+                    const emailed = Array.from(lettersMap.values()).filter(l => l.status === "emailed");
+                    return (
+                      <div className="absolute top-full mt-2 right-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 min-w-[280px] max-h-60 overflow-y-auto">
+                        <div className="px-3 py-2 border-b bg-sky-50 rounded-t-xl">
+                          <span className="text-xs font-bold text-sky-600 uppercase">{emailed.length} Emails Sent</span>
+                        </div>
+                        {emailed.length === 0 ? (
+                          <p className="text-xs text-gray-400 px-3 py-4 text-center">No emails sent yet</p>
+                        ) : emailed.map((l, i) => (
+                          <div key={i} className="px-3 py-2 border-b last:border-0 hover:bg-sky-50">
+                            <div className="text-xs font-semibold text-gray-900">{l.companyname}</div>
+                            <div className="text-xs text-gray-500">{l.contactname} · {l.contact_email}{l.sent_at ? ` · ${new Date(l.sent_at).toLocaleDateString()}` : ""}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -907,16 +949,6 @@ export default function HomePage() {
               className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
             />
           </div>
-          <button
-            onClick={async () => {
-              await fetch("/api/seed-test", { method: "POST" });
-              await loadData();
-              toast("Test company seeded");
-            }}
-            className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200 transition-colors whitespace-nowrap"
-          >
-            + Test Send
-          </button>
         </div>
 
         {companiesLoading ? (
