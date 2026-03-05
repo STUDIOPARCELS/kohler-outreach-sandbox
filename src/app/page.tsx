@@ -294,7 +294,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I've designed electromechanical systems with 3D-printed interfaces for my senior capstone — I'd welcome the chance to contribute to your team."
   ),
   "Automotive / Vehicles": nicheTemplate(
-    "I've had an interest in automobiles since I was young — the chance to engineer in the automotive industry."
+    "I've had an interest in automobiles since I was young, and engineering in the automotive industry is exactly the kind of work I want to do."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
     "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
