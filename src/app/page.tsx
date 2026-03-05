@@ -726,26 +726,16 @@ export default function HomePage() {
                   ENTRY LEVEL BSME / EIT · DENVER METRO
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="text-sm text-white font-bold bg-white/15 rounded-full px-4 py-1.5 backdrop-blur-sm border border-white/20">
                   {companies.length} companies
                 </span>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30 text-center">
-                    {lettersMap.size} letters
-                  </span>
-                  <span className="text-xs text-white font-semibold bg-sky-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-sky-400/50 text-center">
-                    {companies.filter(c => c.email).length} emails
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-white font-semibold bg-green-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-green-400/50 text-center">
-                    {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} emailed
-                  </span>
-                  <span className="text-xs text-white font-semibold bg-green-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-green-400/50 text-center">
-                    {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed
-                  </span>
-                </div>
+                <span className="text-xs text-white/90 font-semibold bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm border border-white/15">
+                  {lettersMap.size} letters · {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed
+                </span>
+                <span className="text-xs text-white/90 font-semibold bg-sky-500/30 rounded-full px-3 py-1 backdrop-blur-sm border border-sky-400/30">
+                  {companies.filter(c => c.email).length} emails · {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} emailed
+                </span>
               </div>
             </div>
           </div>
@@ -850,8 +840,8 @@ export default function HomePage() {
         })()}
 
         {/* ── Filters ── */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
+        <div className="flex gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -863,6 +853,17 @@ export default function HomePage() {
               className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
             />
           </div>
+          <button
+            onClick={async () => {
+              await fetch("/api/seed-test", { method: "POST" });
+              toast("Test company ready — search TEST");
+              await loadData();
+              setCompSearch("TEST");
+            }}
+            className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200 transition-colors whitespace-nowrap"
+          >
+            + Test Send
+          </button>
         </div>
 
         {companiesLoading ? (
