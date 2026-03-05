@@ -721,8 +721,19 @@ export default function HomePage() {
 
   /* ── Filtered companies ── */
   const filteredCompanies = companies.filter((c) => {
-    if (compSearch && !c.companyname.toLowerCase().includes(compSearch.toLowerCase()))
-      return false;
+    if (compSearch) {
+      const q = compSearch.toLowerCase();
+      const matchesAny = [
+        c.companyname,
+        c.contactname,
+        c.email,
+        c.city,
+        c.contact_title,
+        c.company_about,
+        c.niche,
+      ].some(field => field && field.toLowerCase().includes(q));
+      if (!matchesAny) return false;
+    }
     if (tierFilter && c.tier !== Number(tierFilter)) return false;
     return true;
   });
@@ -943,7 +954,7 @@ export default function HomePage() {
             </svg>
             <input
               type="text"
-              placeholder="Search companies..."
+              placeholder="Search companies, contacts, emails, cities..."
               value={compSearch}
               onChange={(e) => setCompSearch(e.target.value)}
               className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
