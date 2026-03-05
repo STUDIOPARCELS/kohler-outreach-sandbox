@@ -905,7 +905,13 @@ export default function HomePage() {
               const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
               const PREVIEW_COUNT = 3;
               const isFullyExpanded = expandedNiches.has(niche);
-              const visibleItems = isFullyExpanded ? items : items.slice(0, PREVIEW_COUNT);
+              // Sort: companies with email first, then without
+              const sortedItems = [...items].sort((a, b) => {
+                const aHas = a.email ? 1 : 0;
+                const bHas = b.email ? 1 : 0;
+                return bHas - aHas;
+              });
+              const visibleItems = isFullyExpanded ? sortedItems : sortedItems.slice(0, PREVIEW_COUNT);
               const hiddenCount = items.length - PREVIEW_COUNT;
               const sentCount = items.filter(c => { const l = lettersMap.get(c.companyname); return l && (l.status === "sent" || l.status === "printed" || l.status === "emailed"); }).length;
               const emailCount = items.filter(c => c.email).length;
