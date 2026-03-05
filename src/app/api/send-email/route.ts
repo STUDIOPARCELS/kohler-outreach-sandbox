@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
       emailBody = emailBody.substring(dearIdx);
     }
 
-    // Adjust wording for email context
+    // Adjust wording for email context — replace entire closing paragraph
     emailBody = emailBody.replace(
-      "I've included my résumé and card — which links to my projects and interests.",
-      "I've attached my résumé — my projects and areas of study are at kohler.solokit.app."
+      "I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
+      "I've attached my résumé below. My projects and interests are presented here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
     );
 
     // Strip the plain-text signature (everything from "Sincerely," on)
@@ -58,14 +58,8 @@ export async function POST(req: NextRequest) {
       emailBody = emailBody.substring(0, sincerelyIdx).trim();
     }
 
-    // Check for handwritten signature image
-    let signatureImg = "<br/>";
-    try {
-      const sigRes = await fetch(`${baseUrl}/KOHLER_SIGNATURE.png`, { method: "HEAD" });
-      if (sigRes.ok) {
-        signatureImg = `<img src="${baseUrl}/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="200" style="display:block; margin:4px 0;" />`;
-      }
-    } catch { /* skip */ }
+    // Always include handwritten signature image
+    const signatureImg = `<img src="https://kohler-outreach.vercel.app/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="200" style="display:block; margin:4px 0;" />`;
 
     // Convert plain text to HTML with proper email signature
     const htmlBody = `

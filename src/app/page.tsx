@@ -1159,20 +1159,12 @@ export default function HomePage() {
                                   </div>
                                 ) : (
                                   <>
-                                    {/* Company info */}
-                                    {c.company_about && (
-                                      <div className="flex items-start gap-2 mb-4 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-100"
-                                        style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}
-                                      >
-                                        <svg className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <p className="text-xs text-gray-600 leading-relaxed">{c.company_about}</p>
-                                      </div>
-                                    )}
+                                    {/* Company description */}
+                                    <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-100" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
+                                      <p className="text-xs text-gray-500 italic">{c.company_about || "Company description"}</p>
+                                    </div>
 
-
-                                    {/* No contacts yet — show Research button */}
+                                    {/* Contacts */}
                                     {contacts.length === 0 && (
                                       <div className="mb-4 p-4 rounded-xl border border-dashed border-amber-300 bg-amber-50/50">
                                         <div className="flex items-center justify-between">
@@ -1186,140 +1178,78 @@ export default function HomePage() {
                                             onClick={() => researchContacts(c.companyname)}
                                             disabled={researching}
                                             className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-all flex items-center gap-1.5"
-                                            style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.15)" }}
                                           >
-                                            {researching ? (
-                                              <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Researching...</>
-                                            ) : (
-                                              <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg> Research Contacts</>
-                                            )}
+                                            {researching ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Researching...</> : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg> Research Contacts</>}
                                           </button>
                                         </div>
                                       </div>
                                     )}
 
-                                    {/* Tabbed Physical Letter / Email */}
                                     {contacts.length > 0 && (
-                                      <div className="rounded-xl overflow-hidden border border-gray-200 mt-2" style={{ boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08)" }}>
-                                        <div className="flex">
-                                          <button
-                                            onClick={() => { setLetterTab("letter"); setEditing(false); }}
-                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tl-xl text-white ${letterTab === "letter" || letterTab === ("letter_preview") ? "bg-green-700" : "bg-green-700/40"}`}
-                                          >Physical Letter</button>
-                                          <button
-                                            onClick={() => { setLetterTab("email"); setEditing(false); }}
-                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tr-xl text-white ${letterTab === "email" ? "bg-blue-600" : "bg-blue-600/40"}`}
-                                          >Email</button>
-                                        </div>
-
-                                        {/* Physical Letter — contact list */}
-                                        {letterTab === "letter" && (
-                                          <div className="p-4 bg-white">
-                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Send to</label>
-                                            <div className="space-y-1">
-                                              {contacts.map((ct, i) => (
-                                                <button key={i}
-                                                  onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
-                                                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-left"
-                                                >
-                                                  <div>
-                                                    <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
-                                                    {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
-                                                  </div>
-                                                  <div className="text-xs text-gray-400 text-right max-w-[140px] truncate">{companyAddress || c.city || ""}</div>
-                                                </button>
-                                              ))}
+                                      <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Contacts</label>
+                                        {contacts.map((ct, i) => (
+                                          <div key={i} className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-100 hover:border-gray-200 bg-white transition-colors">
+                                            <div className="flex-1 min-w-0">
+                                              <div className="text-sm font-semibold text-gray-900 truncate">{ct.contactname}</div>
+                                              {ct.title && <div className="text-xs text-gray-500 truncate">{ct.title}</div>}
                                             </div>
-                                          </div>
-                                        )}
-
-                                        {/* Physical Letter — preview after selecting contact */}
-                                        {letterTab === ("letter_preview") && assembled && (
-                                          <>
-                                            <div className="px-4 py-2 border-b bg-gray-50/50 flex items-center justify-between">
-                                              <button onClick={() => setLetterTab("letter")} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Contacts</button>
-                                              <div className="flex gap-2">
-                                                {!editing ? (
-                                                  <>
-                                                    <button onClick={() => { setEditing(true); setEditBody(assembled.body); }} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Edit</button>
-                                                    <button onClick={() => printAndLog()} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 flex items-center gap-1.5" style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
-                                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg> Print
-                                                    </button>
-                                                  </>
-                                                ) : (
-                                                  <>
-                                                    <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Cancel</button>
-                                                    <button onClick={saveLetter} disabled={saving} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
-                                                  </>
-                                                )}
-                                              </div>
-                                            </div>
-                                            {!editing ? (
-                                              <div className="bg-white" style={{ padding: "16px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap", maxHeight: "400px", overflowY: "auto" }}>{assembled.body}</div>
+                                            <button
+                                              onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
+                                              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors whitespace-nowrap shrink-0"
+                                            >
+                                              Letter
+                                            </button>
+                                            {ct.email ? (
+                                              <button
+                                                onClick={() => {
+                                                  applyContact(i);
+                                                  const freshBody = template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "";
+                                                  setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
+                                                }}
+                                                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap shrink-0"
+                                              >
+                                                Email
+                                              </button>
                                             ) : (
-                                              <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.5", minHeight: "400px", whiteSpace: "pre-wrap" }} />
+                                              <button
+                                                onClick={() => findEmail(i)}
+                                                disabled={findingEmail}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
+                                              >
+                                                {findingEmailIdx === i ? "..." : "Find Email"}
+                                              </button>
                                             )}
-                                          </>
-                                        )}
-
-                                        {/* Email — contact list */}
-                                        {letterTab === "email" && (
-                                          <div className="p-4 bg-white">
-                                            {(() => {
-                                              const emailContacts = contacts.filter(ct => ct.email);
-                                              const noEmailContacts = contacts.filter(ct => !ct.email);
-                                              return (
-                                                <div className="space-y-3">
-                                                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Send to</label>
-                                                  {emailContacts.length > 0 && (
-                                                    <div className="space-y-1">
-                                                      {emailContacts.map((ct, i) => (
-                                                        <div key={i} className="flex items-center gap-1">
-                                                          <button
-                                                            onClick={() => {
-                                                              const idx = contacts.indexOf(ct);
-                                                              if (idx >= 0) applyContact(idx);
-                                                              const freshBody = template ? assembleLetter(
-                                                                template,
-                                                                expandedCompany || "",
-                                                                "",
-                                                                ct.contactname,
-                                                                ct.title,
-                                                                companyAddress,
-                                                                companies.find(co => co.companyname === expandedCompany)?.niche
-                                                              ).body : "";
-                                                              setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
-                                                            }}
-                                                            className="flex-1 flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-colors text-left"
-                                                          >
-                                                            <div>
-                                                              <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
-                                                              {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
-                                                            </div>
-                                                            <div className="text-xs text-sky-600 font-medium">{ct.email}</div>
-                                                          </button>
-                                                        </div>
-                                                      ))}
-                                                    </div>
-                                                  )}
-                                                  {noEmailContacts.length > 0 && (
-                                                    <div className={emailContacts.length > 0 ? "pt-2 border-t" : ""}>
-                                                      <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block mb-1">No email</label>
-                                                      {noEmailContacts.map((ct, i) => (
-                                                        <div key={i} className="flex items-center justify-between px-4 py-2 rounded-lg">
-                                                          <div className="text-xs text-gray-400 flex-1 min-w-0 mr-2">{ct.contactname}{ct.title ? ` — ${ct.title}` : ""}</div>
-                                                          <button onClick={() => { const idx = contacts.indexOf(ct); findEmail(idx); }} disabled={findingEmail} className="px-3 py-3 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 whitespace-nowrap shrink-0 w-20 h-10 text-center flex items-center justify-center">{findingEmailIdx === contacts.indexOf(ct) ? "..." : "Find Email"}</button>
-                                                        </div>
-                                                      ))}
-                                                    </div>
-                                                  )}
-                                                  {emailContacts.length === 0 && noEmailContacts.length === 0 && (
-                                                    <p className="text-xs text-gray-400 italic text-center py-4">No contacts yet</p>
-                                                  )}
-                                                </div>
-                                              );
-                                            })()}
                                           </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Physical Letter preview (after clicking Letter button) */}
+                                    {letterTab === ("letter_preview") && assembled && (
+                                      <div className="mt-3 rounded-xl overflow-hidden border border-green-200" style={{ boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08)" }}>
+                                        <div className="px-4 py-2 border-b bg-green-50/50 flex items-center justify-between">
+                                          <button onClick={() => setLetterTab("letter")} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back</button>
+                                          <div className="flex gap-2">
+                                            {!editing ? (
+                                              <>
+                                                <button onClick={() => { setEditing(true); setEditBody(assembled.body); }} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Edit</button>
+                                                <button onClick={() => printAndLog()} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 flex items-center gap-1.5">
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg> Print
+                                                </button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Cancel</button>
+                                                <button onClick={saveLetter} disabled={saving} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                        {!editing ? (
+                                          <div className="bg-white" style={{ padding: "16px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap", maxHeight: "400px", overflowY: "auto" }}>{assembled.body}</div>
+                                        ) : (
+                                          <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.5", minHeight: "400px", whiteSpace: "pre-wrap" }} />
                                         )}
                                       </div>
                                     )}
@@ -1388,8 +1318,8 @@ export default function HomePage() {
                     const dearIdx = preview.indexOf("Hello ");
                     if (dearIdx > 0) preview = preview.substring(dearIdx);
                     preview = preview.replace(
-                      "I've included my résumé and card — which links to my projects and interests.",
-                      "I've attached my résumé — my projects and areas of study are at kohler.solokit.app."
+                      "I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
+                      "I've attached my résumé below. My projects and interests are presented here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
                     );
                     return preview;
                   })()}
