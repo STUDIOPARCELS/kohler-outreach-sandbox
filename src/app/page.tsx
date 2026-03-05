@@ -307,7 +307,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
   ),
   "Aerospace / Space": nicheTemplate(
-    "My father had a Cessna 172 — that early exposure is part of what drives my engineering interest."
+    "My father owns a Cessna 172 — an experience that shaped my engineering interest today."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
     "I've designed electromechanical systems with 3D-printed interfaces for my senior capstone — I'd welcome the chance to contribute to your team."
@@ -1366,7 +1366,9 @@ export default function HomePage() {
               <div>
                 <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Letter Body</span>
                 <div className="mt-1 bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-[50vh] overflow-y-auto" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
-                  {letterConfirm.body}
+                  {letterConfirm.body.split("kohler.solokit.app").map((part, idx, arr) => (
+                    <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
+                  ))}
                 </div>
               </div>
             </div>
