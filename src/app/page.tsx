@@ -98,8 +98,8 @@ function assembleLetter(
 
   // Standardize wording across all templates (including database default)
   body = body.replace(
-    "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.",
-    "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team."
+    "If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
+    "If you are considering an entry-level BSME/EIT, I would love to interview with your team."
   );
 
   // Remove duplicate paragraphs (safety net)
@@ -261,7 +261,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé. My projects and areas of study are here: kohler.solokit.app. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team.
+I've included my résumé. My projects and areas of study are here: kohler.solokit.app. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -1192,16 +1192,28 @@ export default function HomePage() {
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Send to</label>
                                             <div className="space-y-1">
                                               {contacts.map((ct, i) => (
-                                                <button key={i}
-                                                  onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
-                                                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-left"
-                                                >
-                                                  <div>
-                                                    <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
-                                                    {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
-                                                  </div>
-                                                  <div className="text-xs text-gray-400 text-right max-w-[160px] truncate">{companyAddress || c.city || ""}</div>
-                                                </button>
+                                                <div key={i} className="flex items-center gap-1">
+                                                  <button
+                                                    onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
+                                                    className="flex-1 flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-left"
+                                                  >
+                                                    <div>
+                                                      <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
+                                                      {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
+                                                    </div>
+                                                    <div className="text-xs text-gray-400 text-right max-w-[140px] truncate">{companyAddress || c.city || ""}</div>
+                                                  </button>
+                                                  <a
+                                                    href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(ct.contactname + " " + (expandedCompany || ""))}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="px-2 py-3 text-xs font-semibold rounded-lg bg-yellow-400 text-yellow-900 hover:bg-yellow-500 transition-colors whitespace-nowrap shrink-0"
+                                                    title="Verify this contact on LinkedIn"
+                                                  >
+                                                    Verify
+                                                  </a>
+                                                </div>
                                               ))}
                                             </div>
                                           </div>
@@ -1248,30 +1260,41 @@ export default function HomePage() {
                                                   {emailContacts.length > 0 && (
                                                     <div className="space-y-1">
                                                       {emailContacts.map((ct, i) => (
-                                                        <button key={i}
-                                                          onClick={() => {
-                                                            const idx = contacts.indexOf(ct);
-                                                            if (idx >= 0) applyContact(idx);
-                                                            // Generate fresh body for this specific contact
-                                                            const freshBody = template ? assembleLetter(
-                                                              template,
-                                                              expandedCompany || "",
-                                                              "",
-                                                              ct.contactname,
-                                                              ct.title,
-                                                              companyAddress,
-                                                              companies.find(co => co.companyname === expandedCompany)?.niche
-                                                            ).body : "";
-                                                            setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
-                                                          }}
-                                                          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-colors text-left"
-                                                        >
-                                                          <div>
-                                                            <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
-                                                            {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
-                                                          </div>
-                                                          <div className="text-xs text-sky-600 font-medium">{ct.email}</div>
-                                                        </button>
+                                                        <div key={i} className="flex items-center gap-1">
+                                                          <button
+                                                            onClick={() => {
+                                                              const idx = contacts.indexOf(ct);
+                                                              if (idx >= 0) applyContact(idx);
+                                                              const freshBody = template ? assembleLetter(
+                                                                template,
+                                                                expandedCompany || "",
+                                                                "",
+                                                                ct.contactname,
+                                                                ct.title,
+                                                                companyAddress,
+                                                                companies.find(co => co.companyname === expandedCompany)?.niche
+                                                              ).body : "";
+                                                              setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
+                                                            }}
+                                                            className="flex-1 flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-sky-300 hover:bg-sky-50 transition-colors text-left"
+                                                          >
+                                                            <div>
+                                                              <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
+                                                              {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
+                                                            </div>
+                                                            <div className="text-xs text-sky-600 font-medium">{ct.email}</div>
+                                                          </button>
+                                                          <a
+                                                            href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(ct.contactname + " " + (expandedCompany || ""))}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="px-2 py-3 text-xs font-semibold rounded-lg bg-yellow-400 text-yellow-900 hover:bg-yellow-500 transition-colors whitespace-nowrap shrink-0"
+                                                            title="Verify this contact on LinkedIn"
+                                                          >
+                                                            Verify
+                                                          </a>
+                                                        </div>
                                                       ))}
                                                     </div>
                                                   )}
