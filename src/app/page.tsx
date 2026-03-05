@@ -282,7 +282,7 @@ I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${ni
 
 I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
 
-Thank you so much for your time, and I hope to hear from you!
+Thank you so much for your time!
 
 Sincerely,
 
@@ -1160,10 +1160,20 @@ export default function HomePage() {
                                   </div>
                                 ) : (
                                   <>
-                                    {/* Company description */}
-                                    <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-100" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
-                                      <p className="text-xs text-gray-500 italic">{c.company_about || "Company description"}</p>
+                                    {/* Company name + address */}
+                                    <div className="mb-3 flex items-start justify-between">
+                                      <div>
+                                        <h4 className="text-sm font-bold text-gray-900">{c.companyname}</h4>
+                                        {companyAddress && <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line">{companyAddress}</p>}
+                                      </div>
                                     </div>
+
+                                    {/* Company description */}
+                                    {c.company_about && (
+                                    <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-100" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
+                                      <p className="text-xs text-gray-600 leading-relaxed">{c.company_about}</p>
+                                    </div>
+                                    )}
 
                                     {/* Contacts */}
                                     {contacts.length === 0 && (
@@ -1194,6 +1204,7 @@ export default function HomePage() {
                                             <div className="flex-1 min-w-0">
                                               <div className="text-sm font-semibold text-gray-900 truncate">{ct.contactname}</div>
                                               {ct.title && <div className="text-xs text-gray-500 truncate">{ct.title}</div>}
+                                              {ct.email && <div className="text-xs text-sky-600 truncate">{ct.email}</div>}
                                             </div>
                                             <button
                                               onClick={() => {
@@ -1296,7 +1307,7 @@ export default function HomePage() {
                     if (dearIdx > 0) preview = preview.substring(dearIdx);
                     preview = preview.replace(
                       "I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
-                      "I've attached my résumé below. My projects and interests are presented here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
+                      "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
                     );
                     return preview;
                   })()}
