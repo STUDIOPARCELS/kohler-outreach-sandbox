@@ -809,10 +809,15 @@ export default function HomePage() {
                         {mailed.length === 0 ? (
                           <p className="text-xs text-gray-400 px-3 py-4 text-center">No letters mailed yet</p>
                         ) : mailed.map((l, i) => (
-                          <div key={i} className="px-3 py-2 border-b last:border-0 hover:bg-gray-50">
-                            <div className="text-xs font-semibold text-gray-900">{l.companyname}</div>
-                            <div className="text-xs text-gray-500">{l.contactname}{l.sent_at ? ` · ${new Date(l.sent_at).toLocaleDateString()}` : ""}</div>
-                          </div>
+                          <details key={i} className="border-b last:border-0">
+                            <summary className="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between">
+                              <span className="text-xs font-semibold text-gray-900">{l.companyname}</span>
+                              <span className="text-xs text-gray-400">{l.sent_at ? new Date(l.sent_at).toLocaleDateString() : ""}</span>
+                            </summary>
+                            <div className="px-3 pb-2 text-xs text-gray-500">
+                              {l.contactname}{l.contact_title ? ` · ${l.contact_title}` : ""}
+                            </div>
+                          </details>
                         ))}
                       </div>
                     );
@@ -834,10 +839,16 @@ export default function HomePage() {
                         {emailed.length === 0 ? (
                           <p className="text-xs text-gray-400 px-3 py-4 text-center">No emails sent yet</p>
                         ) : emailed.map((l, i) => (
-                          <div key={i} className="px-3 py-2 border-b last:border-0 hover:bg-sky-50">
-                            <div className="text-xs font-semibold text-gray-900">{l.companyname}</div>
-                            <div className="text-xs text-gray-500">{l.contactname} · {l.contact_email}{l.sent_at ? ` · ${new Date(l.sent_at).toLocaleDateString()}` : ""}</div>
-                          </div>
+                          <details key={i} className="border-b last:border-0">
+                            <summary className="px-3 py-2 hover:bg-sky-50 cursor-pointer flex items-center justify-between">
+                              <span className="text-xs font-semibold text-gray-900">{l.companyname}</span>
+                              <span className="text-xs text-gray-400">{l.sent_at ? new Date(l.sent_at).toLocaleDateString() : ""}</span>
+                            </summary>
+                            <div className="px-3 pb-2 text-xs text-gray-500">
+                              {l.contactname}{l.contact_title ? ` · ${l.contact_title}` : ""}<br/>
+                              {l.contact_email}
+                            </div>
+                          </details>
                         ))}
                       </div>
                     );
