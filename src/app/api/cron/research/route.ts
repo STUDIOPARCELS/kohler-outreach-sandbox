@@ -25,29 +25,13 @@ async function searchAndSave(companyname: string): Promise<{
         query: {
           current_employer: [companyname],
           current_title: [
-            "Engineering Manager",
-            "Director of Engineering",
-            "VP Engineering",
-            "VP of Engineering",
-            "Chief Engineer",
-            "Principal Engineer",
-            "Lead Engineer",
-            "Senior Engineer",
-            "Mechanical Engineer",
-            "Design Engineer",
-            "Manufacturing Engineer",
-            "Project Engineer",
-            "Plant Manager",
-            "Operations Manager",
-            "General Manager",
-            "-Recruiter",
-            "-HR",
-            "-Human Resources",
-            "-Talent Acquisition",
-            "-Staffing",
-            "-Sales",
-            "-Marketing",
-            "-Account Executive",
+            "Engineer", "Engineering Manager", "Director of Engineering",
+            "VP Engineering", "VP of Engineering", "Chief Engineer",
+            "Principal Engineer", "Lead Engineer", "Senior Engineer",
+            "Mechanical Engineer", "Design Engineer", "Manufacturing Engineer",
+            "Project Engineer", "Plant Manager", "Operations Manager",
+            "General Manager", "President", "Owner", "Principal",
+            "Founder", "CEO", "CTO", "COO",
           ],
           location: ["Colorado"],
         },
@@ -63,7 +47,37 @@ async function searchAndSave(companyname: string): Promise<{
     const data = await res.json();
     if (data.code === "throttled") return { saved: 0, error: "rate_limited" };
 
-    const profiles = data.profiles || [];
+    let profiles = data.profiles || [];
+    
+    // Retry without location if Colorado returns nothing
+    if (profiles.length === 0) {
+      const retryRes = await fetch(`${RR_BASE}/v2/api/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Api-Key": RR_API_KEY },
+        body: JSON.stringify({
+          query: {
+            current_employer: [companyname],
+            current_title: [
+              "Engineer", "Engineering Manager", "Director of Engineering",
+              "VP Engineering", "VP of Engineering", "Chief Engineer",
+              "Principal Engineer", "Lead Engineer", "Senior Engineer",
+              "Mechanical Engineer", "Design Engineer", "Manufacturing Engineer",
+              "Project Engineer", "Plant Manager", "Operations Manager",
+              "General Manager", "President", "Owner", "Principal",
+              "Founder", "CEO", "CTO", "COO",
+            ],
+          },
+          start: 1,
+          page_size: 3,
+          order_by: "popularity",
+        }),
+      });
+      if (retryRes.ok) {
+        const retryData = await retryRes.json();
+        profiles = retryData.profiles || [];
+      }
+    }
+
     if (profiles.length === 0) {
       // Mark company as searched even if nothing found — insert a placeholder
       // so the cron doesn't keep retrying it

@@ -20,24 +20,13 @@ export async function POST(req: NextRequest) {
         query: {
           current_employer: [companyname],
           current_title: [
-            "Engineering Manager",
-            "Director of Engineering",
-            "VP Engineering",
-            "VP of Engineering",
-            "Chief Engineer",
-            "Principal Engineer",
-            "Lead Engineer",
-            "Senior Engineer",
-            "Mechanical Engineer",
-            "Design Engineer",
-            "Manufacturing Engineer",
-            "Project Engineer",
-            "Plant Manager",
-            "Operations Manager",
-            "General Manager",
-            "-Recruiter", "-HR", "-Human Resources",
-            "-Talent Acquisition", "-Staffing",
-            "-Sales", "-Marketing", "-Account Executive",
+            "Engineer", "Engineering Manager", "Director of Engineering",
+            "VP Engineering", "VP of Engineering", "Chief Engineer",
+            "Principal Engineer", "Lead Engineer", "Senior Engineer",
+            "Mechanical Engineer", "Design Engineer", "Manufacturing Engineer",
+            "Project Engineer", "Plant Manager", "Operations Manager",
+            "General Manager", "President", "Owner", "Principal",
+            "Founder", "CEO", "CTO", "COO",
           ],
           location: ["Colorado"],
         },
@@ -64,12 +53,43 @@ export async function POST(req: NextRequest) {
     }
 
     const profiles = searchData.profiles || [];
-    if (profiles.length === 0) {
-      return NextResponse.json({ contacts: [], message: "No results on RocketReach for this company in Colorado." });
+    
+    // If no results with Colorado filter, retry without location
+    let finalProfiles = profiles;
+    if (finalProfiles.length === 0) {
+      const retryRes = await fetch(`${RR_BASE}/v2/api/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Api-Key": RR_API_KEY },
+        body: JSON.stringify({
+          query: {
+            current_employer: [companyname],
+            current_title: [
+              "Engineer", "Engineering Manager", "Director of Engineering",
+              "VP Engineering", "VP of Engineering", "Chief Engineer",
+              "Principal Engineer", "Lead Engineer", "Senior Engineer",
+              "Mechanical Engineer", "Design Engineer", "Manufacturing Engineer",
+              "Project Engineer", "Plant Manager", "Operations Manager",
+              "General Manager", "President", "Owner", "Principal",
+              "Founder", "CEO", "CTO", "COO",
+            ],
+          },
+          start: 1,
+          page_size: 5,
+          order_by: "popularity",
+        }),
+      });
+      if (retryRes.ok) {
+        const retryData = await retryRes.json();
+        finalProfiles = retryData.profiles || [];
+      }
+    }
+
+    if (finalProfiles.length === 0) {
+      return NextResponse.json({ contacts: [], message: "No results on RocketReach for this company." });
     }
 
     const saved = [];
-    for (const p of profiles) {
+    for (const p of finalProfiles) {
       const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "";
       if (!name) continue;
       const teaser = p.teaser || {};
