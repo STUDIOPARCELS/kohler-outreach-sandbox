@@ -332,6 +332,7 @@ export default function HomePage() {
   const [currentLetter, setCurrentLetter] = useState<LetterRow | null>(null);
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState("");
+  const [letterTab, setLetterTab] = useState<"letter" | "email">("letter");
   const [saving, setSaving] = useState(false);
   const [expandLoading, setExpandLoading] = useState(false);
   const [researching, setResearching] = useState(false);
@@ -1146,120 +1147,101 @@ export default function HomePage() {
                                       </div>
                                     )}
 
-                                    {/* Letter preview */}
-                                    {assembled && !editing && (
-                                      <div
-                                        className="rounded-xl overflow-hidden border border-gray-200 mt-2"
-                                        style={{
-                                          boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08), 0 2px 6px -2px rgba(0,0,0,0.04)",
-                                        }}
-                                      >
-                                        <div className="px-4 py-2.5 border-b bg-gradient-to-r from-gray-50 to-white">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Physical Letter</span>
-                                            <div className="flex gap-2">
+                                    {/* Tabbed Letter/Email view */}
+                                    {assembled && (
+                                      <div className="rounded-xl overflow-hidden border border-gray-200 mt-2" style={{ boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08)" }}>
+                                        {/* Tabs */}
+                                        <div className="flex border-b">
+                                          <button
+                                            onClick={() => { setLetterTab("letter"); setEditing(false); }}
+                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                                              letterTab === "letter"
+                                                ? "bg-white text-gray-700 border-b-2 border-green-600"
+                                                : "bg-gray-50 text-gray-400 hover:text-gray-600"
+                                            }`}
+                                          >
+                                            Physical Letter
+                                          </button>
+                                          {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
+                                            <button
+                                              onClick={() => { setLetterTab("email"); setEditing(false); }}
+                                              className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                                                letterTab === "email"
+                                                  ? "bg-white text-sky-600 border-b-2 border-sky-500"
+                                                  : "bg-gray-50 text-gray-400 hover:text-gray-600"
+                                              }`}
+                                            >
+                                              Email · {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
+                                            </button>
+                                          )}
+                                        </div>
+
+                                        {/* Tab content */}
+                                        {!editing ? (
+                                          <>
+                                            {/* Action bar */}
+                                            <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50/50">
                                               <button
-                                                onClick={() => { setEditing(true); setEditBody(assembled.body); }}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
+                                                onClick={() => { setEditing(true); setEditBody(letterTab === "email" ? (() => { let t = assembled.body; const idx = t.indexOf("Hello "); if (idx > 0) t = t.substring(idx); t = t.replace("I've included my résumé", "I've attached my résumé below"); return t; })() : assembled.body); }}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200"
                                               >
                                                 Edit
                                               </button>
-                                              <button
-                                                onClick={() => printAndLog()}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors flex items-center gap-1.5"
-                                                style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
-                                              >
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                                </svg>
-                                                Print
-                                              </button>
+                                              {letterTab === "letter" ? (
+                                                <button
+                                                  onClick={() => printAndLog()}
+                                                  className="px-4 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors flex items-center gap-1.5"
+                                                  style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+                                                >
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                  </svg>
+                                                  Print
+                                                </button>
+                                              ) : (
+                                                <button
+                                                  onClick={() => emailLetter()}
+                                                  disabled={emailing}
+                                                  className="px-4 py-1.5 text-xs font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                                  style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+                                                >
+                                                  {emailing ? (
+                                                    <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</>
+                                                  ) : (
+                                                    <><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> Send Email + Resume</>
+                                                  )}
+                                                </button>
+                                              )}
                                             </div>
-                                          </div>
-                                        </div>
-                                        <div
-                                          className="bg-white"
-                                          style={{
-                                            padding: "16px 16px",
-                                            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                                            fontSize: "10pt",
-                                            lineHeight: "1.6",
-                                            whiteSpace: "pre-wrap",
-                                            maxHeight: "400px",
-                                            overflowY: "auto",
-                                          }}
-                                        >
-                                          {assembled.body}
-                                        </div>
-
-                                        {/* Email action bar */}
-                                        {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
-                                          <div className="px-4 py-2.5 border-t bg-gradient-to-r from-sky-50 to-white flex items-center justify-between">
-                                            <div>
-                                              <span className="text-xs font-bold text-sky-600 uppercase tracking-wider">Email Version</span>
-                                              <div className="text-xs text-sky-500 font-medium truncate mt-0.5">
-                                                → {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
+                                            {/* Preview body */}
+                                            <div className="bg-white" style={{ padding: "16px", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap", maxHeight: "400px", overflowY: "auto" }}>
+                                              {letterTab === "letter" ? assembled.body : (() => {
+                                                let t = assembled.body;
+                                                const idx = t.indexOf("Hello ");
+                                                if (idx > 0) t = t.substring(idx);
+                                                t = t.replace("I've included my résumé", "I've attached my résumé below");
+                                                return t;
+                                              })()}
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <>
+                                            {/* Edit mode */}
+                                            <div className="flex items-center justify-between px-4 py-2 border-b bg-blue-50/50">
+                                              <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Editing</span>
+                                              <div className="flex gap-2">
+                                                <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 transition-colors border border-gray-200">Cancel</button>
+                                                <button onClick={saveLetter} disabled={saving} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors" style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}>{saving ? "Saving..." : "Save"}</button>
                                               </div>
                                             </div>
-                                            <button
-                                              onClick={() => emailLetter()}
-                                              disabled={emailing}
-                                              className="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
-                                              style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
-                                            >
-                                              {emailing ? (
-                                                <>
-                                                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                  Sending...
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                  </svg>
-                                                  Email + Resume
-                                                </>
-                                              )}
-                                            </button>
-                                          </div>
+                                            <textarea
+                                              value={editBody}
+                                              onChange={(e) => setEditBody(e.target.value)}
+                                              className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none"
+                                              style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontSize: "10pt", lineHeight: "1.5", minHeight: "400px", whiteSpace: "pre-wrap" }}
+                                            />
+                                          </>
                                         )}
-                                      </div>
-                                    )}
-
-                                    {/* Edit mode */}
-                                    {editing && (
-                                      <div className="mt-2 rounded-xl overflow-hidden border border-blue-200" style={{ boxShadow: "0 4px 12px -2px rgba(37,99,235,0.15)" }}>
-                                        <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gradient-to-r from-blue-50 to-white">
-                                          <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Editing Letter</span>
-                                          <div className="flex gap-2">
-                                            <button
-                                              onClick={() => setEditing(false)}
-                                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors border border-gray-200"
-                                            >
-                                              Cancel
-                                            </button>
-                                            <button
-                                              onClick={saveLetter}
-                                              disabled={saving}
-                                              className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                                              style={{ boxShadow: "0 2px 4px rgba(37,99,235,0.3)" }}
-                                            >
-                                              {saving ? "Saving..." : "Save Letter"}
-                                            </button>
-                                          </div>
-                                        </div>
-                                        <textarea
-                                          value={editBody}
-                                          onChange={(e) => setEditBody(e.target.value)}
-                                          className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none"
-                                          style={{
-                                            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                                            fontSize: "10pt",
-                                            lineHeight: "1.5",
-                                            minHeight: "400px",
-                                            whiteSpace: "pre-wrap",
-                                          }}
-                                        />
                                       </div>
                                     )}
 
