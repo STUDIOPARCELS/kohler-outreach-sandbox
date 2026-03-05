@@ -905,9 +905,13 @@ export default function HomePage() {
           <button
             onClick={async () => {
               await fetch("/api/seed-test", { method: "POST" });
-              toast("Test company ready");
               await loadData();
-              setCompSearch("LISA WOOD");
+              setCompSearch("");
+              // Find and expand LISA WOOD STUDIO directly
+              setTimeout(() => {
+                expandCompany("LISA WOOD STUDIO");
+              }, 500);
+              toast("Test company loaded");
             }}
             className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200 transition-colors whitespace-nowrap"
           >
