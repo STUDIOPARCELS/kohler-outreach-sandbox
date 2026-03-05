@@ -362,6 +362,7 @@ export default function HomePage() {
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string} | null>(null);
+  const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string} | null>(null);
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
@@ -1195,7 +1196,11 @@ export default function HomePage() {
                                               {ct.title && <div className="text-xs text-gray-500 truncate">{ct.title}</div>}
                                             </div>
                                             <button
-                                              onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
+                                              onClick={() => {
+                                                applyContact(i);
+                                                const freshBody = template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "";
+                                                setLetterConfirm({ contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
+                                              }}
                                               className="px-3 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors whitespace-nowrap shrink-0"
                                             >
                                               Letter
@@ -1207,7 +1212,7 @@ export default function HomePage() {
                                                   const freshBody = template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "";
                                                   setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
                                                 }}
-                                                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap shrink-0"
+                                                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors whitespace-nowrap shrink-0"
                                               >
                                                 Email
                                               </button>
@@ -1225,34 +1230,6 @@ export default function HomePage() {
                                       </div>
                                     )}
 
-                                    {/* Physical Letter preview (after clicking Letter button) */}
-                                    {letterTab === ("letter_preview") && assembled && (
-                                      <div className="mt-3 rounded-xl overflow-hidden border border-green-200" style={{ boxShadow: "0 4px 12px -2px rgba(0,0,0,0.08)" }}>
-                                        <div className="px-4 py-2 border-b bg-green-50/50 flex items-center justify-between">
-                                          <button onClick={() => setLetterTab("letter")} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back</button>
-                                          <div className="flex gap-2">
-                                            {!editing ? (
-                                              <>
-                                                <button onClick={() => { setEditing(true); setEditBody(assembled.body); }} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Edit</button>
-                                                <button onClick={() => printAndLog()} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 flex items-center gap-1.5">
-                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg> Print
-                                                </button>
-                                              </>
-                                            ) : (
-                                              <>
-                                                <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-200">Cancel</button>
-                                                <button onClick={saveLetter} disabled={saving} className="px-4 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
-                                              </>
-                                            )}
-                                          </div>
-                                        </div>
-                                        {!editing ? (
-                                          <div className="bg-white" style={{ padding: "16px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap", maxHeight: "400px", overflowY: "auto" }}>{assembled.body}</div>
-                                        ) : (
-                                          <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} className="w-full border-0 p-4 text-xs focus:ring-0 focus:outline-none" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.5", minHeight: "400px", whiteSpace: "pre-wrap" }} />
-                                        )}
-                                      </div>
-                                    )}
 
                                   </>
                                 )}
@@ -1353,6 +1330,47 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 Send Email
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Letter Popup ── */}
+      {letterConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm no-print">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-gradient-to-r from-green-700 to-green-800 shrink-0">
+              <h3 className="text-white font-bold text-base">Physical Letter</h3>
+            </div>
+            <div className="px-6 py-5 space-y-3 overflow-y-auto">
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">To</span>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5">{letterConfirm.contactname}</p>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company</span>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5">{letterConfirm.companyname}</p>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Letter Body</span>
+                <div className="mt-1 bg-gray-50 rounded-xl border border-gray-200 p-4 max-h-[50vh] overflow-y-auto" style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", fontSize: "10pt", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                  {letterConfirm.body}
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
+              <button onClick={() => setLetterConfirm(null)} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Close</button>
+              <button onClick={() => { setLetterConfirm(null); setEditing(true); setEditBody(letterConfirm.body); }} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Edit</button>
+              <button
+                onClick={() => { setLetterConfirm(null); printAndLog(); }}
+                className="px-5 py-2 text-sm font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors flex items-center gap-2"
+                style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
               </button>
             </div>
           </div>
