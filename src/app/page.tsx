@@ -295,7 +295,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I grew up in Sun Valley, ID and have spent my life in the outdoors — the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
-    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to work in woodworking every day would be a dream come true."
+    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to work in woodworking would be a dream come true."
   ),
   "Medical / Biotech": nicheTemplate(
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I'd welcome the chance to apply that experience in medical device engineering."
@@ -325,7 +325,7 @@ export default function HomePage() {
   const [batchStatus, setBatchStatus] = useState("");
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
-  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string} | null>(null);
+  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string} | null>(null);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
@@ -382,8 +382,12 @@ export default function HomePage() {
       ]);
       const contData = await contRes.json();
       const compData = await compRes.json();
-      if (Array.isArray(contData)) setContacts(contData);
-      else setContacts([]);
+      if (Array.isArray(contData)) {
+        const realContacts = contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)");
+        setContacts(realContacts);
+      } else {
+        setContacts([]);
+      }
       if (compData && !compData.error) {
         const parts = [
           compData.mailing_address1,
@@ -561,7 +565,7 @@ export default function HomePage() {
       // Reload contacts for this company
       const contRes = await fetch(`/api/contacts?companyname=${encodeURIComponent(companyname)}`);
       const contData = await contRes.json();
-      if (Array.isArray(contData)) setContacts(contData);
+      if (Array.isArray(contData)) setContacts(contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)"));
 
       // Reload letters
       const qRes = await fetch("/api/queue");
@@ -593,6 +597,7 @@ export default function HomePage() {
       to: email,
       contactname: currentLetter.contactname || contact?.contactname || "",
       companyname: expandedCompany,
+      body: assembled.body,
     });
   }
 
@@ -1200,11 +1205,11 @@ export default function HomePage() {
       {/* ── Email Confirmation Dialog ── */}
       {emailConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm no-print">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-            <div className="px-6 py-4 bg-gradient-to-r from-sky-500 to-sky-600">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-gradient-to-r from-sky-500 to-sky-600 shrink-0">
               <h3 className="text-white font-bold text-base">Confirm Email</h3>
             </div>
-            <div className="px-6 py-5 space-y-3">
+            <div className="px-6 py-5 space-y-3 overflow-y-auto">
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">To</span>
                 <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.contactname}</p>
@@ -1217,6 +1222,17 @@ export default function HomePage() {
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
                 <p className="text-sm text-gray-700 mt-0.5">Mechanical Engineer — Colorado School of Mines, EIT</p>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
+                <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {(() => {
+                    let preview = emailConfirm.body;
+                    const dearIdx = preview.indexOf("Dear ");
+                    if (dearIdx > 0) preview = preview.substring(dearIdx);
+                    return preview;
+                  })()}
+                </div>
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attachments</span>
