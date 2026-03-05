@@ -97,7 +97,6 @@ function assembleLetter(
   }
 
   // Standardize wording across all templates (including database default)
-  body = body.replace(/this passion/g, "my passion");
   body = body.replace(
     "Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview.",
     "If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team."
