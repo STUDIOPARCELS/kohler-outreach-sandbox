@@ -91,12 +91,18 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Count total remaining
+  const { count: remainingCount } = await supabaseAdmin
+    .from("companies")
+    .select("*", { count: "exact", head: true })
+    .is("mailing_address1", null);
+
   return NextResponse.json({
     processed: companies.length,
     updated,
     errors: errors.length,
     errorDetails: errors.slice(0, 10),
-    remaining: 209 - updated, // approximate
-    message: `Updated ${updated} of ${companies.length} companies. ${errors.length} errors.`,
+    remaining: (remainingCount || 0) - updated,
+    message: `Updated ${updated} of ${companies.length} companies. ${errors.length} errors. ${(remainingCount || 0) - updated} still missing.`,
   });
 }

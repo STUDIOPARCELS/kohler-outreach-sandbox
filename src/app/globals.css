@@ -2,8 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   @apply bg-gray-50 text-gray-900;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Prevent tap highlight on mobile */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth micro-transitions on interactive elements */
+button, input, textarea {
+  transition: all 0.15s ease-out;
+}
+
+/* Fix input zoom on iOS (font-size < 16px triggers zoom) */
+@media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
 }
 
 @media print {
@@ -12,5 +37,6 @@ body {
   }
   body {
     background: white;
+    padding: 0;
   }
 }
