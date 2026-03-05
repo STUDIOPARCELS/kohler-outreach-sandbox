@@ -1289,7 +1289,7 @@ export default function HomePage() {
             }
 
             return (
-              <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
                 {orderedNiches.map((niche) => {
                   const items = grouped.get(niche);
                   if (!items || items.length === 0) return null;
