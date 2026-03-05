@@ -721,15 +721,17 @@ export default function HomePage() {
 
   /* ── Assembled letter for expanded company — always regenerate from template ── */
   const assembled = expandedCompany && template && currentLetter
-    ? assembleLetter(
-        template,
-        expandedCompany,
-        "",
-        currentLetter.contactname || (contacts.length > 0 ? contacts[selectedContactIdx]?.contactname : undefined),
-        currentLetter.contact_title || (contacts.length > 0 ? contacts[selectedContactIdx]?.title : undefined),
-        companyAddress,
-        companies.find((c) => c.companyname === expandedCompany)?.niche
-      )
+    ? (currentLetter.body_final
+      ? { body: currentLetter.body_final }
+      : assembleLetter(
+          template,
+          expandedCompany,
+          "",
+          currentLetter.contactname || (contacts.length > 0 ? contacts[selectedContactIdx]?.contactname : undefined),
+          currentLetter.contact_title || (contacts.length > 0 ? contacts[selectedContactIdx]?.title : undefined),
+          companyAddress,
+          companies.find((c) => c.companyname === expandedCompany)?.niche
+        ))
     : null;
 
   const statusBadge = (s: string) => {
@@ -767,17 +769,17 @@ export default function HomePage() {
                   ENTRY LEVEL BSME / EIT · DENVER METRO
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-center px-4 py-2 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm">
+              <div className="flex items-stretch gap-4">
+                <div className="text-center px-4 py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[90px]">
                   <div className="text-2xl font-bold text-white">{companies.length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Companies</div>
                 </div>
-                <div className="text-center px-4 py-2 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm">
+                <div className="text-center px-4 py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[90px]">
                   <div className="text-2xl font-bold text-white">{lettersMap.size}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Letters</div>
                   <div className="text-xs text-green-300 font-semibold mt-0.5">{Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed</div>
                 </div>
-                <div className="text-center px-4 py-2 bg-sky-500/20 rounded-xl border border-sky-400/30 backdrop-blur-sm">
+                <div className="text-center px-4 py-3 bg-sky-500/20 rounded-xl border border-sky-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[90px]">
                   <div className="text-2xl font-bold text-white">{companies.filter(c => c.email).length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Emails</div>
                   <div className="text-xs text-sky-300 font-semibold mt-0.5">{Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} sent</div>
