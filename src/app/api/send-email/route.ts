@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Always include handwritten signature image
-    const signatureImg = `<img src="https://kohler-outreach.vercel.app/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="200" style="display:block; margin:4px 0;" />`;
+    const signatureImg = `<img src="https://kohler-outreach.vercel.app/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="100" style="display:block; margin:4px 0;" />`;
 
     // Convert plain text to HTML with proper email signature
     const htmlBody = `
