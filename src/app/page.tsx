@@ -261,7 +261,7 @@ I hope you are doing well. My name is Kohler Wood, EIT and recent BSME graduate 
 
 I am writing because I am interested in the work you are doing at {{COMPANY}}. ${nicheParagraph}
 
-My résumé is included. My projects and areas of study can be viewed here: kohler.solokit.app. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team.
+I've included my résumé. My projects and areas of study are here: kohler.solokit.app. Should you be considering an entry-level BSME/EIT, I would love the opportunity to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -1156,7 +1156,7 @@ export default function HomePage() {
                                       >
                                         <div className="px-4 py-2.5 border-b bg-gradient-to-r from-gray-50 to-white">
                                           <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Letter Preview</span>
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Physical Letter</span>
                                             <div className="flex gap-2">
                                               <button
                                                 onClick={() => { setEditing(true); setEditBody(assembled.body); }}
@@ -1166,40 +1166,16 @@ export default function HomePage() {
                                               </button>
                                               <button
                                                 onClick={() => printAndLog()}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors"
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors flex items-center gap-1.5"
                                                 style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
                                               >
-                                                Print & Send
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                </svg>
+                                                Print
                                               </button>
-                                              {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
-                                                <button
-                                                  onClick={() => emailLetter()}
-                                                  disabled={emailing}
-                                                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
-                                                  style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
-                                                >
-                                                  {emailing ? (
-                                                    <>
-                                                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                      Sending...
-                                                    </>
-                                                  ) : (
-                                                    <>
-                                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                      </svg>
-                                                      Email + Resume
-                                                    </>
-                                                  )}
-                                                </button>
-                                              )}
                                             </div>
                                           </div>
-                                          {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
-                                            <div className="mt-1.5 text-xs text-sky-600 font-medium truncate">
-                                              → {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
-                                            </div>
-                                          )}
                                         </div>
                                         <div
                                           className="bg-white"
@@ -1215,6 +1191,38 @@ export default function HomePage() {
                                         >
                                           {assembled.body}
                                         </div>
+
+                                        {/* Email action bar */}
+                                        {(currentLetter?.contact_email || contacts[selectedContactIdx]?.email) && (
+                                          <div className="px-4 py-2.5 border-t bg-gradient-to-r from-sky-50 to-white flex items-center justify-between">
+                                            <div>
+                                              <span className="text-xs font-bold text-sky-600 uppercase tracking-wider">Email Version</span>
+                                              <div className="text-xs text-sky-500 font-medium truncate mt-0.5">
+                                                → {currentLetter?.contact_email || contacts[selectedContactIdx]?.email}
+                                              </div>
+                                            </div>
+                                            <button
+                                              onClick={() => emailLetter()}
+                                              disabled={emailing}
+                                              className="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                              style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+                                            >
+                                              {emailing ? (
+                                                <>
+                                                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                  Sending...
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                  </svg>
+                                                  Email + Resume
+                                                </>
+                                              )}
+                                            </button>
+                                          </div>
+                                        )}
                                       </div>
                                     )}
 
@@ -1329,6 +1337,7 @@ export default function HomePage() {
                     let preview = emailConfirm.body;
                     const dearIdx = preview.indexOf("Hello ");
                     if (dearIdx > 0) preview = preview.substring(dearIdx);
+                    preview = preview.replace("I've included my résumé", "I've attached my résumé below");
                     return preview;
                   })()}
                 </div>

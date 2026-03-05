@@ -38,12 +38,15 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = getBaseUrl(req);
 
-    // Strip postal header for email — start at "Dear [Name]"
+    // Strip postal header for email — start at "Hello [Name]"
     let emailBody = body;
     const dearIdx = emailBody.indexOf("Hello ");
     if (dearIdx > 0) {
       emailBody = emailBody.substring(dearIdx);
     }
+
+    // Adjust wording for email context
+    emailBody = emailBody.replace("I've included my résumé", "I've attached my résumé below");
 
     // Strip the plain-text signature (everything from "Sincerely," on)
     // We'll replace it with a proper HTML signature
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest) {
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 650px;">
         ${emailBody
           .split("\n\n")
-          .map((p: string) => `<p style="margin: 0 0 12px 0;">${p.replace(/\n/g, "<br>")}</p>`)
+          .map((p: string) => `<p style="margin: 0 0 12px 0;">${p.replace(/\n/g, "<br>").replace(/kohler\.solokit\.app/g, '<a href="https://kohler.solokit.app" style="color:#2563eb; text-decoration:none;">kohler.solokit.app</a>')}</p>`)
           .join("")}
 
         <p style="margin: 16px 0 0 0;">Sincerely,</p>
