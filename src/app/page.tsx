@@ -744,11 +744,13 @@ export default function HomePage() {
                   </span>
                   <span className="text-xs text-white font-semibold bg-green-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-green-400/50 text-center">
                     {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed
-                </span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
         {/* ── Gray divider line ── */}
         <div className="border-b border-gray-300 my-5" />
