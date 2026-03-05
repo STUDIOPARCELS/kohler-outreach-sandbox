@@ -332,7 +332,7 @@ export default function HomePage() {
   const [currentLetter, setCurrentLetter] = useState<LetterRow | null>(null);
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState("");
-  const [letterTab, setLetterTab] = useState<"letter" | "email">("letter");
+  const [letterTab, setLetterTab] = useState<"letter" | "email" | "letter_preview">("letter");
   const [showMailedList, setShowMailedList] = useState(false);
   const [showEmailedList, setShowEmailedList] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1162,7 +1162,7 @@ export default function HomePage() {
                                         <div className="flex">
                                           <button
                                             onClick={() => { setLetterTab("letter"); setEditing(false); }}
-                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tl-xl text-white ${letterTab === "letter" || letterTab === ("letter_preview" as "letter") ? "bg-green-700" : "bg-green-700/40"}`}
+                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tl-xl text-white ${letterTab === "letter" || letterTab === ("letter_preview") ? "bg-green-700" : "bg-green-700/40"}`}
                                           >Physical Letter</button>
                                           <button
                                             onClick={() => { setLetterTab("email"); setEditing(false); }}
@@ -1177,7 +1177,7 @@ export default function HomePage() {
                                             <div className="space-y-1">
                                               {contacts.map((ct, i) => (
                                                 <button key={i}
-                                                  onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview" as "letter"); }}
+                                                  onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
                                                   className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-left"
                                                 >
                                                   <div>
@@ -1192,7 +1192,7 @@ export default function HomePage() {
                                         )}
 
                                         {/* Physical Letter — preview after selecting contact */}
-                                        {letterTab === ("letter_preview" as "letter") && assembled && (
+                                        {letterTab === ("letter_preview") && assembled && (
                                           <>
                                             <div className="px-4 py-2 border-b bg-gray-50/50 flex items-center justify-between">
                                               <button onClick={() => setLetterTab("letter")} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Contacts</button>
