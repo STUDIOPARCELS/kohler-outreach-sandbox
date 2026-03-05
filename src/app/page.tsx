@@ -69,7 +69,7 @@ function cleanCompanyName(name: string): string {
   // But only if the name has 2+ words (don't strip single-word names)
   const words = clean.split(/\s+/);
   // Special overrides
-  const overrides: Record<string, string> = { "York Space Systems": "York" };
+  const overrides: Record<string, string> = { "York Space Systems": "York", "H5 Data Centers": "H5", "Blue Canyon Technologies": "Blue Canyon", "Alchemy Bikes": "Alchemy" };
   if (overrides[clean]) return overrides[clean];
   
   const keepFull = ["YG Acoustics", "Boulder Amplifiers", "Blue Origin", "Air Squared", "Acoustical Elements", "Wave Engineering"];
@@ -77,7 +77,7 @@ function cleanCompanyName(name: string): string {
     const productSuffixes = [
       "Skis", "Ski", "Cycles", "Bikes", "Vehicles", "Motors", "Acoustics",
       "Amplifiers", "Technologies", "Systems", "Solutions", "Industries",
-      "Products", "Services", "Metals", "Engineering", "Robotics",
+      "Products", "Services", "Metals", "Engineering", "Robotics", "Centers", "Designs",
     ];
     const lastWord = words[words.length - 1];
     if (productSuffixes.some(s => s.toLowerCase() === lastWord.toLowerCase())) {
@@ -1470,6 +1470,14 @@ export default function HomePage() {
                   className="px-4 py-2 text-sm font-semibold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   Edit
+                </button>
+              )}
+              {emailConfirm.editing && (
+                <button
+                  onClick={() => setEmailConfirm({ ...emailConfirm, editing: false })}
+                  className="px-4 py-2 text-sm font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                >
+                  Save
                 </button>
               )}
               <button
