@@ -127,11 +127,11 @@ const NICHE_ORDER = [
   "Automotive / Vehicles",
   "Woodworking / Furniture / Cabinetry / Prototyping",
   "Energy / Renewables / Power",
-  "MEP / HVAC / Building Systems",
-  "Construction / Civil / Heavy Industry",
   "Manufacturing / Automation / Product Design",
-  "Water / Environmental / Geotech",
   "Quantum / Deep Tech / Electronics / Robotics",
+  "MEP / HVAC / Building Systems",
+  "Water / Environmental / Geotech",
+  "Construction / Civil / Heavy Industry",
   "Aerospace / Space",
   "Medical / Biotech",
   "Food / Beverage Manufacturing",
@@ -726,18 +726,24 @@ export default function HomePage() {
                   ENTRY LEVEL BSME / EIT · DENVER METRO
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
                   {companies.length} companies
                 </span>
-                <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
-                  {lettersMap.size} letters
-                </span>
-                <span className="text-xs text-white font-semibold bg-sky-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-sky-400/50">
-                  {Array.from(lettersMap.values()).filter(l => l.contact_email).length} emailable
-                </span>
-                <span className="text-xs text-white font-semibold bg-green-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-green-400/50">
-                  {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed · {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} emailed
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30 text-center">
+                    {lettersMap.size} letters
+                  </span>
+                  <span className="text-xs text-white font-semibold bg-sky-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-sky-400/50 text-center">
+                    {companies.filter(c => c.email).length} emails
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-white font-semibold bg-green-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-green-400/50 text-center">
+                    {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} emailed
+                  </span>
+                  <span className="text-xs text-white font-semibold bg-green-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-green-400/50 text-center">
+                    {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed
                 </span>
               </div>
             </div>
