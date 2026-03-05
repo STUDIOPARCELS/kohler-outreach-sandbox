@@ -36,13 +36,13 @@ export async function POST() {
   }, { onConflict: "companyname,contactname" });
 
   // Insert draft letter
-  const { data: existing } = await supabaseAdmin
+  const { data: existingLetter } = await supabaseAdmin
     .from("reachout_company_inserts")
     .select("id")
     .eq("companyname", "LISA WOOD STUDIO")
     .limit(1);
 
-  if (!existing || existing.length === 0) {
+  if (!existingLetter || existingLetter.length === 0) {
     await supabaseAdmin.from("reachout_company_inserts").insert({
       companyname: "LISA WOOD STUDIO",
       contactname: "Lisa Wood",
