@@ -750,7 +750,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </div>
 
         {/* ── Gray divider line ── */}
         <div className="border-b border-gray-300 my-5" />
