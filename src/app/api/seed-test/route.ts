@@ -34,7 +34,17 @@ export async function POST() {
     { companyname: "LISA WOOD STUDIO", contactname: "Kohler Wood", title: "", email: "kwood12802@gmail.com" },
   ];
   for (const c of testContacts) {
-    await supabaseAdmin.from("contacts").upsert(c, { onConflict: "companyname,contactname" });
+    const { data: exists } = await supabaseAdmin
+      .from("contacts")
+      .select("id")
+      .eq("companyname", c.companyname)
+      .eq("contactname", c.contactname)
+      .limit(1);
+    if (exists && exists.length > 0) {
+      await supabaseAdmin.from("contacts").update({ email: c.email, title: c.title }).eq("id", exists[0].id);
+    } else {
+      await supabaseAdmin.from("contacts").insert(c);
+    }
   }
 
   // Insert draft letter
