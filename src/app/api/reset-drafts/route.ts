@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST() {
   const { data, error } = await supabaseAdmin
     .from("reachout_company_inserts")
-    .update({ status: "draft", sent_at: null, printed_at: null })
+    .update({ status: "draft", sent_at: null, printed_at: null, body_final: null })
     .neq("status", "placeholder");
 
   if (error) {
