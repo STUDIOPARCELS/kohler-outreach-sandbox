@@ -127,6 +127,9 @@ function assembleLetter(
     "If you are considering an entry-level BSME/EIT, I would love to interview with your team."
   );
 
+  // Remove exclamation mark from closing
+  body = body.replace("I hope to hear from you!", "I hope to hear from you.");
+
   // Remove duplicate paragraphs (safety net)
   body = deduplicateParagraphs(body);
 
@@ -134,7 +137,10 @@ function assembleLetter(
   const signIdx = body.indexOf("Sincerely,");
   if (signIdx > 0) {
     const before = body.substring(0, signIdx).replace(/\n{3,}/g, "\n\n");
-    body = before + body.substring(signIdx);
+    const after = body.substring(signIdx);
+    // Ensure 5 blank lines between Sincerely and Kohler Wood for handwritten signature
+    body = before + after.replace(/Sincerely,\n*Kohler Wood/, "Sincerely,\n\n\n\n\n\nKohler Wood")
+                        .replace(/Sincerely,\n{2,5}Kohler Wood/, "Sincerely,\n\n\n\n\n\nKohler Wood");
   } else {
     body = body.replace(/\n{3,}/g, "\n\n");
   }
@@ -1302,12 +1308,12 @@ export default function HomePage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                {(c.email || letter?.contact_email) && (
+                                {(c.email || letter?.contact_email) && !(letter?.status === "sent" || letter?.status === "printed") && (
                                   <div className="flex items-center gap-1">
                                     <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                     </svg>
-                                    {letter?.sent_at && (letter.status === "emailed" || letter.status === "sent" || letter.status === "printed") && (
+                                    {letter?.sent_at && letter.status === "emailed" && (
                                       <span className="text-[10px] text-gray-400 tabular-nums">
                                         {new Date(letter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                       </span>
@@ -1315,13 +1321,35 @@ export default function HomePage() {
                                   </div>
                                 )}
                                 {letter && (
-                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
-                                    {letter.status === "emailed"
-                                      ? "emailed"
-                                      : letter.status === "sent" || letter.status === "printed"
-                                      ? "printed"
-                                      : letter.status.replace(/_/g, " ")}
-                                  </span>
+                                  <>
+                                    {(letter.status === "sent" || letter.status === "printed") && (
+                                      <div className="flex items-center gap-1">
+                                        <svg className="w-3.5 h-3.5 text-emerald-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        {letter.sent_at && (
+                                          <span className="text-[10px] text-gray-400 tabular-nums">
+                                            {new Date(letter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                    {letter.status === "emailed" && (
+                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
+                                        emailed
+                                      </span>
+                                    )}
+                                    {letter.status === "draft" && (
+                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
+                                        draft
+                                      </span>
+                                    )}
+                                    {letter.status !== "sent" && letter.status !== "printed" && letter.status !== "emailed" && letter.status !== "draft" && (
+                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
+                                        {letter.status.replace(/_/g, " ")}
+                                      </span>
+                                    )}
+                                  </>
                                 )}
                                 <svg
                                   className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-300 ${isExpanded ? "rotate-180" : ""}`}
@@ -1421,8 +1449,18 @@ export default function HomePage() {
                                               <div className="flex items-center gap-2">
                                                 <span className="text-sm font-semibold text-gray-900 truncate">{ct.contactname}</span>
                                                 {ctStatus && (ctStatus === "sent" || ctStatus === "printed" || ctStatus === "emailed") && (
-                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${ctStatus === "emailed" ? "bg-sky-100 text-sky-700" : "bg-emerald-100/60 text-emerald-700"}`}>
-                                                    {ctStatus === "emailed" ? "emailed" : "printed"}
+                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${ctStatus === "emailed" ? "bg-sky-100 text-sky-700" : "bg-emerald-50 text-emerald-700"}`}>
+                                                    {ctStatus === "emailed" ? (
+                                                      <>
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                        {ctLetter?.sent_at && new Date(ctLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                                      </>
+                                                    ) : (
+                                                      <>
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                        {ctLetter?.sent_at && new Date(ctLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                                      </>
+                                                    )}
                                                     {ctSentAt && <span className="ml-1 font-normal">{new Date(ctSentAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
                                                   </span>
                                                 )}
