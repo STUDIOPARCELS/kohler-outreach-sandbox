@@ -141,10 +141,10 @@ const NICHE_ORDER = [
 /* ── Niche color themes ── */
 const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string }> = {
   "TEST": {
-    bg: "from-orange-50 to-amber-50",
-    headerBg: "from-orange-500 to-amber-600",
-    border: "border-orange-400/40",
-    accent: "text-orange-950",
+    bg: "from-slate-50 to-blue-50",
+    headerBg: "from-slate-400 to-slate-500",
+    border: "border-slate-300/40",
+    accent: "text-slate-700",
   },
   "Acoustics / Audio / Musical Instruments": {
     bg: "from-slate-50 to-gray-50",

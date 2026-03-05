@@ -27,13 +27,15 @@ export async function POST() {
     });
   }
 
-  // Insert test contact
-  await supabaseAdmin.from("contacts").upsert({
-    companyname: "LISA WOOD STUDIO",
-    contactname: "Lisa Wood",
-    title: "Creative Director",
-    email: "317lrw@gmail.com",
-  }, { onConflict: "companyname,contactname" });
+  // Insert test contacts
+  const testContacts = [
+    { companyname: "LISA WOOD STUDIO", contactname: "Lisa Wood", title: "Creative Director", email: "317lrw@gmail.com" },
+    { companyname: "LISA WOOD STUDIO", contactname: "Hallie Stapleton", title: "", email: "hallie.stapleton@nxtthingrpo.com" },
+    { companyname: "LISA WOOD STUDIO", contactname: "Kohler Wood", title: "", email: "kwood12802@gmail.com" },
+  ];
+  for (const c of testContacts) {
+    await supabaseAdmin.from("contacts").upsert(c, { onConflict: "companyname,contactname" });
+  }
 
   // Insert draft letter
   const { data: existingLetter } = await supabaseAdmin
