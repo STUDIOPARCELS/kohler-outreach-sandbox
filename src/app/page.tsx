@@ -1047,9 +1047,9 @@ export default function HomePage() {
               const isFullyExpanded = expandedNiches.has(niche);
               // Sort: companies with email first, then without
               const sortedItems = [...items].sort((a, b) => {
-                const aHas = a.email ? 1 : 0;
-                const bHas = b.email ? 1 : 0;
-                return bHas - aHas;
+                // Tier 1: has contact with email (3), Tier 2: has contact no email (2), Tier 3: no contact (1)
+                const tierOf = (c: CompanyRow) => c.email ? 3 : c.contactname ? 2 : 1;
+                return tierOf(b) - tierOf(a);
               });
               const visibleItems = isFullyExpanded ? sortedItems : sortedItems.slice(0, PREVIEW_COUNT);
               const hiddenCount = items.length - PREVIEW_COUNT;
@@ -1079,6 +1079,7 @@ export default function HomePage() {
                         </h3>
                         <p className="text-xs text-white/60 mt-0.5">
                           {items.length} {items.length === 1 ? "company" : "companies"}
+                          {(() => { const withContact = items.filter(x => x.contactname).length; return withContact > 0 ? <span className="text-white/80 ml-1"> · {withContact} contacts</span> : null; })()}
                           {emailCount > 0 && <span className="text-sky-300 ml-1"> · {emailCount} with email</span>}
                           {sentCount > 0 && <span className="text-green-300 ml-1"> · {sentCount} sent</span>}
                         </p>
