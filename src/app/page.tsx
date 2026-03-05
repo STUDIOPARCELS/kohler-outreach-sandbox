@@ -300,7 +300,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
-    "I've studied and performed classical piano for three years and built an adaptive bass guitar for my senior capstone — the chance to engineer products I'd love to use would be a dream come true."
+    "I've studied and performed classical piano for three years. I also built an adaptive bass guitar for my senior capstone, and I'd jump at the chance to engineer in this industry."
   ),
   "Skiing": nicheTemplate(
     "I grew up in Sun Valley, ID and have skied all my life — the chance to engineer products I'd love to use would be a dream come true."
