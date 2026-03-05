@@ -396,6 +396,39 @@ export default function HomePage() {
       if (Array.isArray(contData)) {
         const realContacts = contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)");
         setContacts(realContacts);
+
+        // Auto-create draft if contacts exist but no letter
+        const existingLetter = lettersMap.get(companyname);
+        if (!existingLetter && realContacts.length > 0) {
+          const bestContact = realContacts.find((c: Contact) => c.email) || realContacts[0];
+          try {
+            const draftRes = await fetch("/api/draft", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                companyname,
+                contactname: bestContact.contactname,
+                contact_title: bestContact.title,
+                contact_email: bestContact.email || "",
+              }),
+            });
+            const draftData = await draftRes.json();
+            if (draftData && draftData.id) {
+              const newLetter: LetterRow = {
+                id: draftData.id,
+                companyname,
+                contactname: draftData.contactname || bestContact.contactname,
+                contact_title: draftData.contact_title || bestContact.title,
+                contact_email: draftData.contact_email || bestContact.email || "",
+                status: draftData.status || "draft",
+              };
+              setCurrentLetter(newLetter);
+              setLettersMap((prev) => { const m = new Map(prev); m.set(companyname, newLetter); return m; });
+            }
+          } catch (err) {
+            console.error("Auto-create draft failed:", err);
+          }
+        }
       } else {
         setContacts([]);
       }
@@ -408,38 +441,6 @@ export default function HomePage() {
         setCompanyAddress(parts.join("\n"));
       } else {
         setCompanyAddress("");
-      }
-
-      // Auto-create draft if contacts exist but no letter
-      const realCont = Array.isArray(contData) ? contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)") : [];
-      const existingLetter = lettersMap.get(companyname);
-      if (!existingLetter && realCont.length > 0) {
-        const bestContact = realCont.find((c: Contact) => c.email) || realCont[0];
-        try {
-          const draftRes = await fetch("/api/draft", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              companyname,
-              contactname: bestContact.contactname,
-              contact_title: bestContact.title,
-              contact_email: bestContact.email || "",
-            }),
-          });
-          const draftData = await draftRes.json();
-          if (!draftData.error) {
-            const newLetter: LetterRow = {
-              id: draftData.id || "",
-              companyname,
-              contactname: bestContact.contactname,
-              contact_title: bestContact.title,
-              contact_email: bestContact.email || "",
-              status: "draft",
-            };
-              setCurrentLetter(newLetter);
-              setLettersMap((prev) => { const m = new Map(prev); m.set(companyname, newLetter); return m; });
-            }
-          } catch { /* non-critical */ }
       }
     } catch {
       setContacts([]);
