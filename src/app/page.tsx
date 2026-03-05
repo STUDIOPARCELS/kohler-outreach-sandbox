@@ -1126,7 +1126,9 @@ export default function HomePage() {
                                 )}
                                 {letter && (
                                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
-                                    {letter.status.replace(/_/g, " ")}
+                                    {letter.status === "emailed" && letter.sent_at
+                                      ? `emailed ${new Date(letter.sent_at).toLocaleDateString("en-US", { month: "short" })} ${new Date(letter.sent_at).getFullYear()}`
+                                      : letter.status.replace(/_/g, " ")}
                                   </span>
                                 )}
                                 <svg
