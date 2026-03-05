@@ -361,6 +361,7 @@ export default function HomePage() {
   const [emailing, setEmailing] = useState(false);
   const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string} | null>(null);
   const [findingEmail, setFindingEmail] = useState(false);
+  const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [contactSearch, setContactSearch] = useState("");
@@ -639,10 +640,12 @@ export default function HomePage() {
     });
   }
 
-  async function findEmail() {
-    const contact = contacts[selectedContactIdx];
+  async function findEmail(overrideIdx?: number) {
+    const idx = overrideIdx !== undefined ? overrideIdx : selectedContactIdx;
+    const contact = contacts[idx];
     if (!contact || !expandedCompany) return;
     setFindingEmail(true);
+    setFindingEmailIdx(idx);
     try {
       const res = await fetch("/api/find-email", {
         method: "POST",
@@ -676,6 +679,7 @@ export default function HomePage() {
       toast((e as Error).message, "error");
     } finally {
       setFindingEmail(false);
+      setFindingEmailIdx(null);
     }
   }
 
@@ -1212,28 +1216,16 @@ export default function HomePage() {
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Send to</label>
                                             <div className="space-y-1">
                                               {contacts.map((ct, i) => (
-                                                <div key={i} className="flex items-center gap-1">
-                                                  <button
-                                                    onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
-                                                    className="flex-1 flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-left"
-                                                  >
-                                                    <div>
-                                                      <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
-                                                      {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
-                                                    </div>
-                                                    <div className="text-xs text-gray-400 text-right max-w-[140px] truncate">{companyAddress || c.city || ""}</div>
-                                                  </button>
-                                                  <a
-                                                    href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(ct.contactname + " " + (expandedCompany || ""))}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="px-2 py-3 text-xs font-semibold rounded-lg bg-yellow-400 text-yellow-900 hover:bg-yellow-500 transition-colors whitespace-nowrap shrink-0"
-                                                    title="Verify this contact on LinkedIn"
-                                                  >
-                                                    Verify
-                                                  </a>
-                                                </div>
+                                                <button key={i}
+                                                  onClick={() => { applyContact(i); setEditing(false); setLetterTab("letter_preview"); }}
+                                                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-left"
+                                                >
+                                                  <div>
+                                                    <div className="text-sm font-semibold text-gray-900">{ct.contactname}</div>
+                                                    {ct.title && <div className="text-xs text-gray-500">{ct.title}</div>}
+                                                  </div>
+                                                  <div className="text-xs text-gray-400 text-right max-w-[140px] truncate">{companyAddress || c.city || ""}</div>
+                                                </button>
                                               ))}
                                             </div>
                                           </div>
@@ -1314,7 +1306,7 @@ export default function HomePage() {
                                                       {noEmailContacts.map((ct, i) => (
                                                         <div key={i} className="flex items-center justify-between px-4 py-2 rounded-lg">
                                                           <div className="text-xs text-gray-400 flex-1 min-w-0 mr-2">{ct.contactname}{ct.title ? ` — ${ct.title}` : ""}</div>
-                                                          <button onClick={() => { setSelectedContactIdx(contacts.indexOf(ct)); findEmail(); }} disabled={findingEmail} className="px-3 py-3 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 whitespace-nowrap shrink-0 w-20 h-10 text-center flex items-center justify-center">{findingEmail ? "..." : "Find Email"}</button>
+                                                          <button onClick={() => { const idx = contacts.indexOf(ct); findEmail(idx); }} disabled={findingEmail} className="px-3 py-3 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 whitespace-nowrap shrink-0 w-20 h-10 text-center flex items-center justify-center">{findingEmailIdx === contacts.indexOf(ct) ? "..." : "Find Email"}</button>
                                                         </div>
                                                       ))}
                                                     </div>
