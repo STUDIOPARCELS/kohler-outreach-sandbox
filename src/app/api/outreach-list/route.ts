@@ -27,14 +27,26 @@ export async function GET() {
     .from("contacts")
     .select("companyname, contactname, title, email");
 
-  // Build a map of best contact per company
+  // Build a map of best contact per company + counts
   const contactMap = new Map<
     string,
-    { contactname: string; title: string; email: string }
+    { contactname: string; title: string; email: string; contact_count: number; email_count: number }
   >();
   if (contacts) {
+    // First pass: count contacts and emails per company
+    const counts = new Map<string, { total: number; withEmail: number }>();
     for (const c of contacts) {
+      if (!c.contactname || c.contactname === "(no results)") continue;
+      const cur = counts.get(c.companyname) || { total: 0, withEmail: 0 };
+      cur.total++;
+      if (c.email) cur.withEmail++;
+      counts.set(c.companyname, cur);
+    }
+
+    for (const c of contacts) {
+      if (!c.contactname || c.contactname === "(no results)") continue;
       const existing = contactMap.get(c.companyname);
+      const cnt = counts.get(c.companyname) || { total: 0, withEmail: 0 };
       if (
         !existing ||
         (c.email && !existing.email) ||
@@ -44,6 +56,8 @@ export async function GET() {
           contactname: c.contactname,
           title: c.title,
           email: c.email,
+          contact_count: cnt.total,
+          email_count: cnt.withEmail,
         });
       }
     }
@@ -57,6 +71,8 @@ export async function GET() {
       contactname: contact?.contactname || null,
       contact_title: contact?.title || null,
       email: contact?.email || null,
+      contact_count: contact?.contact_count || 0,
+      email_count: contact?.email_count || 0,
     };
   });
 

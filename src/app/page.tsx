@@ -39,6 +39,8 @@ interface CompanyRow {
   company_about?: string;
   niche?: string;
   email?: string;
+  contact_count?: number;
+  email_count?: number;
 }
 
 /* ── Remove duplicate paragraphs from a letter body ── */
@@ -1092,8 +1094,8 @@ export default function HomePage() {
                         </h3>
                         <p className="text-xs text-white/60 mt-0.5">
                           {items.length} {items.length === 1 ? "company" : "companies"}
-                          {(() => { const withContact = items.filter(x => x.contactname).length; return withContact > 0 ? <span className="text-white/80 ml-1"> · {withContact} contacts</span> : null; })()}
-                          {emailCount > 0 && <span className="text-sky-300 ml-1"> · {emailCount} with email</span>}
+                          {(() => { const total = items.reduce((s, x) => s + (x.contact_count || 0), 0); return total > 0 ? <span className="text-white/80 ml-1"> · {total} contacts</span> : null; })()}
+                          {(() => { const total = items.reduce((s, x) => s + (x.email_count || 0), 0); return total > 0 ? <span className="text-sky-300 ml-1"> · {total} with email</span> : null; })()}
                           {sentCount > 0 && <span className="text-green-300 ml-1"> · {sentCount} sent</span>}
                         </p>
                       </div>
