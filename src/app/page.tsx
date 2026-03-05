@@ -165,118 +165,154 @@ const NICHE_ORDER = [
 ];
 
 /* ── Niche color themes ── */
-const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string }> = {
+const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string; descBg: string; descText: string }> = {
   "TEST": {
     bg: "from-slate-50 to-blue-50",
     headerBg: "from-slate-700 via-slate-800 to-slate-900",
     border: "border-slate-300/40",
     accent: "text-slate-700",
+    descBg: "from-slate-50/80 to-slate-100/60 border-slate-200/50",
+    descText: "text-slate-700",
   },
   "Acoustics / Audio / Musical Instruments": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "",
     border: "border-rose-400/40",
     accent: "text-rose-950",
+    descBg: "from-rose-50/80 to-pink-50/60 border-rose-300/50",
+    descText: "text-rose-900",
   },
   "Skiing": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-sky-800 to-slate-900",
     border: "border-sky-300/60",
     accent: "text-sky-900",
+    descBg: "from-sky-50/80 to-indigo-50/60 border-sky-200/50",
+    descText: "text-sky-900",
   },
   "Outdoor Recreation & Equipment": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-emerald-900 to-green-950",
     border: "border-emerald-300/60",
     accent: "text-emerald-900",
+    descBg: "from-emerald-50/80 to-green-50/60 border-emerald-200/50",
+    descText: "text-emerald-900",
   },
   "Automotive / Vehicles": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-zinc-800 to-neutral-900",
     border: "border-zinc-300/60",
     accent: "text-zinc-900",
+    descBg: "from-zinc-50/80 to-gray-100/60 border-zinc-200/50",
+    descText: "text-zinc-800",
   },
   "Woodworking / Furniture / Cabinetry / Prototyping": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-amber-800 to-yellow-950",
     border: "border-amber-300/60",
     accent: "text-amber-900",
+    descBg: "from-amber-50/80 to-yellow-50/60 border-amber-200/50",
+    descText: "text-amber-900",
   },
   "Energy / Renewables / Power": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-orange-800 to-amber-950",
     border: "border-orange-300/60",
     accent: "text-orange-900",
+    descBg: "from-orange-50/80 to-amber-50/60 border-orange-200/50",
+    descText: "text-orange-900",
   },
   "MEP / HVAC / Building Systems": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-teal-800 to-teal-950",
     border: "border-teal-300/60",
     accent: "text-teal-900",
+    descBg: "from-teal-50/80 to-cyan-50/60 border-teal-200/50",
+    descText: "text-teal-900",
   },
   "Construction / Civil / Heavy Industry": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-stone-700 to-stone-900",
     border: "border-stone-300/60",
     accent: "text-stone-800",
+    descBg: "from-stone-50/80 to-gray-100/60 border-stone-200/50",
+    descText: "text-stone-800",
   },
   "Manufacturing / Automation / Product Design": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-indigo-900 to-blue-950",
     border: "border-indigo-300/60",
     accent: "text-indigo-900",
+    descBg: "from-indigo-50/80 to-blue-50/60 border-indigo-200/50",
+    descText: "text-indigo-900",
   },
   "Water / Environmental / Geotech": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-cyan-800 to-cyan-950",
     border: "border-cyan-300/60",
     accent: "text-cyan-900",
+    descBg: "from-cyan-50/80 to-sky-50/60 border-cyan-200/50",
+    descText: "text-cyan-900",
   },
   "Quantum / Deep Tech / Electronics / Robotics": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-rose-900 to-pink-950",
     border: "border-rose-300/60",
     accent: "text-rose-900",
+    descBg: "from-rose-50/80 to-pink-50/60 border-rose-200/50",
+    descText: "text-rose-900",
   },
   "Aerospace / Space": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-blue-900 to-indigo-950",
     border: "border-blue-300/60",
     accent: "text-blue-900",
+    descBg: "from-blue-50/80 to-indigo-50/60 border-blue-200/50",
+    descText: "text-blue-900",
   },
   "Medical / Biotech": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-red-800 to-rose-950",
     border: "border-red-300/60",
     accent: "text-red-900",
+    descBg: "from-red-50/80 to-rose-50/60 border-red-200/50",
+    descText: "text-red-900",
   },
   "Food / Beverage Manufacturing": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-lime-800 to-green-950",
     border: "border-lime-300/60",
     accent: "text-lime-900",
+    descBg: "from-lime-50/80 to-green-50/60 border-lime-200/50",
+    descText: "text-lime-900",
   },
   "Staffing / Recruiting": {
     bg: "from-gray-50 to-slate-50",
     headerBg: "from-violet-800 to-purple-950",
     border: "border-violet-300/60",
     accent: "text-violet-900",
+    descBg: "from-violet-50/80 to-purple-50/60 border-violet-200/50",
+    descText: "text-violet-900",
   },
   "Metals / Material Science": {
     bg: "from-slate-50 to-gray-50",
     headerBg: "from-zinc-700 to-slate-800",
     border: "border-zinc-300/60",
     accent: "text-zinc-900",
+    descBg: "from-zinc-50/80 to-gray-100/60 border-zinc-200/50",
+    descText: "text-zinc-800",
   },
   "Real Estate / Facilities": {
     bg: "from-gray-50 to-slate-50",
     headerBg: "from-gray-700 to-slate-800",
     border: "border-gray-300/60",
     accent: "text-gray-700",
+    descBg: "from-gray-50/80 to-slate-100/60 border-gray-200/50",
+    descText: "text-gray-700",
   },
 };
 
-const DEFAULT_COLORS = NICHE_COLORS["Real Estate / Facilities"];
+const DEFAULT_COLORS = { ...NICHE_COLORS["Real Estate / Facilities"] };
 
 /* ── Niche-specific letter body templates ── */
 /* ── Helper to build a full letter body from a niche paragraph ── */
@@ -295,7 +331,7 @@ I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${ni
 
 I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
 
-Thank you for your time, and I hope to hear from you!
+Thank you for your time, and I hope to hear from you.
 
 Sincerely,
 
@@ -820,7 +856,7 @@ export default function HomePage() {
           to: emailConfirm.to,
           companyname: expandedCompany,
           contactname: emailConfirm.contactname,
-          subject: `Mechanical Engineer — Colorado School of Mines, EIT`,
+          subject: `Mechanical Engineer — CO School of Mines, EIT`,
           body: assembled.body,
           letterId: currentLetter.id,
           attachments: emailConfirm.attachments,
@@ -1114,26 +1150,26 @@ export default function HomePage() {
 
 
         {/* ── Search Filters ── */}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2 mb-6">
+        <div className="grid grid-cols-4 gap-2 mb-5">
           <input
-            type="text" placeholder="Company Search" value={compSearch}
+            type="text" placeholder="Company" value={compSearch}
             onChange={(e) => setCompSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
           />
           <input
-            type="text" placeholder="Contact / Email Search" value={contactSearch}
+            type="text" placeholder="Contact / Email" value={contactSearch}
             onChange={(e) => setContactSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
           />
           <input
-            type="text" placeholder="City Search" value={locationSearch}
+            type="text" placeholder="City" value={locationSearch}
             onChange={(e) => setLocationSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition-all"
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white shadow-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition-all"
           />
           <input
-            type="text" placeholder="Keyword Search" value={keywordSearch}
+            type="text" placeholder="Keyword" value={keywordSearch}
             onChange={(e) => setKeywordSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-gray-500/20 focus:border-gray-400 transition-all"
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white shadow-sm focus:ring-2 focus:ring-gray-500/20 focus:border-gray-400 transition-all"
           />
         </div>
 
@@ -1346,8 +1382,8 @@ export default function HomePage() {
 
                                     {/* Company description */}
                                     {c.company_about && (
-                                    <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-sky-50/80 to-indigo-50/60 border border-sky-200/50" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
-                                      <p className="text-xs text-sky-900 leading-relaxed font-medium">{c.company_about}</p>
+                                    <div className={`mb-3 p-3 rounded-xl bg-gradient-to-r ${colors.descBg}`} style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
+                                      <p className={`text-xs ${colors.descText} leading-relaxed font-medium`}>{c.company_about}</p>
                                     </div>
                                     )}
 
@@ -1487,7 +1523,7 @@ export default function HomePage() {
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
-                <p className="text-sm text-gray-700 mt-0.5">Mechanical Engineer — Colorado School of Mines, EIT</p>
+                <p className="text-sm text-gray-700 mt-0.5">Mechanical Engineer — CO School of Mines, EIT</p>
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
