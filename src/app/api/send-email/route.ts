@@ -46,7 +46,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Adjust wording for email context
-    emailBody = emailBody.replace("I've included my résumé —", "I've attached my résumé —");
+    emailBody = emailBody.replace(
+      "I've included my résumé and card — which links to my projects and interests.",
+      "I've attached my résumé — my projects and areas of study are at kohler.solokit.app."
+    );
 
     // Strip the plain-text signature (everything from "Sincerely," on)
     // We'll replace it with a proper HTML signature

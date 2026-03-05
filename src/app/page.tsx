@@ -280,7 +280,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé — my projects and areas of study are at kohler.solokit.app. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
+I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -1387,7 +1387,10 @@ export default function HomePage() {
                     let preview = emailConfirm.body;
                     const dearIdx = preview.indexOf("Hello ");
                     if (dearIdx > 0) preview = preview.substring(dearIdx);
-                    preview = preview.replace("I've included my résumé —", "I've attached my résumé —");
+                    preview = preview.replace(
+                      "I've included my résumé and card — which links to my projects and interests.",
+                      "I've attached my résumé — my projects and areas of study are at kohler.solokit.app."
+                    );
                     return preview;
                   })()}
                 </div>
