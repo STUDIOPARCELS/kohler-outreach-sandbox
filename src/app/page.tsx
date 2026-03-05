@@ -1154,20 +1154,20 @@ export default function HomePage() {
                                         <div className="flex">
                                           <button
                                             onClick={() => { setLetterTab("letter"); setEditing(false); }}
-                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tl-xl ${
                                               letterTab === "letter"
                                                 ? "bg-green-700 text-white"
-                                                : "bg-gray-100 text-gray-400 hover:text-gray-600"
+                                                : "bg-gray-100 text-green-700/40 hover:text-green-700/60"
                                             }`}
                                           >
                                             Physical Letter
                                           </button>
                                           <button
                                             onClick={() => { setLetterTab("email"); setEditing(false); }}
-                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                                            className={`flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors rounded-tr-xl ${
                                               letterTab === "email"
-                                                ? "bg-sky-500 text-white"
-                                                : "bg-gray-100 text-gray-400 hover:text-gray-600"
+                                                ? "bg-blue-600 text-white"
+                                                : "bg-gray-100 text-blue-600/40 hover:text-blue-600/60"
                                             }`}
                                           >
                                             Email
