@@ -726,16 +726,21 @@ export default function HomePage() {
                   ENTRY LEVEL BSME / EIT · DENVER METRO
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <span className="text-sm text-white font-bold bg-white/15 rounded-full px-4 py-1.5 backdrop-blur-sm border border-white/20">
-                  {companies.length} companies
-                </span>
-                <span className="text-xs text-white/90 font-semibold bg-white/10 rounded-full px-3 py-1 backdrop-blur-sm border border-white/15">
-                  {lettersMap.size} letters · {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed
-                </span>
-                <span className="text-xs text-white/90 font-semibold bg-sky-500/30 rounded-full px-3 py-1 backdrop-blur-sm border border-sky-400/30">
-                  {companies.filter(c => c.email).length} emails · {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} emailed
-                </span>
+              <div className="flex items-center gap-4">
+                <div className="text-center px-4 py-2 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm">
+                  <div className="text-2xl font-bold text-white">{companies.length}</div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider">Companies</div>
+                </div>
+                <div className="text-center px-4 py-2 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm">
+                  <div className="text-2xl font-bold text-white">{lettersMap.size}</div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider">Letters</div>
+                  <div className="text-xs text-green-300 font-semibold mt-0.5">{Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed</div>
+                </div>
+                <div className="text-center px-4 py-2 bg-sky-500/20 rounded-xl border border-sky-400/30 backdrop-blur-sm">
+                  <div className="text-2xl font-bold text-white">{companies.filter(c => c.email).length}</div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider">Emails</div>
+                  <div className="text-xs text-sky-300 font-semibold mt-0.5">{Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} sent</div>
+                </div>
               </div>
             </div>
           </div>
@@ -856,9 +861,9 @@ export default function HomePage() {
           <button
             onClick={async () => {
               await fetch("/api/seed-test", { method: "POST" });
-              toast("Test company ready — search TEST");
+              toast("Test company ready");
               await loadData();
-              setCompSearch("TEST");
+              setCompSearch("LISA WOOD");
             }}
             className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-200 transition-colors whitespace-nowrap"
           >
