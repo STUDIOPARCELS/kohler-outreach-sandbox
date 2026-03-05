@@ -719,10 +719,16 @@ export default function HomePage() {
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
-                  {lettersMap.size} letters drafted
+                  {companies.length} companies
                 </span>
                 <span className="text-xs text-white font-semibold bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm border border-white/30">
-                  {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed" || l.status === "emailed").length} sent
+                  {lettersMap.size} letters
+                </span>
+                <span className="text-xs text-white font-semibold bg-sky-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-sky-400/50">
+                  {Array.from(lettersMap.values()).filter(l => l.contact_email).length} emailable
+                </span>
+                <span className="text-xs text-white font-semibold bg-green-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-green-400/50">
+                  {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed · {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} emailed
                 </span>
               </div>
             </div>
