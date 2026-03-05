@@ -66,10 +66,12 @@ function cleanCompanyName(name: string): string {
   // Strip product/category suffixes that sound awkward in "the work you're doing at [X]"
   // But only if the name has 2+ words (don't strip single-word names)
   const words = clean.split(/\s+/);
-  const keepFull = ["YG Acoustics", "Boulder Amplifiers", "Blue Origin", "Air Squared"];
+  const keepFull = ["YG Acoustics", "Boulder Amplifiers", "Blue Origin", "Air Squared", "Acoustical Elements", "Wave Engineering"];
   if (words.length >= 2 && !keepFull.some(k => k.toLowerCase() === clean.toLowerCase())) {
     const productSuffixes = [
-      "Skis", "Ski", "Cycles", "Bikes", "Vehicles", "Motors",
+      "Skis", "Ski", "Cycles", "Bikes", "Vehicles", "Motors", "Acoustics",
+      "Amplifiers", "Technologies", "Systems", "Solutions", "Industries",
+      "Products", "Services", "Metals", "Engineering", "Robotics",
     ];
     const lastWord = words[words.length - 1];
     if (productSuffixes.some(s => s.toLowerCase() === lastWord.toLowerCase())) {
@@ -278,7 +280,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé. My projects and areas of study are here: kohler.solokit.app. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
+I've included my résumé — my projects and areas of study are at kohler.solokit.app. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
 
 Thank you so much for your time, and I hope to hear from you!
 
@@ -293,16 +295,16 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I've got hands-on experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
+    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
-    "I've got coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
+    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
   ),
   "Construction / Civil / Heavy Industry": nicheTemplate(
     "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I've got hands-on experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
+    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
   ),
   "Aerospace / Space": nicheTemplate(
     "My father had a Cessna 172 — that early exposure is part of what drives my engineering interest."
@@ -314,7 +316,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I've had an interest in automobiles since I was young, and I'd jump at the chance to contribute to your team."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
-    "I've got hands-on experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
+    "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
     "I've studied and performed classical piano for three years. I also built an adaptive bass guitar for my senior capstone, and I'd jump at the chance to engineer in this industry."
@@ -332,7 +334,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I'd welcome the chance to apply that experience in medical device engineering."
   ),
   "Food / Beverage Manufacturing": nicheTemplate(
-    "I've got experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
+    "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
   ),
 };
 
@@ -1385,7 +1387,7 @@ export default function HomePage() {
                     let preview = emailConfirm.body;
                     const dearIdx = preview.indexOf("Hello ");
                     if (dearIdx > 0) preview = preview.substring(dearIdx);
-                    preview = preview.replace("I've included my résumé", "I've attached my résumé below");
+                    preview = preview.replace("I've included my résumé —", "I've attached my résumé —");
                     return preview;
                   })()}
                 </div>
