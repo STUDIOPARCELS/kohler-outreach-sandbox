@@ -309,7 +309,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I grew up in Sun Valley, ID and have spent my life in the outdoors — the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
-    "I spent the last year designing and prototyping custom woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to work in woodworking would be a dream come true."
+    "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet — the chance to work in woodworking would be a dream come true."
   ),
   "Medical / Biotech": nicheTemplate(
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I'd welcome the chance to apply that experience in medical device engineering."
