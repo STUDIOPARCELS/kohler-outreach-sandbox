@@ -66,7 +66,8 @@ function cleanCompanyName(name: string): string {
   // Strip product/category suffixes that sound awkward in "the work you're doing at [X]"
   // But only if the name has 2+ words (don't strip single-word names)
   const words = clean.split(/\s+/);
-  if (words.length >= 2) {
+  const keepFull = ["YG Acoustics", "Boulder Amplifiers", "Blue Origin", "Air Squared"];
+  if (words.length >= 2 && !keepFull.some(k => k.toLowerCase() === clean.toLowerCase())) {
     const productSuffixes = [
       "Skis", "Ski", "Cycles", "Bikes", "Vehicles", "Motors",
     ];
@@ -1310,7 +1311,7 @@ export default function HomePage() {
                                                       {noEmailContacts.map((ct, i) => (
                                                         <div key={i} className="flex items-center justify-between px-4 py-2 rounded-lg">
                                                           <div className="text-xs text-gray-400 flex-1 min-w-0 mr-2">{ct.contactname}{ct.title ? ` — ${ct.title}` : ""}</div>
-                                                          <button onClick={() => { setSelectedContactIdx(contacts.indexOf(ct)); findEmail(); }} disabled={findingEmail} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 whitespace-nowrap shrink-0 w-24 text-center">{findingEmail ? "..." : "Find Email"}</button>
+                                                          <button onClick={() => { setSelectedContactIdx(contacts.indexOf(ct)); findEmail(); }} disabled={findingEmail} className="px-3 py-3 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 whitespace-nowrap shrink-0 w-20 h-10 text-center flex items-center justify-center">{findingEmail ? "..." : "Find Email"}</button>
                                                         </div>
                                                       ))}
                                                     </div>
