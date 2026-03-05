@@ -302,6 +302,9 @@ Sincerely,
 
 
 
+
+
+
 Kohler Wood
 208-720-4635
 Lakewood, CO
@@ -1343,8 +1346,8 @@ export default function HomePage() {
 
                                     {/* Company description */}
                                     {c.company_about && (
-                                    <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-100" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
-                                      <p className="text-xs text-gray-600 leading-relaxed">{c.company_about}</p>
+                                    <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-sky-50/80 to-indigo-50/60 border border-sky-200/50" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
+                                      <p className="text-xs text-sky-900 leading-relaxed font-medium">{c.company_about}</p>
                                     </div>
                                     )}
 
