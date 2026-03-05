@@ -11,7 +11,7 @@ function getBaseUrl(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { to, companyname, contactname, subject, body, letterId } =
+    const { to, companyname, contactname, subject, body, letterId, attachments: requestedAttachments } =
       await req.json();
 
     if (!to || !body) {
@@ -89,24 +89,61 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    // Build attachments
+    // Build attachments based on selection (default to resume if not specified)
     const attachments: { filename: string; content: Buffer; contentType?: string }[] = [];
+    const selectedAttachments: string[] = requestedAttachments || ["resume"];
 
     // Fetch resume PDF
-    try {
-      const pdfRes = await fetch(`${baseUrl}/KOHLER_WOOD_RESUME.pdf`);
-      if (pdfRes.ok) {
-        const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
-        attachments.push({
-          filename: "Kohler_Wood_Resume.pdf",
-          content: pdfBuffer,
-          contentType: "application/pdf",
-        });
-      } else {
-        console.error("Resume PDF fetch failed:", pdfRes.status);
+    if (selectedAttachments.includes("resume")) {
+      try {
+        const pdfRes = await fetch(`${baseUrl}/KOHLER_WOOD_RESUME.pdf`);
+        if (pdfRes.ok) {
+          const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
+          attachments.push({
+            filename: "Kohler_Wood_Resume.pdf",
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          });
+        } else {
+          console.error("Resume PDF fetch failed:", pdfRes.status);
+        }
+      } catch (e) {
+        console.error("Failed to fetch resume PDF:", e);
       }
-    } catch (e) {
-      console.error("Failed to fetch resume PDF:", e);
+    }
+
+    // Fetch Solocard Craft GIF
+    if (selectedAttachments.includes("solocard_craft")) {
+      try {
+        const gifRes = await fetch(`${baseUrl}/SOLOCARD_CRAFT.gif`);
+        if (gifRes.ok) {
+          const gifBuffer = Buffer.from(await gifRes.arrayBuffer());
+          attachments.push({
+            filename: "Solocard_Craft.gif",
+            content: gifBuffer,
+            contentType: "image/gif",
+          });
+        }
+      } catch (e) {
+        console.error("Failed to fetch Solocard Craft:", e);
+      }
+    }
+
+    // Fetch Solocard Pro GIF
+    if (selectedAttachments.includes("solocard_pro")) {
+      try {
+        const gifRes = await fetch(`${baseUrl}/SOLOCARD_PRO.gif`);
+        if (gifRes.ok) {
+          const gifBuffer = Buffer.from(await gifRes.arrayBuffer());
+          attachments.push({
+            filename: "Solocard_Pro.gif",
+            content: gifBuffer,
+            contentType: "image/gif",
+          });
+        }
+      } catch (e) {
+        console.error("Failed to fetch Solocard Pro:", e);
+      }
     }
 
     // Gmail SMTP — auth as Lisa, display as Kohler, replies go to Kohler

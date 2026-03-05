@@ -153,6 +153,7 @@ const NICHE_ORDER = [
   "Automotive / Vehicles",
   "Woodworking / Furniture / Cabinetry / Prototyping",
   "Energy / Renewables / Power",
+  "Metals / Material Science",
   "Manufacturing / Automation / Product Design",
   "Quantum / Deep Tech / Electronics / Robotics",
   "Construction / Civil / Heavy Industry",
@@ -261,6 +262,12 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
     border: "border-violet-300/60",
     accent: "text-violet-900",
   },
+  "Metals / Material Science": {
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-zinc-700 to-slate-800",
+    border: "border-zinc-300/60",
+    accent: "text-zinc-900",
+  },
   "Real Estate / Facilities": {
     bg: "from-gray-50 to-slate-50",
     headerBg: "from-gray-700 to-slate-800",
@@ -344,6 +351,9 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Food / Beverage Manufacturing": nicheTemplate(
     "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
   ),
+  "Metals / Material Science": nicheTemplate(
+    "I have hands-on experience with metal fabrication, 3D printing, and taking SolidWorks designs from concept through prototype — I'd welcome the chance to contribute to your team's materials work."
+  ),
 };
 
 /* ── Main Page ── */
@@ -369,10 +379,16 @@ export default function HomePage() {
   const [batchStatus, setBatchStatus] = useState("");
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
-  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean} | null>(null);
+  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean; attachments: string[]} | null>(null);
   const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string; editing?: boolean} | null>(null);
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
+  const [addLeadNiche, setAddLeadNiche] = useState<string | null>(null);
+  const [addLeadName, setAddLeadName] = useState("");
+  const [addLeadCity, setAddLeadCity] = useState("Denver");
+  const [addLeadAddress, setAddLeadAddress] = useState("");
+  const [addLeadAbout, setAddLeadAbout] = useState("");
+  const [addLeadLoading, setAddLeadLoading] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [contactSearch, setContactSearch] = useState("");
@@ -648,7 +664,42 @@ export default function HomePage() {
       contactname: currentLetter.contactname || contact?.contactname || "",
       companyname: expandedCompany,
       body: assembled.body,
+      attachments: ["resume"],
     });
+  }
+
+  async function addLead() {
+    if (!addLeadNiche || !addLeadName.trim()) return;
+    setAddLeadLoading(true);
+    try {
+      const res = await fetch("/api/find-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          niche: addLeadNiche,
+          mode: "manual",
+          company: {
+            name: addLeadName.trim(),
+            city: addLeadCity.trim() || "Denver",
+            address1: addLeadAddress.trim() || null,
+            about: addLeadAbout.trim() || null,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.alreadyExists) {
+        toast(`${addLeadName} already exists`, "error");
+      } else {
+        toast(data.message || `Added ${addLeadName}`);
+        setAddLeadNiche(null);
+        await loadData();
+      }
+    } catch (e: unknown) {
+      toast((e as Error).message, "error");
+    } finally {
+      setAddLeadLoading(false);
+    }
   }
 
   async function findEmail(overrideIdx?: number) {
@@ -709,6 +760,7 @@ export default function HomePage() {
           subject: `Mechanical Engineer — Colorado School of Mines, EIT`,
           body: assembled.body,
           letterId: currentLetter.id,
+          attachments: emailConfirm.attachments,
         }),
       });
       const data = await res.json();
@@ -828,12 +880,12 @@ export default function HomePage() {
                   ENTRY LEVEL BSME / EIT · DENVER METRO
                 </p>
               </div>
-              <div className="flex items-stretch gap-4">
-                <div className="text-center px-4 py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[90px]">
+              <div className="flex items-stretch gap-2 sm:gap-4 flex-wrap">
+                <div className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px]">
                   <div className="text-2xl font-bold text-white">{companies.length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Companies</div>
                 </div>
-                <div className="text-center px-4 py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[90px] relative">
+                <div className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] relative">
                   <div className="text-2xl font-bold text-white">{lettersMap.size}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Letters</div>
                   <button onClick={() => { setShowMailedList(!showMailedList); setShowEmailedList(false); }} className="text-xs text-green-300 font-semibold mt-0.5 hover:text-green-200 cursor-pointer">
@@ -863,7 +915,7 @@ export default function HomePage() {
                     );
                   })()}
                 </div>
-                <div className="text-center px-4 py-3 bg-sky-500/20 rounded-xl border border-sky-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[90px] relative">
+                <div className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-sky-500/20 rounded-xl border border-sky-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] relative">
                   <div className="text-2xl font-bold text-white">{companies.filter(c => c.email).length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Emails</div>
                   <button onClick={() => { setShowEmailedList(!showEmailedList); setShowMailedList(false); }} className="text-xs text-sky-300 font-semibold mt-0.5 hover:text-sky-200 cursor-pointer">
@@ -998,26 +1050,26 @@ export default function HomePage() {
         })()}
 
         {/* ── Search Filters ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2 mb-6">
           <input
             type="text" placeholder="Company Search" value={compSearch}
             onChange={(e) => setCompSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
+            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 transition-all"
           />
           <input
             type="text" placeholder="Contact / Email Search" value={contactSearch}
             onChange={(e) => setContactSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
           />
           <input
             type="text" placeholder="City Search" value={locationSearch}
             onChange={(e) => setLocationSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition-all"
+            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition-all"
           />
           <input
             type="text" placeholder="Keyword Search" value={keywordSearch}
             onChange={(e) => setKeywordSearch(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-white shadow-sm focus:ring-2 focus:ring-gray-500/20 focus:border-gray-400 transition-all"
+            className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm sm:text-xs bg-white shadow-sm focus:ring-2 focus:ring-gray-500/20 focus:border-gray-400 transition-all"
           />
         </div>
 
@@ -1101,7 +1153,13 @@ export default function HomePage() {
                       </div>
                       {niche !== "TEST" && (
                         <button
-                          onClick={() => toast("Find New Leads — coming soon")}
+                          onClick={() => {
+                            setAddLeadNiche(niche);
+                            setAddLeadName("");
+                            setAddLeadCity("Denver");
+                            setAddLeadAddress("");
+                            setAddLeadAbout("");
+                          }}
                           className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
                           title="Find new companies in this niche"
                         >
@@ -1147,14 +1205,23 @@ export default function HomePage() {
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 {(c.email || letter?.contact_email) && (
-                                  <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                  </svg>
+                                  <div className="flex items-center gap-1">
+                                    <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    {letter?.sent_at && (letter.status === "emailed" || letter.status === "sent" || letter.status === "printed") && (
+                                      <span className="text-[10px] text-gray-400 tabular-nums">
+                                        {new Date(letter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                                 {letter && (
                                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
-                                    {letter.status === "emailed" && letter.sent_at
-                                      ? `emailed ${new Date(letter.sent_at).toLocaleDateString("en-US", { month: "short" })} ${new Date(letter.sent_at).getFullYear()}`
+                                    {letter.status === "emailed"
+                                      ? "emailed"
+                                      : letter.status === "sent" || letter.status === "printed"
+                                      ? "mailed"
                                       : letter.status.replace(/_/g, " ")}
                                   </span>
                                 )}
@@ -1219,12 +1286,13 @@ export default function HomePage() {
                                       <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Contacts</label>
                                         {contacts.map((ct, i) => (
-                                          <div key={i} className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-100 hover:border-gray-200 bg-white transition-colors">
+                                          <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-100 hover:border-gray-200 bg-white transition-colors">
                                             <div className="flex-1 min-w-0">
                                               <div className="text-sm font-semibold text-gray-900 truncate">{ct.contactname}</div>
                                               {ct.title && <div className="text-xs text-gray-500 truncate">{ct.title}</div>}
                                               {ct.email && <div className="text-xs text-sky-600 truncate">{ct.email}</div>}
                                             </div>
+                                            <div className="flex items-center gap-1.5 shrink-0">
                                             <button
                                               onClick={() => {
                                                 applyContact(i);
@@ -1240,7 +1308,7 @@ export default function HomePage() {
                                                 onClick={() => {
                                                   applyContact(i);
                                                   const freshBody = template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "";
-                                                  setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
+                                                  setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody, attachments: ["resume"] });
                                                 }}
                                                 className="px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors whitespace-nowrap shrink-0"
                                               >
@@ -1255,6 +1323,7 @@ export default function HomePage() {
                                                 {findingEmailIdx === i ? "..." : "Find Email"}
                                               </button>
                                             )}
+                                            </div>
                                           </div>
                                         ))}
                                       </div>
@@ -1284,7 +1353,7 @@ export default function HomePage() {
             }
 
             return (
-              <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+              <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                 {orderedNiches.map((niche) => {
                   const items = grouped.get(niche);
                   if (!items || items.length === 0) return null;
@@ -1343,9 +1412,44 @@ export default function HomePage() {
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attachments</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <span className="text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-2.5 py-0.5 font-medium">📄 Resume PDF</span>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {emailConfirm.attachments.includes("resume") ? (
+                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: emailConfirm.attachments.filter(a => a !== "resume")})} className="group text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-red-100 transition-colors">
+                      <span>📄 Resume PDF</span>
+                      <svg className="w-3 h-3 text-red-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  ) : (
+                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: [...emailConfirm.attachments, "resume"]})} className="text-xs bg-gray-50 text-gray-400 border border-dashed border-gray-300 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      <span>Resume PDF</span>
+                    </button>
+                  )}
+                  {emailConfirm.attachments.includes("solocard_craft") ? (
+                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: emailConfirm.attachments.filter(a => a !== "solocard_craft")})} className="group text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-amber-100 transition-colors">
+                      <span>🎴 Solocard Craft</span>
+                      <svg className="w-3 h-3 text-amber-400 group-hover:text-amber-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  ) : (
+                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: [...emailConfirm.attachments, "solocard_craft"]})} className="text-xs bg-gray-50 text-gray-400 border border-dashed border-gray-300 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      <span>Solocard Craft</span>
+                    </button>
+                  )}
+                  {emailConfirm.attachments.includes("solocard_pro") ? (
+                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: emailConfirm.attachments.filter(a => a !== "solocard_pro")})} className="group text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-blue-100 transition-colors">
+                      <span>🎴 Solocard Pro</span>
+                      <svg className="w-3 h-3 text-blue-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  ) : (
+                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: [...emailConfirm.attachments, "solocard_pro"]})} className="text-xs bg-gray-50 text-gray-400 border border-dashed border-gray-300 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      <span>Solocard Pro</span>
+                    </button>
+                  )}
                 </div>
+                {emailConfirm.attachments.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1.5">⚠ No attachments selected — email will send without resume</p>
+                )}
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">From</span>
@@ -1436,6 +1540,90 @@ export default function HomePage() {
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Lead Dialog ── */}
+      {addLeadNiche && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm no-print">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div
+              className={`px-6 py-4 ${NICHE_COLORS[addLeadNiche]?.headerBg ? `bg-gradient-to-r ${NICHE_COLORS[addLeadNiche].headerBg}` : ""}`}
+              style={!NICHE_COLORS[addLeadNiche]?.headerBg ? { background: "linear-gradient(135deg, #334155, #1e293b)" } : undefined}
+            >
+              <h3 className="text-white font-bold text-base flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add to {addLeadNiche}
+              </h3>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company Name *</label>
+                <input
+                  type="text"
+                  value={addLeadName}
+                  onChange={(e) => setAddLeadName(e.target.value)}
+                  placeholder="e.g. Rocky Mountain Fabrication"
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">City</label>
+                  <input
+                    type="text"
+                    value={addLeadCity}
+                    onChange={(e) => setAddLeadCity(e.target.value)}
+                    placeholder="Denver"
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Street Address</label>
+                  <input
+                    type="text"
+                    value={addLeadAddress}
+                    onChange={(e) => setAddLeadAddress(e.target.value)}
+                    placeholder="123 Main St"
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">About (optional)</label>
+                <input
+                  type="text"
+                  value={addLeadAbout}
+                  onChange={(e) => setAddLeadAbout(e.target.value)}
+                  placeholder="What does this company do?"
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
+                />
+              </div>
+              <p className="text-xs text-gray-400">Contacts will be auto-researched via RocketReach after adding.</p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+              <button
+                onClick={() => setAddLeadNiche(null)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addLead}
+                disabled={addLeadLoading || !addLeadName.trim()}
+                className="px-5 py-2 text-sm font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                {addLeadLoading ? (
+                  <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Adding...</>
+                ) : (
+                  <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg> Add Company</>
+                )}
+              </button>
             </div>
           </div>
         </div>
