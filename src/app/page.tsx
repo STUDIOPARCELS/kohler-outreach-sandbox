@@ -168,7 +168,7 @@ const NICHE_ORDER = [
 const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string }> = {
   "TEST": {
     bg: "from-slate-50 to-blue-50",
-    headerBg: "from-slate-400 to-slate-500",
+    headerBg: "from-slate-700 via-slate-800 to-slate-900",
     border: "border-slate-300/40",
     accent: "text-slate-700",
   },
@@ -913,7 +913,7 @@ export default function HomePage() {
       case "draft": return "bg-white/60 text-gray-600 border border-gray-200";
       case "ready_to_print": return "bg-yellow-400/20 text-yellow-800 border border-yellow-300";
       case "printed": return "bg-blue-400/20 text-blue-800 border border-blue-300";
-      case "sent": return "bg-green-400/20 text-green-800 border border-green-300";
+      case "sent": return "bg-emerald-400/15 text-emerald-800 border border-emerald-300/50";
       case "emailed": return "bg-sky-400/20 text-sky-800 border border-sky-300";
       default: return "bg-gray-100 text-gray-500 border border-gray-200";
     }
@@ -951,18 +951,18 @@ export default function HomePage() {
                 <div className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] relative">
                   <div className="text-2xl font-bold text-white">{lettersMap.size}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Letters</div>
-                  <button onClick={() => { setShowMailedList(!showMailedList); setShowEmailedList(false); }} className="text-xs text-green-300 font-semibold mt-0.5 hover:text-green-200 cursor-pointer">
-                    {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} mailed
+                  <button onClick={() => { setShowMailedList(!showMailedList); setShowEmailedList(false); }} className="text-xs text-emerald-300/80 font-semibold mt-0.5 hover:text-green-200 cursor-pointer">
+                    {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} printed
                   </button>
                   {showMailedList && (() => {
                     const mailed = Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed");
                     return (
                       <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 min-w-[280px] max-h-60 overflow-y-auto">
                         <div className="px-3 py-2 border-b bg-gray-50 rounded-t-xl">
-                          <span className="text-xs font-bold text-gray-500 uppercase">{mailed.length} Letters Mailed</span>
+                          <span className="text-xs font-bold text-gray-500 uppercase">{mailed.length} Letters Printed</span>
                         </div>
                         {mailed.length === 0 ? (
-                          <p className="text-xs text-gray-400 px-3 py-4 text-center">No letters mailed yet</p>
+                          <p className="text-xs text-gray-400 px-3 py-4 text-center">No letters printed yet</p>
                         ) : mailed.map((l, i) => (
                           <details key={i} className="border-b last:border-0">
                             <summary className="px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between">
@@ -1074,15 +1074,15 @@ export default function HomePage() {
                         key={i}
                         className={`relative rounded-lg text-center py-2 sm:py-2.5 text-xs transition-all group cursor-default ${
                           count > 0
-                            ? "bg-green-200 text-green-900 font-bold ring-1 ring-green-400 shadow-sm"
+                            ? "bg-emerald-100/60 text-emerald-900 font-bold ring-1 ring-emerald-300/50 shadow-sm"
                             : isToday
-                            ? "bg-green-100 text-green-900 font-semibold ring-1 ring-green-500 shadow-sm"
+                            ? "bg-emerald-50/80 text-emerald-800 font-semibold ring-1 ring-emerald-300/40"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
                         {day}
                         {count > 0 && (
-                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold px-1">
+                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-emerald-600/80 text-white text-xs font-bold px-1">
                             {count}
                           </span>
                         )}
@@ -1283,7 +1283,7 @@ export default function HomePage() {
                                     {letter.status === "emailed"
                                       ? "emailed"
                                       : letter.status === "sent" || letter.status === "printed"
-                                      ? "mailed"
+                                      ? "printed"
                                       : letter.status.replace(/_/g, " ")}
                                   </span>
                                 )}
@@ -1385,8 +1385,8 @@ export default function HomePage() {
                                               <div className="flex items-center gap-2">
                                                 <span className="text-sm font-semibold text-gray-900 truncate">{ct.contactname}</span>
                                                 {ctStatus && (ctStatus === "sent" || ctStatus === "printed" || ctStatus === "emailed") && (
-                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${ctStatus === "emailed" ? "bg-sky-100 text-sky-700" : "bg-green-100 text-green-700"}`}>
-                                                    {ctStatus === "emailed" ? "emailed" : "mailed"}
+                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${ctStatus === "emailed" ? "bg-sky-100 text-sky-700" : "bg-emerald-100/60 text-emerald-700"}`}>
+                                                    {ctStatus === "emailed" ? "emailed" : "printed"}
                                                     {ctSentAt && <span className="ml-1 font-normal">{new Date(ctSentAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
                                                   </span>
                                                 )}
@@ -1517,36 +1517,27 @@ export default function HomePage() {
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attachments</span>
                 <div className="flex flex-wrap gap-2 mt-1.5">
                   {emailConfirm.attachments.includes("resume") ? (
-                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: emailConfirm.attachments.filter(a => a !== "resume")})} className="group text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-red-100 transition-colors">
-                      <span>📄 Resume PDF</span>
-                      <svg className="w-3 h-3 text-red-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    <div className="flex items-center gap-0 rounded-full border border-purple-300/80 overflow-hidden" style={{ background: "rgba(44,15,56,0.08)" }}>
+                      <a
+                        href="/KOHLER_WOOD_RESUME.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 hover:underline transition-colors"
+                        style={{ color: "#2c0f38" }}
+                      >
+                        📄 Resume PDF
+                      </a>
+                      <button
+                        onClick={() => setEmailConfirm({...emailConfirm, attachments: emailConfirm.attachments.filter(a => a !== "resume")})}
+                        className="px-1.5 py-1 hover:bg-purple-200/40 transition-colors"
+                      >
+                        <svg className="w-3 h-3" style={{ color: "#2c0f38" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
                   ) : (
                     <button onClick={() => setEmailConfirm({...emailConfirm, attachments: [...emailConfirm.attachments, "resume"]})} className="text-xs bg-gray-50 text-gray-400 border border-dashed border-gray-300 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       <span>Resume PDF</span>
-                    </button>
-                  )}
-                  {emailConfirm.attachments.includes("solocard_craft") ? (
-                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: emailConfirm.attachments.filter(a => a !== "solocard_craft")})} className="group text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-amber-100 transition-colors">
-                      <span>🎴 Solocard Craft</span>
-                      <svg className="w-3 h-3 text-amber-400 group-hover:text-amber-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  ) : (
-                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: [...emailConfirm.attachments, "solocard_craft"]})} className="text-xs bg-gray-50 text-gray-400 border border-dashed border-gray-300 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                      <span>Solocard Craft</span>
-                    </button>
-                  )}
-                  {emailConfirm.attachments.includes("solocard_pro") ? (
-                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: emailConfirm.attachments.filter(a => a !== "solocard_pro")})} className="group text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-blue-100 transition-colors">
-                      <span>🎴 Solocard Pro</span>
-                      <svg className="w-3 h-3 text-blue-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  ) : (
-                    <button onClick={() => setEmailConfirm({...emailConfirm, attachments: [...emailConfirm.attachments, "solocard_pro"]})} className="text-xs bg-gray-50 text-gray-400 border border-dashed border-gray-300 rounded-full px-2.5 py-1 font-medium flex items-center gap-1.5 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                      <span>Solocard Pro</span>
                     </button>
                   )}
                 </div>
