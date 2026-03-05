@@ -24,6 +24,7 @@ interface Template {
 }
 
 interface Contact {
+  id?: number;
   contactname: string;
   title: string;
   email: string;
@@ -335,6 +336,7 @@ export default function HomePage() {
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string} | null>(null);
+  const [findingEmail, setFindingEmail] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
@@ -409,36 +411,35 @@ export default function HomePage() {
       }
 
       // Auto-create draft if contacts exist but no letter
+      const realCont = Array.isArray(contData) ? contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)") : [];
       const existingLetter = lettersMap.get(companyname);
-      if (!existingLetter && Array.isArray(contData) && contData.length > 0) {
-        const bestContact = contData.find((c: Contact) => c.contactname !== "(no results)") || contData[0];
-        if (bestContact && bestContact.contactname !== "(no results)") {
-          try {
-            const draftRes = await fetch("/api/draft", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                companyname,
-                contactname: bestContact.contactname,
-                contact_title: bestContact.title,
-                contact_email: bestContact.email,
-              }),
-            });
-            const draftData = await draftRes.json();
-            if (!draftData.error) {
-              const newLetter: LetterRow = {
-                id: draftData.id || "",
-                companyname,
-                contactname: bestContact.contactname,
-                contact_title: bestContact.title,
-                contact_email: bestContact.email,
-                status: "draft",
-              };
+      if (!existingLetter && realCont.length > 0) {
+        const bestContact = realCont.find((c: Contact) => c.email) || realCont[0];
+        try {
+          const draftRes = await fetch("/api/draft", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              companyname,
+              contactname: bestContact.contactname,
+              contact_title: bestContact.title,
+              contact_email: bestContact.email || "",
+            }),
+          });
+          const draftData = await draftRes.json();
+          if (!draftData.error) {
+            const newLetter: LetterRow = {
+              id: draftData.id || "",
+              companyname,
+              contactname: bestContact.contactname,
+              contact_title: bestContact.title,
+              contact_email: bestContact.email || "",
+              status: "draft",
+            };
               setCurrentLetter(newLetter);
               setLettersMap((prev) => { const m = new Map(prev); m.set(companyname, newLetter); return m; });
             }
           } catch { /* non-critical */ }
-        }
       }
     } catch {
       setContacts([]);
@@ -608,6 +609,46 @@ export default function HomePage() {
       companyname: expandedCompany,
       body: assembled.body,
     });
+  }
+
+  async function findEmail() {
+    const contact = contacts[selectedContactIdx];
+    if (!contact || !expandedCompany) return;
+    setFindingEmail(true);
+    try {
+      const res = await fetch("/api/find-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId: contact.id,
+          contactname: contact.contactname,
+          companyname: expandedCompany,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.email) {
+        toast(`Found: ${data.email}`);
+        // Reload contacts
+        const contRes = await fetch(`/api/contacts?companyname=${encodeURIComponent(expandedCompany)}`);
+        const contData = await contRes.json();
+        if (Array.isArray(contData)) {
+          setContacts(contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)"));
+        }
+        // Update current letter email
+        if (currentLetter) {
+          const updated = { ...currentLetter, contact_email: data.email };
+          setCurrentLetter(updated);
+          setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+        }
+      } else {
+        toast(data.message || "No email found", "error");
+      }
+    } catch (e: unknown) {
+      toast((e as Error).message, "error");
+    } finally {
+      setFindingEmail(false);
+    }
   }
 
   async function confirmSendEmail() {
@@ -1033,17 +1074,35 @@ export default function HomePage() {
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
                                           Contact
                                         </label>
-                                        <select
-                                          value={selectedContactIdx}
-                                          onChange={(e) => applyContact(Number(e.target.value))}
-                                          className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white w-full max-w-sm shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                                        >
-                                          {contacts.map((ct, i) => (
-                                            <option key={i} value={i}>
-                                              {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}{ct.email ? ` ✉ ${ct.email}` : " (no email)"}
-                                            </option>
-                                          ))}
-                                        </select>
+                                        <div className="flex gap-2 items-center">
+                                          <select
+                                            value={selectedContactIdx}
+                                            onChange={(e) => applyContact(Number(e.target.value))}
+                                            className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white flex-1 max-w-sm shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                          >
+                                            {contacts.map((ct, i) => (
+                                              <option key={i} value={i}>
+                                                {ct.contactname}{ct.title ? ` — ${ct.title}` : ""}{ct.email ? ` ✉ ${ct.email}` : " (no email)"}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          {contacts[selectedContactIdx] && !contacts[selectedContactIdx].email && (
+                                            <button
+                                              onClick={findEmail}
+                                              disabled={findingEmail}
+                                              className="px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors whitespace-nowrap flex items-center gap-1"
+                                            >
+                                              {findingEmail ? (
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                              ) : (
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                              )}
+                                              Find Email
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
                                     )}
 
