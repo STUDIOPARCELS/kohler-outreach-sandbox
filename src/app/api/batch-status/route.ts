@@ -11,8 +11,10 @@ export async function POST(req: NextRequest) {
 
   const now = new Date().toISOString();
   const updatePayload: Record<string, string> = { status, updated_at: now };
-  if (status === "printed") updatePayload.printed_at = now;
-  if (status === "sent") updatePayload.sent_at = now;
+  if (status === "printed" || status === "sent") {
+    updatePayload.printed_at = now;
+    updatePayload.sent_at = now;
+  }
 
   const { data, error } = await supabaseAdmin
     .from("reachout_company_inserts")

@@ -174,11 +174,11 @@ const NICHE_ORDER = [
   "Skiing",
   "Acoustics / Audio / Musical Instruments",
   "Outdoor Recreation & Equipment",
-  "Automotive / Vehicles",
   "Woodworking / Furniture / Cabinetry / Prototyping",
+  "Automotive / Vehicles",
   "Energy / Renewables / Power",
-  "Metals / Material Science",
   "Manufacturing / Automation / Product Design",
+  "Metals / Material Science",
   "Quantum / Deep Tech / Electronics / Robotics",
   "Construction / Civil / Heavy Industry",
   "MEP / HVAC / Building Systems",
@@ -370,7 +370,7 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I have hands-on experience with thermal systems, fluid dynamics, and taking SolidWorks designs from concept through fabrication, and I'd welcome the chance to apply that to energy infrastructure."
+    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to apply that to energy infrastructure."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
     "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
@@ -379,7 +379,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I have coursework in fluid mechanics and materials selection, plus hands-on fabrication experience, and I'd welcome the chance to contribute to water and environmental infrastructure."
+    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
   ),
   "Aerospace / Space": nicheTemplate(
     "My father owns a Cessna 172 — an experience that shaped my engineering interest today."
