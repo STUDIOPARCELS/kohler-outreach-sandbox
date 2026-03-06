@@ -1698,9 +1698,10 @@ akwood1@mines.edu`;
                                                             const data = await res.json();
                                                             if (data.error) throw new Error(data.error);
                                                             toast(`Letter drafted for ${ct.contactname} at ${displayName}`);
-                                                            const lr = await fetch("/api/letters?companyname=" + encodeURIComponent(c.companyname));
-                                                            const ld = await lr.json();
-                                                            if (ld.letters) setLettersMap(prev => { const n = new Map(prev); n.set(c.companyname, ld.letters); return n; });
+                                                            // Update lettersMap directly with returned draft
+                                                            if (data && data.id) {
+                                                              setLettersMap(prev => upsertLetterInMap(prev, c.companyname, data));
+                                                            }
                                                           } catch (e) { toast((e as Error).message, "error"); }
                                                         }
                                                       }
