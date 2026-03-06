@@ -1598,17 +1598,45 @@ export default function HomePage() {
                                                             .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
                                                           const firstName = contactWithEmail.contactname.split(" ")[0];
 
-                                                          // Build a job-tailored email body
-                                                          const jobTitle = job.title || "the open engineering position";
+                                                          // Categorize the job title into a simple role type
+                                                          const jt = (job.title || "").toLowerCase();
+                                                          let roleCategory = "engineering";
+                                                          if (jt.includes("mechanical")) roleCategory = "mechanical engineering";
+                                                          else if (jt.includes("design")) roleCategory = "design engineering";
+                                                          else if (jt.includes("project")) roleCategory = "project engineering";
+                                                          else if (jt.includes("manufacturing") || jt.includes("production")) roleCategory = "manufacturing engineering";
+                                                          else if (jt.includes("hvac") || jt.includes("mep")) roleCategory = "mechanical systems";
+                                                          else if (jt.includes("aerospace") || jt.includes("space")) roleCategory = "aerospace engineering";
+                                                          else if (jt.includes("commissioning")) roleCategory = "commissioning";
+                                                          else if (jt.includes("nuclear") || jt.includes("power")) roleCategory = "power engineering";
+                                                          else if (jt.includes("structural") || jt.includes("analysis")) roleCategory = "structural analysis";
+                                                          else if (jt.includes("quality") || jt.includes("test")) roleCategory = "quality engineering";
+                                                          else if (jt.includes("estimat")) roleCategory = "estimating";
+                                                          else if (jt.includes("field") || jt.includes("site")) roleCategory = "field engineering";
+
+                                                          // Match one line of relevant experience from the resume
+                                                          let skillLine = "I have experience taking SolidWorks designs from concept through prototype and fabrication.";
+                                                          if (roleCategory.includes("manufacturing") || roleCategory.includes("production")) {
+                                                            skillLine = "I have hands-on experience with CNC machining, 3D printing, and taking designs from prototype through fabrication.";
+                                                          } else if (roleCategory.includes("aerospace") || roleCategory.includes("space")) {
+                                                            skillLine = "I have experience with SolidWorks modeling, FEA simulation, and taking designs from concept through prototype.";
+                                                          } else if (roleCategory.includes("power") || roleCategory.includes("mechanical systems")) {
+                                                            skillLine = "I have experience with SolidWorks, CFD simulation, and mechanical system design from concept through fabrication.";
+                                                          } else if (roleCategory.includes("structural") || roleCategory.includes("analysis")) {
+                                                            skillLine = "I have experience with SolidWorks, FEA linear static analysis, and taking designs from concept through prototype.";
+                                                          } else if (roleCategory.includes("project") || roleCategory.includes("field") || roleCategory.includes("commissioning")) {
+                                                            skillLine = "I have hands-on fabrication experience, Scrum project management skills, and a strong mechanical design foundation.";
+                                                          } else if (roleCategory.includes("design")) {
+                                                            skillLine = "I have experience with SolidWorks parts, assemblies, and drawings, plus hands-on CNC and 3D printing fabrication.";
+                                                          }
+
                                                           const emailBody = `Hello ${firstName},
 
 I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I noticed your opening for ${jobTitle} at ${displayName} and wanted to reach out directly. I have hands-on experience taking SolidWorks designs from concept through prototype and fabrication, including CNC machining, 3D printing, and metal/wood fabrication at the Labriola Innovation Hub at Mines.${job.summary ? `
+I'm interested in your ${roleCategory} position at ${displayName}. ${skillLine}
 
-What drew me to this role: ${job.summary.slice(0, 150).trim()}${job.summary.length > 150 ? "..." : ""}` : ""}
-
-I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I have attached my résumé below. My projects and interests are included here: kohler.solokit.app.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -1623,7 +1651,7 @@ akwood1@mines.edu`;
                                                             companyname: c.companyname,
                                                             body: emailBody,
                                                             attachments: ["resume"],
-                                                            subject: `Interest in ${jobTitle} — CO School of Mines, EIT`,
+                                                            subject: `${roleCategory.charAt(0).toUpperCase() + roleCategory.slice(1)} position — CO School of Mines, EIT`,
                                                           });
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
