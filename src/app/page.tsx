@@ -1814,33 +1814,37 @@ akwood1@mines.edu`;
               <h3 className="text-white font-bold text-base">Confirm Email</h3>
             </div>
             <div className="px-6 py-5 space-y-3 overflow-y-auto">
-              <div>
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">To</span>
-                <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.contactname}</p>
-                <p className="text-sm text-sky-600">{emailConfirm.to}</p>
-              </div>
-              <div>
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company</span>
-                <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.companyname}</p>
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-2">
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">To</span>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.contactname}</p>
+                    <p className="text-sm text-sky-600">{emailConfirm.to}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company</span>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.companyname}</p>
+                  </div>
+                </div>
+                {emailConfirm.matches && emailConfirm.matches.length > 0 && (
+                  <div className="w-56 shrink-0 rounded-lg border border-emerald-200 bg-emerald-50/40 p-2.5">
+                    <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">Skill Match</span>
+                    <div className="mt-1 space-y-1">
+                      {emailConfirm.matches.map((m, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                          <span className="text-gray-500 flex-1 truncate">{m.job_skill}</span>
+                          <svg className="w-2.5 h-2.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                          <span className="text-emerald-800 font-semibold flex-1 truncate">{m.resume_skill}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
                 <p className="text-sm text-gray-700 mt-0.5">{emailConfirm.subject || "Mechanical Engineer — CO School of Mines, EIT"}</p>
               </div>
-              {emailConfirm.matches && emailConfirm.matches.length > 0 && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
-                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Skill Match</span>
-                  <div className="mt-1.5 space-y-1.5">
-                    {emailConfirm.matches.map((m, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[11px]">
-                        <span className="text-gray-500 flex-1 truncate">{m.job_skill}</span>
-                        <svg className="w-3 h-3 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                        <span className="text-emerald-800 font-semibold flex-1 truncate">{m.resume_skill}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
                 {emailConfirm.editing ? (
