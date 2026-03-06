@@ -454,6 +454,7 @@ export default function HomePage() {
   const [jobsCompany, setJobsCompany] = useState<string | null>(null);
   const [jobsLoading2, setJobsLoading2] = useState(false);
   const [jobResults2, setJobResults2] = useState<{title: string; salary?: string; location?: string; summary?: string; apply_url: string; source?: string}[]>([]);
+  const [jobContactPicker, setJobContactPicker] = useState<{jobIdx: number; action: "email"|"letter"; company: string} | null>(null);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [contactSearch, setContactSearch] = useState("");
@@ -1596,7 +1597,7 @@ export default function HomePage() {
                                                     {job.source && <span className="text-[10px] text-gray-300">{job.source}</span>}
                                                   </div>
                                                   {job.summary && <p className="text-[10px] text-gray-500 mt-1.5 leading-relaxed">{job.summary}</p>}
-                                                  <div className="flex items-center gap-2 mt-2">
+                                                  <div className="mt-2">
                                                     {(() => {
                                                       const displayName = c.companyname
                                                         .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
@@ -1613,7 +1614,11 @@ export default function HomePage() {
                                                       else if (jt.includes("test") || jt.includes("quality")) roleLabel = "quality engineer";
                                                       else if (jt.includes("instrument") || jt.includes("control")) roleLabel = "controls engineer";
 
-                                                      async function getSkillMatch() {
+                                                      const pickerOpen = jobContactPicker?.jobIdx === ji && jobContactPicker?.company === c.companyname;
+                                                      const pickerAction = jobContactPicker?.action;
+
+                                                      async function handleContactAction(ct: typeof contacts[0], action: "email"|"letter") {
+                                                        setJobContactPicker(null);
                                                         let skillSentence = "I have experience with SolidWorks design and hands-on prototyping and fabrication.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
                                                         try {
@@ -1626,23 +1631,10 @@ export default function HomePage() {
                                                           if (d.sentence) skillSentence = d.sentence;
                                                           if (d.matches) matches = d.matches;
                                                         } catch { /* fallback */ }
-                                                        return { skillSentence, matches };
-                                                      }
 
-                                                      // Best contact with email
-                                                      const bestContact = contacts.find(ct => ct.email);
-                                                      // Any contact at all (for letters)
-                                                      const anyContact = contacts[0];
-
-                                                      return (
-                                                        <>
-                                                          {/* Send Interest (email) — needs contact with email */}
-                                                          {bestContact && template && (
-                                                            <button
-                                                              onClick={async () => {
-                                                                const { skillSentence, matches } = await getSkillMatch();
-                                                                const firstName = bestContact.contactname.split(" ")[0];
-                                                                const emailBody = `Hello ${firstName},
+                                                        if (action === "email") {
+                                                          const firstName = ct.contactname.split(" ")[0];
+                                                          const emailBody = `Hello ${firstName},
 
 I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
@@ -1658,40 +1650,25 @@ Kohler Wood
 208-720-4635
 Lakewood, CO
 akwood1@mines.edu`;
-                                                                setEmailConfirm({
-                                                                  to: bestContact.email,
-                                                                  contactname: bestContact.contactname,
-                                                                  companyname: c.companyname,
-                                                                  body: emailBody,
-                                                                  attachments: ["resume"],
-                                                                  subject: `Entry-level ${roleLabel} — CO School of Mines, EIT`,
-                                                                  matches,
-                                                                });
-                                                              }}
-                                                              className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
-                                                            >
-                                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                                              Email
-                                                            </button>
-                                                          )}
+                                                          setEmailConfirm({
+                                                            to: ct.email,
+                                                            contactname: ct.contactname,
+                                                            companyname: c.companyname,
+                                                            body: emailBody,
+                                                            attachments: ["resume"],
+                                                            subject: `Entry-level ${roleLabel} — CO School of Mines, EIT`,
+                                                            matches,
+                                                          });
+                                                        } else {
+                                                          const companyAddr = companyAddress || "";
+                                                          const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                                                          const letterBody = `${today}
 
-                                                          {/* Send Letter (physical) — needs any contact */}
-                                                          {anyContact && template && (
-                                                            <button
-                                                              onClick={async () => {
-                                                                const { skillSentence } = await getSkillMatch();
-                                                                const contactName = anyContact.contactname;
-                                                                const companyAddr = companyAddress || "";
-
-                                                                // Build a job-tailored physical letter
-                                                                const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-                                                                const letterBody = `${today}
-
-${contactName}
+${ct.contactname}
 ${c.companyname}
 ${companyAddr}
 
-Hello ${contactName.split(" ")[0]},
+Hello ${ct.contactname.split(" ")[0]},
 
 I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
@@ -1712,55 +1689,82 @@ Kohler Wood, EIT
 208-720-4635
 Lakewood, CO
 akwood1@mines.edu`;
+                                                          try {
+                                                            const res = await fetch("/api/draft", {
+                                                              method: "POST",
+                                                              headers: { "Content-Type": "application/json" },
+                                                              body: JSON.stringify({ companyname: c.companyname, contactname: ct.contactname, body: letterBody }),
+                                                            });
+                                                            const data = await res.json();
+                                                            if (data.error) throw new Error(data.error);
+                                                            toast(`Letter drafted for ${ct.contactname} at ${displayName}`);
+                                                            const lr = await fetch("/api/letters?companyname=" + encodeURIComponent(c.companyname));
+                                                            const ld = await lr.json();
+                                                            if (ld.letters) setLettersMap(prev => { const n = new Map(prev); n.set(c.companyname, ld.letters); return n; });
+                                                          } catch (e) { toast((e as Error).message, "error"); }
+                                                        }
+                                                      }
 
-                                                                // Save to DB via draft API
-                                                                try {
-                                                                  const res = await fetch("/api/draft", {
-                                                                    method: "POST",
-                                                                    headers: { "Content-Type": "application/json" },
-                                                                    body: JSON.stringify({
-                                                                      companyname: c.companyname,
-                                                                      contactname: contactName,
-                                                                      body: letterBody,
-                                                                    }),
-                                                                  });
-                                                                  const data = await res.json();
-                                                                  if (data.error) throw new Error(data.error);
-                                                                  toast(`Letter drafted for ${contactName} at ${displayName}`);
-                                                                  // Reload letters
-                                                                  const lr = await fetch("/api/letters?companyname=" + encodeURIComponent(c.companyname));
-                                                                  const ld = await lr.json();
-                                                                  if (ld.letters) {
-                                                                    setLettersMap(prev => {
-                                                                      const next = new Map(prev);
-                                                                      next.set(c.companyname, ld.letters);
-                                                                      return next;
-                                                                    });
-                                                                  }
-                                                                } catch (e) { toast((e as Error).message, "error"); }
-                                                              }}
-                                                              className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition-colors flex items-center gap-1"
-                                                            >
-                                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                                              Letter
-                                                            </button>
-                                                          )}
+                                                      const contactsWithEmail = contacts.filter(ct => ct.email);
 
-                                                          {/* Find Contacts — when no contacts exist */}
-                                                          {contacts.length === 0 && (
-                                                            <button
-                                                              onClick={() => researchContacts(c.companyname)}
-                                                              disabled={researching}
-                                                              className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors flex items-center gap-1"
-                                                            >
-                                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                                              Find Contacts
-                                                            </button>
-                                                          )}
-
-                                                          {/* No email available — show hint */}
-                                                          {contacts.length > 0 && !bestContact && (
-                                                            <span className="text-[10px] text-amber-500 italic">No email found — use Letter</span>
+                                                      return (
+                                                        <>
+                                                          <div className="flex items-center gap-2">
+                                                            {contactsWithEmail.length > 0 && template && (
+                                                              <button
+                                                                onClick={() => {
+                                                                  if (contactsWithEmail.length === 1) { handleContactAction(contactsWithEmail[0], "email"); return; }
+                                                                  setJobContactPicker(pickerOpen && pickerAction === "email" ? null : { jobIdx: ji, action: "email", company: c.companyname });
+                                                                }}
+                                                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 ${pickerOpen && pickerAction === "email" ? "bg-blue-700 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                                                              >
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                                Email{contactsWithEmail.length > 1 ? " ▾" : ""}
+                                                              </button>
+                                                            )}
+                                                            {contacts.length > 0 && template && (
+                                                              <button
+                                                                onClick={() => {
+                                                                  if (contacts.length === 1) { handleContactAction(contacts[0], "letter"); return; }
+                                                                  setJobContactPicker(pickerOpen && pickerAction === "letter" ? null : { jobIdx: ji, action: "letter", company: c.companyname });
+                                                                }}
+                                                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 ${pickerOpen && pickerAction === "letter" ? "bg-gray-800 text-white" : "bg-gray-700 text-white hover:bg-gray-800"}`}
+                                                              >
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                                Letter{contacts.length > 1 ? " ▾" : ""}
+                                                              </button>
+                                                            )}
+                                                            {contacts.length === 0 && (
+                                                              <button
+                                                                onClick={() => researchContacts(c.companyname)}
+                                                                disabled={researching}
+                                                                className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors flex items-center gap-1"
+                                                              >
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                                                Find Contacts
+                                                              </button>
+                                                            )}
+                                                          </div>
+                                                          {/* Contact picker dropdown */}
+                                                          {pickerOpen && (
+                                                            <div className="mt-1.5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                                                              <div className="px-2.5 py-1.5 bg-gray-50 border-b border-gray-100">
+                                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Choose contact to {pickerAction}</span>
+                                                              </div>
+                                                              {(pickerAction === "email" ? contactsWithEmail : contacts).map((ct, ci) => (
+                                                                <button
+                                                                  key={ci}
+                                                                  onClick={() => handleContactAction(ct, pickerAction!)}
+                                                                  className="w-full text-left px-2.5 py-1.5 hover:bg-blue-50 transition-colors flex items-center justify-between gap-2 border-b border-gray-50 last:border-0"
+                                                                >
+                                                                  <div className="min-w-0">
+                                                                    <p className="text-[10px] font-semibold text-gray-900 truncate">{ct.contactname}</p>
+                                                                    <p className="text-[9px] text-gray-400 truncate">{ct.title}{ct.email ? ` · ${ct.email}` : ""}</p>
+                                                                  </div>
+                                                                  <svg className="w-3 h-3 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                                                </button>
+                                                              ))}
+                                                            </div>
                                                           )}
                                                         </>
                                                       );
