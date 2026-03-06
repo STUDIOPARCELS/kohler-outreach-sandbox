@@ -455,6 +455,7 @@ export default function HomePage() {
   const [jobsLoading2, setJobsLoading2] = useState(false);
   const [jobResults2, setJobResults2] = useState<{title: string; salary?: string; location?: string; summary?: string; apply_url: string; source?: string}[]>([]);
   const [jobContactPicker, setJobContactPicker] = useState<{jobIdx: number; action: "email"|"letter"; company: string} | null>(null);
+  const [jobsSearched, setJobsSearched] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [contactSearch, setContactSearch] = useState("");
@@ -1553,6 +1554,7 @@ export default function HomePage() {
                                           setJobsCompany(c.companyname);
                                           setJobsLoading2(true);
                                           setJobResults2([]);
+                                          setJobsSearched(false);
                                           try {
                                             const res = await fetch("/api/search-jobs", {
                                               method: "POST",
@@ -1562,7 +1564,7 @@ export default function HomePage() {
                                             const data = await res.json();
                                             setJobResults2(data.jobs || []);
                                           } catch { setJobResults2([]); }
-                                          finally { setJobsLoading2(false); }
+                                          finally { setJobsLoading2(false); setJobsSearched(true); }
                                         }}
                                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${jobsCompany === c.companyname ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60"}`}
                                       >
@@ -1574,7 +1576,7 @@ export default function HomePage() {
 
                                       {jobsCompany === c.companyname && (
                                         <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/30 overflow-hidden">
-                                          {jobsLoading2 && (
+                                          {(jobsLoading2 || !jobsSearched) && (
                                             <div className="px-4 py-5 space-y-3">
                                               {[1,2,3].map(i => (
                                                 <div key={i} className="animate-pulse flex items-center gap-3">
@@ -1588,7 +1590,7 @@ export default function HomePage() {
                                               <p className="text-[10px] text-blue-400 text-center pt-1">Searching live job boards...</p>
                                             </div>
                                           )}
-                                          {!jobsLoading2 && jobResults2.length === 0 && (
+                                          {!jobsLoading2 && jobResults2.length === 0 && jobsSearched && (
                                             <div className="px-4 py-5 text-center">
                                               <p className="text-xs text-gray-400">No current openings found for this company</p>
                                             </div>
