@@ -1113,7 +1113,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div>
                 <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight uppercase">
-                  OUTREACH | MISSION CONTROL
+                  OUTREACH ENGINE
                 </h1>
                 <p className="text-slate-300 mt-1 text-xs sm:text-base font-medium uppercase tracking-wide">
                   ENTRY LEVEL BSME / EIT · DENVER METRO

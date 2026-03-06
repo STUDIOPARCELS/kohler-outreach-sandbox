@@ -3,8 +3,8 @@ import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 
 export const metadata: Metadata = {
-  title: "Outreach | Mission Control",
-  description: "Outreach mission control for entry level BSME/EIT",
+  title: "Outreach Engine",
+  description: "Outreach engine for entry level BSME",
 };
 
 export const viewport: Viewport = {
