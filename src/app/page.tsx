@@ -1570,39 +1570,55 @@ export default function HomePage() {
                                           )}
                                           {!jobsLoading2 && jobResults2.length === 0 && (
                                             <div className="px-4 py-5 text-center">
-                                              <p className="text-xs text-gray-400">No current openings found</p>
-                                              <a
-                                                href={`https://www.indeed.com/jobs?q=${encodeURIComponent("mechanical engineer " + c.companyname)}&l=Denver%2C+CO`}
-                                                target="_blank" rel="noopener noreferrer"
-                                                className="inline-block mt-2 text-xs text-blue-500 hover:text-blue-700 underline"
-                                              >
-                                                Search Indeed →
-                                              </a>
+                                              <p className="text-xs text-gray-400">No current openings found for this company</p>
                                             </div>
                                           )}
                                           {!jobsLoading2 && jobResults2.length > 0 && (
                                             <div className="divide-y divide-blue-100/60">
-                                              {jobResults2.map((job, ji) => (
-                                                <div key={ji} className="px-4 py-3 hover:bg-blue-50/50 transition-colors">
-                                                  <div className="flex items-start justify-between gap-3">
-                                                    <div className="min-w-0 flex-1">
-                                                      <p className="text-xs font-bold text-gray-900 leading-tight">{job.title}</p>
-                                                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                        {job.location && <span className="text-[10px] text-gray-500">{job.location}</span>}
-                                                        {job.salary && <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">{job.salary}</span>}
-                                                      </div>
-                                                      {job.summary && <p className="text-[10px] text-gray-500 mt-1 leading-relaxed line-clamp-2">{job.summary}</p>}
-                                                    </div>
+                                              {jobResults2.map((job, ji) => {
+                                                // Find the best contact with email for this company
+                                                const contactWithEmail = contacts.find(ct => ct.email);
+                                                return (
+                                                <div key={ji} className="px-4 py-3">
+                                                  <p className="text-xs font-bold text-gray-900 leading-tight">{job.title}</p>
+                                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                    {job.location && <span className="text-[10px] text-gray-500">{job.location}</span>}
+                                                    {job.salary && <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">{job.salary}</span>}
+                                                    {job.source && <span className="text-[10px] text-gray-300">{job.source}</span>}
+                                                  </div>
+                                                  {job.summary && <p className="text-[10px] text-gray-500 mt-1.5 leading-relaxed">{job.summary}</p>}
+                                                  <div className="flex items-center gap-2 mt-2">
+                                                    {contactWithEmail && template && (
+                                                      <button
+                                                        onClick={() => {
+                                                          const niche = companies.find(co => co.companyname === c.companyname)?.niche;
+                                                          const freshBody = assembleLetter(template, c.companyname, "", contactWithEmail.contactname, contactWithEmail.title, companyAddress, niche).body;
+                                                          const jobRef = `\n\nP.S. I noticed your posting for "${job.title}" and am very interested in this role.`;
+                                                          setEmailConfirm({
+                                                            to: contactWithEmail.email,
+                                                            contactname: contactWithEmail.contactname,
+                                                            companyname: c.companyname,
+                                                            body: freshBody + jobRef,
+                                                            attachments: ["resume"],
+                                                          });
+                                                        }}
+                                                        className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
+                                                      >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                        Send Interest
+                                                      </button>
+                                                    )}
                                                     <a
                                                       href={job.apply_url}
                                                       target="_blank" rel="noopener noreferrer"
-                                                      className="shrink-0 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                                      className="text-[10px] text-blue-400 hover:text-blue-600 underline"
                                                     >
-                                                      Apply
+                                                      View posting
                                                     </a>
                                                   </div>
                                                 </div>
-                                              ))}
+                                                );
+                                              })}
                                             </div>
                                           )}
                                         </div>
