@@ -1961,7 +1961,7 @@ export default function HomePage() {
                     <div className="font-semibold text-sm text-gray-900">{r.name}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{r.address}</div>
                     {r.types && <div className="text-xs text-gray-400 mt-0.5">{r.types}</div>}
-                    {r.rating && <div className="text-xs text-amber-500 mt-0.5">★ {r.rating}</div>}
+                    {r.types && <div className="text-[10px] text-gray-400 mt-0.5">{r.types}</div>}
                   </div>
                   <button
                     onClick={() => addLeadFromResult(r)}

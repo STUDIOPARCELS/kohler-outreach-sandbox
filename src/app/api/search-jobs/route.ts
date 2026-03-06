@@ -19,57 +19,90 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ jobs: cached, source: "cache" });
     }
 
-    // No fresh cache — try live search via SearXNG (free, no auth needed)
-    const query = encodeURIComponent(`${companyname} mechanical engineer jobs Denver Colorado`);
-    const searxInstances = [
-      "https://search.bus-hit.me",
-      "https://priv.au",
-      "https://search.ononoki.org",
-    ];
-
     type JobResult = { title: string; location: string; salary: string; summary: string; apply_url: string; source: string; companyname: string };
     const jobs: JobResult[] = [];
 
-    for (const instance of searxInstances) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch(`${instance}/search?q=${query}&format=json&categories=general`, {
-          headers: { Accept: "application/json", "User-Agent": "KohlerOutreach/1.0" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!res.ok) continue;
-        const data = await res.json();
-        const results = (data.results || []).slice(0, 10);
+    // Try Indeed RSS feed (structured, reliable, free)
+    const indeedQuery = encodeURIComponent(`${companyname} mechanical engineer`);
+    try {
+      const indeedUrl = `https://www.indeed.com/rss?q=${indeedQuery}&l=Denver%2C+CO&sort=date&limit=10`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(indeedUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; KohlerOutreach/1.0)" },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
 
-        const jobKeywords = /job|career|position|hiring|engineer|apply|opening|opportunit/i;
-        const jobSites = /indeed\.com|linkedin\.com\/jobs|glassdoor\.com|dice\.com|ziprecruiter\.com|builtin\.com|lever\.co|greenhouse\.io|workday/i;
+      if (res.ok) {
+        const xml = await res.text();
+        // Parse RSS items
+        const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+        let match;
+        while ((match = itemRegex.exec(xml)) !== null && jobs.length < 8) {
+          const item = match[1];
+          const getTag = (tag: string) => {
+            const m = item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`));
+            return m ? m[1].replace(/<!\[CDATA\[|\]\]>/g, "").trim() : "";
+          };
+          const title = getTag("title");
+          const link = getTag("link") || getTag("guid");
+          const desc = getTag("description").replace(/<[^>]+>/g, "").trim();
 
-        for (const r of results) {
-          const url: string = r.url || "";
-          const title: string = r.title || "";
-          const snippet: string = r.content || "";
-          if (!url) continue;
-
-          if (jobKeywords.test(title) || jobKeywords.test(snippet) || jobSites.test(url)) {
-            const salaryMatch = snippet.match(/\$[\d,]+(?:\s*[-–]\s*\$?[\d,]+)?(?:\s*(?:per|a|\/)\s*(?:year|hr|hour))?/i);
-            let host = "";
-            try { host = new URL(url).hostname.replace("www.", ""); } catch { host = "web"; }
-
+          if (title && link) {
+            const salaryMatch = desc.match(/\$[\d,]+(?:\s*[-–]\s*\$?[\d,]+)?(?:\s*(?:per|a|\/)\s*(?:year|hr|hour))?/i);
             jobs.push({
-              title: title.replace(/\s*[-|–].*$/, "").trim().slice(0, 140),
+              title: title.slice(0, 140),
               location: "Denver, CO area",
               salary: salaryMatch ? salaryMatch[0] : "",
-              summary: snippet.slice(0, 250),
-              apply_url: url,
-              source: host,
+              summary: desc.slice(0, 250),
+              apply_url: link,
+              source: "indeed.com",
               companyname,
             });
           }
         }
-        if (jobs.length > 0) break;
-      } catch { continue; }
+      }
+    } catch { /* Indeed failed, try fallback */ }
+
+    // Fallback: ZipRecruiter search page
+    if (jobs.length === 0) {
+      try {
+        const zipQuery = encodeURIComponent(`${companyname} mechanical engineer`);
+        const zipUrl = `https://www.ziprecruiter.com/jobs-search?search=${zipQuery}&location=Denver%2C+CO&radius=25`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(zipUrl, {
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const html = await res.text();
+          // Extract job cards from ZipRecruiter HTML
+          const cardRegex = /<article[^>]*class="[^"]*job_result[^"]*"[\s\S]*?<\/article>/gi;
+          let cardMatch;
+          while ((cardMatch = cardRegex.exec(html)) !== null && jobs.length < 8) {
+            const card = cardMatch[0];
+            const titleMatch = card.match(/class="[^"]*job_title[^"]*"[^>]*>[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/i);
+            const salaryMatch = card.match(/\$[\d,]+(?:\s*[-–]\s*\$?[\d,]+)?/);
+            const snippetMatch = card.match(/class="[^"]*snippet[^"]*"[^>]*>([\s\S]*?)<\//i);
+
+            if (titleMatch) {
+              jobs.push({
+                title: titleMatch[2].replace(/<[^>]+>/g, "").trim().slice(0, 140),
+                location: "Denver, CO area",
+                salary: salaryMatch ? salaryMatch[0] : "",
+                summary: snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g, "").trim().slice(0, 250) : "",
+                apply_url: titleMatch[1].startsWith("http") ? titleMatch[1] : `https://www.ziprecruiter.com${titleMatch[1]}`,
+                source: "ziprecruiter.com",
+                companyname,
+              });
+            }
+          }
+        }
+      } catch { /* ZipRecruiter failed too */ }
     }
 
     // Cache results
@@ -89,7 +122,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fallback: check for any older cache
+    // Fallback: check old cache
     if (jobs.length === 0) {
       const { data: oldCache } = await supabaseAdmin
         .from("job_listings")
