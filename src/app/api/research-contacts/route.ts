@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
         linkedin: p.linkedin_url || "",
         phone: (teaser.phones?.[0] ?? "") as string,
         notes: `RocketReach ${new Date().toISOString().split("T")[0]}`,
+        email_searched: true,
       };
 
       const { data: existing } = await supabaseAdmin

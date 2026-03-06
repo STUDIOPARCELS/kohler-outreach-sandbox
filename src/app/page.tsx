@@ -28,6 +28,7 @@ interface Contact {
   contactname: string;
   title: string;
   email: string;
+  email_searched?: boolean;
 }
 
 interface CompanyRow {
@@ -868,12 +869,6 @@ export default function HomePage() {
       if (data.error) throw new Error(data.error);
       if (data.email) {
         toast(`Found: ${data.email}`);
-        // Reload contacts
-        const contRes = await fetch(`/api/contacts?companyname=${encodeURIComponent(expandedCompany)}`);
-        const contData = await contRes.json();
-        if (Array.isArray(contData)) {
-          setContacts(contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)"));
-        }
         // Update current letter email
         if (currentLetter) {
           const updated = { ...currentLetter, contact_email: data.email };
@@ -882,6 +877,12 @@ export default function HomePage() {
         }
       } else {
         toast(data.message || "No email found", "error");
+      }
+      // Always reload contacts to get updated email_searched flag
+      const contRes = await fetch(`/api/contacts?companyname=${encodeURIComponent(expandedCompany)}`);
+      const contData = await contRes.json();
+      if (Array.isArray(contData)) {
+        setContacts(contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)"));
       }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
@@ -1532,6 +1533,10 @@ export default function HomePage() {
                                               >
                                                 Email
                                               </button>
+                                            ) : ct.email_searched ? (
+                                              <span className="px-3 py-1.5 text-xs text-gray-400 whitespace-nowrap shrink-0">
+                                                No email found
+                                              </span>
                                             ) : (
                                               <button
                                                 onClick={() => findEmail(i)}
