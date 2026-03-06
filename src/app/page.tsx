@@ -1634,9 +1634,13 @@ export default function HomePage() {
 
                                                           const emailBody = `Hello ${firstName},
 
-My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines. I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
+I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-${skillSentence} I have attached my résumé below. My projects and interests are included here: kohler.solokit.app.
+I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
+
+${skillSentence}
+
+I have attached my résumé below. My projects and interests are included here: kohler.solokit.app.
 
 Thank you for your time, and I hope to hear from you.
 
