@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return NextResponse.json({ sentence: fallback });
+    if (!apiKey) return NextResponse.json({ sentence: fallback, debug: "no_key", envKeys: Object.keys(process.env).filter(k => k.includes("ANTHROPIC")).join(",") || "none" });
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
