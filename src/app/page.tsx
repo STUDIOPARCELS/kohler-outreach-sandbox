@@ -87,16 +87,11 @@ function cleanCompanyName(name: string): string {
     }
   }
   
-  // Fix brand-style lowercase abbreviations that should be uppercase in formal letters
-  const uppercaseFixes: Record<string, string> = {
-    " bp": " BP",
-    " usa": " USA",
-    " llc": " LLC",
-  };
-  for (const [from, to] of Object.entries(uppercaseFixes)) {
-    if (clean.toLowerCase().endsWith(from)) {
-      clean = clean.slice(0, clean.length - from.length) + to;
-    }
+  // Strip brand suffixes that don't belong in "the work you're doing at [X]"
+  const brandSuffixes = ["bp", "BP"];
+  const lastWord2 = clean.split(/\s+/).pop() || "";
+  if (clean.split(/\s+/).length >= 2 && brandSuffixes.includes(lastWord2)) {
+    clean = clean.split(/\s+/).slice(0, -1).join(" ");
   }
   
   return clean;
@@ -143,6 +138,15 @@ function assembleLetter(
 
   // Remove exclamation mark from closing
   body = body.replace("I hope to hear from you!", "I hope to hear from you.");
+
+  // Fix dash before "which links" in old drafts
+  body = body.replace("résumé and card — which links", "résumé and card, which links");
+
+  // Ensure "with my skill set" in closing
+  body = body.replace(
+    "entry-level BSME/EIT, I would love to interview",
+    "entry-level BSME/EIT with my skill set, I would love to interview"
+  );
 
   // Remove duplicate paragraphs (safety net)
   body = deduplicateParagraphs(body);
@@ -349,7 +353,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.
+I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -366,7 +370,7 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I have hands-on experience with thermal systems, fluid dynamics, and taking SolidWorks designs from concept through fabrication — I'd welcome the chance to apply that to energy infrastructure."
+    "I have hands-on experience with thermal systems, fluid dynamics, and taking SolidWorks designs from concept through fabrication, and I'd welcome the chance to apply that to energy infrastructure."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
     "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
@@ -375,13 +379,13 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I have coursework in fluid mechanics and materials selection, plus hands-on fabrication experience — I'd welcome the chance to contribute to water and environmental infrastructure."
+    "I have coursework in fluid mechanics and materials selection, plus hands-on fabrication experience, and I'd welcome the chance to contribute to water and environmental infrastructure."
   ),
   "Aerospace / Space": nicheTemplate(
     "My father owns a Cessna 172 — an experience that shaped my engineering interest today."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "I've designed electromechanical systems with 3D-printed interfaces for my senior capstone — I'd welcome the chance to contribute to your team."
+    "I've designed electromechanical systems with 3D-printed interfaces for my senior capstone, and I'd welcome the chance to contribute to your team."
   ),
   "Automotive / Vehicles": nicheTemplate(
     "I've had an interest in automobiles since I was young, and I'd jump at the chance to contribute to your team."
@@ -393,22 +397,22 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I've studied and performed classical piano for three years. I also built an adaptive bass guitar for my senior capstone, and I'd jump at the chance to engineer in this industry."
   ),
   "Skiing": nicheTemplate(
-    "I grew up in Sun Valley, ID and have skied all my life — the chance to engineer products I'd love to use would be a dream come true."
+    "I grew up in Sun Valley, ID and have skied all my life, and the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Outdoor Recreation & Equipment": nicheTemplate(
-    "I grew up in Sun Valley, ID and have spent my life in the outdoors — the chance to engineer products I'd love to use would be a dream come true."
+    "I grew up in Sun Valley, ID and have spent my life in the outdoors, and the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
     "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet."
   ),
   "Medical / Biotech": nicheTemplate(
-    "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I'd welcome the chance to apply that experience in medical device engineering."
+    "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities, and I'd welcome the chance to apply that experience in medical device engineering."
   ),
   "Food / Beverage Manufacturing": nicheTemplate(
     "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
   ),
   "Metals / Material Science": nicheTemplate(
-    "I have hands-on experience with metal fabrication, 3D printing, and taking SolidWorks designs from concept through prototype — I'd welcome the chance to contribute to your team's materials work."
+    "I have hands-on experience with materials processing, taking SolidWorks designs from concept through prototype, and I'd welcome the chance to contribute to your team."
   ),
 };
 
@@ -1634,7 +1638,7 @@ export default function HomePage() {
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my résumé and card — which links to my projects and interests. If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
+                        "I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
                         "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
                       );
                       return preview;
