@@ -50,7 +50,11 @@ Rules:
       }),
     });
 
-    if (!res.ok) return NextResponse.json({ sentence: fallback });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error("Anthropic API error:", res.status, errText);
+      return NextResponse.json({ sentence: fallback, debug: `API ${res.status}` });
+    }
 
     const data = await res.json();
     let sentence = (data.content?.[0]?.text || fallback).trim();
@@ -58,7 +62,8 @@ Rules:
     sentence = sentence.replace(/^["']|["']$/g, "").trim();
     if (!sentence.startsWith("I have")) sentence = fallback;
     return NextResponse.json({ sentence });
-  } catch {
-    return NextResponse.json({ sentence: fallback });
+  } catch (e) {
+    console.error("match-skills error:", e);
+    return NextResponse.json({ sentence: fallback, debug: String(e) });
   }
 }
