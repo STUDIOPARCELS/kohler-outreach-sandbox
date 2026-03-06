@@ -15,6 +15,7 @@ interface LetterRow {
   status: string;
   printed_at?: string;
   sent_at?: string;
+  emailed_at?: string;
   created_at?: string;
 }
 
@@ -455,8 +456,8 @@ export default function HomePage() {
     const letters = lettersMap.get(companyname);
     if (!letters || letters.length === 0) return null;
     // Priority: emailed > sent/printed > draft
-    return letters.find(l => l.status === "emailed") 
-      || letters.find(l => l.status === "sent" || l.status === "printed")
+    return letters.find(l => l.emailed_at) 
+      || letters.find(l => l.printed_at)
       || letters[0];
   };
   const getContactLetter = (companyname: string, contactname: string): LetterRow | null => {
@@ -913,7 +914,7 @@ export default function HomePage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       toast(`Email sent to ${emailConfirm.to}`);
-      const updated = { ...currentLetter, status: "emailed", sent_at: new Date().toISOString() };
+      const updated = { ...currentLetter, status: "emailed", sent_at: new Date().toISOString(), emailed_at: new Date().toISOString() };
       setCurrentLetter(updated);
       setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
     } catch (e: unknown) {
@@ -1036,10 +1037,10 @@ export default function HomePage() {
                   <div className="text-2xl font-bold text-white">{totalLetterCount}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Letters</div>
                   <button onClick={() => { setShowMailedList(!showMailedList); setShowEmailedList(false); }} className="text-xs text-emerald-300/80 font-semibold mt-0.5 hover:text-green-200 cursor-pointer">
-                    {allLetters.filter(l => l.status === "sent" || l.status === "printed").length} printed
+                    {allLetters.filter(l => l.printed_at).length} printed
                   </button>
                   {showMailedList && (() => {
-                    const mailed = allLetters.filter(l => l.status === "sent" || l.status === "printed");
+                    const mailed = allLetters.filter(l => l.printed_at);
                     return (
                       <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 min-w-[280px] max-h-60 overflow-y-auto">
                         <div className="px-3 py-2 border-b bg-gray-50 rounded-t-xl">
@@ -1066,10 +1067,10 @@ export default function HomePage() {
                   <div className="text-2xl font-bold text-white">{companies.filter(c => c.email).length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Emails</div>
                   <button onClick={() => { setShowEmailedList(!showEmailedList); setShowMailedList(false); }} className="text-xs text-sky-300 font-semibold mt-0.5 hover:text-sky-200 cursor-pointer">
-                    {allLetters.filter(l => l.status === "emailed").length} sent
+                    {allLetters.filter(l => l.emailed_at).length} sent
                   </button>
                   {showEmailedList && (() => {
-                    const emailed = allLetters.filter(l => l.status === "emailed");
+                    const emailed = allLetters.filter(l => l.emailed_at);
                     return (
                       <div className="absolute top-full mt-2 right-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 min-w-[280px] max-h-60 overflow-y-auto">
                         <div className="px-3 py-2 border-b bg-sky-50 rounded-t-xl">
@@ -1104,7 +1105,7 @@ export default function HomePage() {
         {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
           const calendarLetters = Array.from(lettersMap.values()).flat();
-          const sentOrPrinted = calendarLetters.filter(l => l.sent_at || l.printed_at || l.status === "sent" || l.status === "printed" || l.status === "emailed");
+          const sentOrPrinted = calendarLetters.filter(l => l.printed_at || l.emailed_at);
 
           // Group sent letters by day-of-month for March 2026
           const sentByDay = new Map<number, { companyname: string; contactname?: string }[]>();
@@ -1268,7 +1269,7 @@ export default function HomePage() {
               });
               const visibleItems = isFullyExpanded ? sortedItems : sortedItems.slice(0, PREVIEW_COUNT);
               const hiddenCount = items.length - PREVIEW_COUNT;
-              const sentCount = items.filter(c => { const letters = lettersMap.get(c.companyname); return letters && letters.some(l => l.status === "sent" || l.status === "printed" || l.status === "emailed"); }).length;
+              const sentCount = items.filter(c => { const letters = lettersMap.get(c.companyname); return letters && letters.some(l => l.printed_at || l.emailed_at); }).length;
               const emailCount = items.filter(c => c.email).length;
 
               return (
@@ -1327,10 +1328,10 @@ export default function HomePage() {
                         const isExpanded = expandedCompany === c.companyname;
                         const letter = getBestLetter(c.companyname);
                         const companyLetters = lettersMap.get(c.companyname) || [];
-                        const hasPrinted = companyLetters.some(l => l.status === "sent" || l.status === "printed");
-                        const hasEmailed = companyLetters.some(l => l.status === "emailed");
-                        const printedLetter = companyLetters.find(l => l.status === "sent" || l.status === "printed");
-                        const emailedLetter = companyLetters.find(l => l.status === "emailed");
+                        const hasPrinted = companyLetters.some(l => l.printed_at);
+                        const hasEmailed = companyLetters.some(l => l.emailed_at);
+                        const printedLetter = companyLetters.find(l => l.printed_at);
+                        const emailedLetter = companyLetters.find(l => l.emailed_at);
                         const isDraft = letter && !hasPrinted && !hasEmailed;
                         return (
                           <div key={c.companyname}>
@@ -1362,9 +1363,9 @@ export default function HomePage() {
                                     <svg className="w-3.5 h-3.5 text-emerald-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    {printedLetter?.sent_at && (
+                                    {printedLetter?.printed_at && (
                                       <span className="text-[10px] text-gray-400 tabular-nums">
-                                        {new Date(printedLetter.sent_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                                        {new Date(printedLetter.printed_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                                       </span>
                                     )}
                                   </div>
@@ -1375,9 +1376,9 @@ export default function HomePage() {
                                     <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                     </svg>
-                                    {emailedLetter?.sent_at && (
+                                    {emailedLetter?.emailed_at && (
                                       <span className="text-[10px] text-gray-400 tabular-nums">
-                                        {new Date(emailedLetter.sent_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                                        {new Date(emailedLetter.emailed_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                                       </span>
                                     )}
                                   </div>
@@ -1484,27 +1485,21 @@ export default function HomePage() {
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Contacts</label>
                                         {contacts.map((ct, i) => {
                                           const ctLetter = contactLetters.get(ct.contactname);
-                                          const ctStatus = ctLetter?.status;
-                                          const ctSentAt = ctLetter?.sent_at;
                                           return (
                                           <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-100 hover:border-gray-200 bg-white transition-colors">
                                             <div className="flex-1 min-w-0">
                                               <div className="flex items-center gap-2">
                                                 <span className="text-sm font-semibold text-gray-900 truncate">{ct.contactname}</span>
-                                                {ctStatus && (ctStatus === "sent" || ctStatus === "printed" || ctStatus === "emailed") && (
-                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${ctStatus === "emailed" ? "bg-sky-100 text-sky-700" : "bg-emerald-50 text-emerald-700"}`}>
-                                                    {ctStatus === "emailed" ? (
-                                                      <>
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                                        {ctLetter?.sent_at && new Date(ctLetter.sent_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                                                      </>
-                                                    ) : (
-                                                      <>
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                                        {ctLetter?.sent_at && new Date(ctLetter.sent_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                                                      </>
-                                                    )}
-                                                    {ctSentAt && <span className="ml-1 font-normal">{new Date(ctSentAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>}
+                                                {ctLetter?.printed_at && (
+                                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 bg-emerald-50 text-emerald-700">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                    {new Date(ctLetter.printed_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                                                  </span>
+                                                )}
+                                                {ctLetter?.emailed_at && (
+                                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 bg-sky-100 text-sky-700">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                    {new Date(ctLetter.emailed_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                                                   </span>
                                                 )}
                                               </div>
@@ -1534,9 +1529,13 @@ export default function HomePage() {
                                                 Email
                                               </button>
                                             ) : ct.email_searched ? (
-                                              <span className="px-3 py-1.5 text-xs text-gray-400 whitespace-nowrap shrink-0">
-                                                No email found
-                                              </span>
+                                              <button
+                                                onClick={() => findEmail(i)}
+                                                disabled={findingEmail}
+                                                className="px-3 py-1.5 text-xs text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors whitespace-nowrap shrink-0 disabled:opacity-50"
+                                              >
+                                                {findingEmailIdx === i ? "Searching..." : "No email · retry"}
+                                              </button>
                                             ) : (
                                               <button
                                                 onClick={() => findEmail(i)}

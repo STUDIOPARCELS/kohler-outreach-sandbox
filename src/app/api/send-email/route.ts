@@ -171,6 +171,7 @@ export async function POST(req: NextRequest) {
         .update({
           status: "emailed",
           sent_at: new Date().toISOString(),
+          emailed_at: new Date().toISOString(),
         })
         .eq("id", letterId);
     }
