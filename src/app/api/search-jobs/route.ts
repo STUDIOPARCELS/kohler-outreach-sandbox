@@ -15,25 +15,28 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         tools: [{ type: "web_search_preview" }],
-        input: `Find current mechanical engineer job openings at "${companyname}" in Denver, Colorado area (within 50 miles). Search their careers page and major job boards.
+        input: `Search for ENTRY-LEVEL mechanical engineer job openings at "${companyname}" in Denver, Colorado area (within 50 miles).
 
-Return ONLY a JSON array (no markdown, no backticks, no explanation) of up to 5 jobs. Each object:
+CRITICAL FILTER: Only return positions that are entry-level, junior, associate, Engineer I, Engineer II, early career, new grad, or 0-3 years experience. 
+
+DO NOT return any position that says Senior, Lead, Principal, Staff, Manager, Director, or requires 5+ years experience.
+
+Return ONLY a JSON array (no markdown, no backticks, no explanation) of up to 5 qualifying jobs. Each object:
 - "title": exact job title
 - "salary": salary range if found, or ""
 - "location": city, state
 - "summary": 1 sentence about the role
-- "apply_url": direct URL to the job posting (must be a real working URL)
-- "source": domain name (e.g. "blueorigin.com", "indeed.com")
+- "apply_url": direct URL to the job posting
+- "source": domain name
 
-If no mechanical/design/manufacturing engineer jobs found at this company, return [].
+If no entry-level engineer jobs found at this company, return [].
 ONLY the JSON array.`,
         text: { format: { type: "text" } },
       }),
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      console.error("OpenAI error:", res.status, err);
+      console.error("OpenAI error:", res.status);
       return NextResponse.json({ jobs: [], source: "api_error" });
     }
 
@@ -54,7 +57,11 @@ ONLY the JSON array.`,
       const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed)) {
-        jobs = parsed.filter((j: Record<string, unknown>) => j.title && j.apply_url).slice(0, 6);
+        // Double-check: filter out senior/lead/principal titles that slipped through
+        const seniorPattern = /\b(senior|sr\.?|lead|principal|staff|manager|director|supervisor|chief|head of|vp|vice president)\b/i;
+        jobs = parsed
+          .filter((j: Record<string, unknown>) => j.title && j.apply_url && !seniorPattern.test(j.title as string))
+          .slice(0, 6);
       }
     } catch { /* parse failed */ }
 
