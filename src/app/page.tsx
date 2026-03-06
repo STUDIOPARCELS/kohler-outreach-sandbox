@@ -1566,9 +1566,17 @@ export default function HomePage() {
                                       {jobsCompany === c.companyname && (
                                         <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/30 overflow-hidden">
                                           {jobsLoading2 && (
-                                            <div className="flex items-center justify-center py-6 gap-2">
-                                              <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-                                              <span className="text-xs text-blue-500">Searching job boards...</span>
+                                            <div className="px-4 py-5 space-y-3">
+                                              {[1,2,3].map(i => (
+                                                <div key={i} className="animate-pulse flex items-center gap-3">
+                                                  <div className="flex-1 space-y-1.5">
+                                                    <div className="h-3 bg-blue-100 rounded w-3/4" />
+                                                    <div className="h-2 bg-blue-50 rounded w-1/2" />
+                                                  </div>
+                                                  <div className="h-6 w-14 bg-blue-100 rounded-lg" />
+                                                </div>
+                                              ))}
+                                              <p className="text-[10px] text-blue-400 text-center pt-1">Searching live job boards...</p>
                                             </div>
                                           )}
                                           {!jobsLoading2 && jobResults2.length === 0 && (
@@ -1591,14 +1599,13 @@ export default function HomePage() {
                                                   </div>
                                                   {job.summary && <p className="text-[10px] text-gray-500 mt-1.5 leading-relaxed">{job.summary}</p>}
                                                   <div className="flex items-center gap-2 mt-2">
-                                                    {contactWithEmail && template && (
+                                                    {contactWithEmail && template ? (
                                                       <button
                                                         onClick={async () => {
                                                           const displayName = c.companyname
                                                             .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
                                                           const firstName = contactWithEmail.contactname.split(" ")[0];
 
-                                                          // Categorize the job title
                                                           const jt = (job.title || "").toLowerCase();
                                                           let roleLabel = "mechanical engineer";
                                                           if (jt.includes("design")) roleLabel = "design engineer";
@@ -1606,24 +1613,21 @@ export default function HomePage() {
                                                           else if (jt.includes("manufacturing") || jt.includes("production")) roleLabel = "manufacturing engineer";
                                                           else if (jt.includes("hvac") || jt.includes("mep")) roleLabel = "mechanical systems engineer";
                                                           else if (jt.includes("aerospace") || jt.includes("space") || jt.includes("gn&c")) roleLabel = "aerospace engineer";
-                                                          else if (jt.includes("nuclear") || jt.includes("power") || jt.includes("steam")) roleLabel = "power engineer";
+                                                          else if (jt.includes("nuclear") || jt.includes("power") || jt.includes("steam") || jt.includes("thermal")) roleLabel = "power engineer";
                                                           else if (jt.includes("structural") || jt.includes("analysis")) roleLabel = "structural engineer";
-                                                          else if (jt.includes("commissioning")) roleLabel = "commissioning engineer";
-                                                          else if (jt.includes("quality") || jt.includes("test")) roleLabel = "quality engineer";
-                                                          else if (jt.includes("field") || jt.includes("site")) roleLabel = "field engineer";
-                                                          else if (jt.includes("estimat")) roleLabel = "estimator";
+                                                          else if (jt.includes("fluid")) roleLabel = "fluids engineer";
+                                                          else if (jt.includes("test") || jt.includes("quality")) roleLabel = "quality engineer";
 
-                                                          // Call AI for skill sentence
                                                           let skillSentence = "I have experience taking SolidWorks designs from concept through prototype and fabrication.";
                                                           try {
-                                                            const res = await fetch("/api/match-skills", {
+                                                            const r = await fetch("/api/match-skills", {
                                                               method: "POST",
                                                               headers: { "Content-Type": "application/json" },
                                                               body: JSON.stringify({ jobTitle: job.title, jobSummary: job.summary, companyName: displayName }),
                                                             });
-                                                            const data = await res.json();
-                                                            if (data.sentence) skillSentence = data.sentence;
-                                                          } catch { /* use fallback */ }
+                                                            const d = await r.json();
+                                                            if (d.sentence) skillSentence = d.sentence;
+                                                          } catch { /* fallback */ }
 
                                                           const emailBody = `Hello ${firstName},
 
@@ -1654,14 +1658,16 @@ akwood1@mines.edu`;
                                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                                         Send Interest
                                                       </button>
+                                                    ) : (
+                                                      <button
+                                                        onClick={() => researchContacts(c.companyname)}
+                                                        disabled={researching}
+                                                        className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors flex items-center gap-1"
+                                                      >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                                        Find Contact to Apply
+                                                      </button>
                                                     )}
-                                                    <a
-                                                      href={job.apply_url}
-                                                      target="_blank" rel="noopener noreferrer"
-                                                      className="text-[10px] text-blue-400 hover:text-blue-600 underline"
-                                                    >
-                                                      View posting
-                                                    </a>
                                                   </div>
                                                 </div>
                                                 );
