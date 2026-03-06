@@ -1609,18 +1609,15 @@ export default function HomePage() {
                                                     {(() => {
                                                       const displayName = c.companyname
                                                         .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
-                                                      const jt = (job.title || "").toLowerCase();
-                                                      let roleLabel = "mechanical engineer";
-                                                      if (jt.includes("design")) roleLabel = "design engineer";
-                                                      else if (jt.includes("project")) roleLabel = "project engineer";
-                                                      else if (jt.includes("manufacturing") || jt.includes("production")) roleLabel = "manufacturing engineer";
-                                                      else if (jt.includes("hvac") || jt.includes("mep")) roleLabel = "mechanical systems engineer";
-                                                      else if (jt.includes("aerospace") || jt.includes("space") || jt.includes("gn&c")) roleLabel = "aerospace engineer";
-                                                      else if (jt.includes("nuclear") || jt.includes("power") || jt.includes("steam") || jt.includes("thermal")) roleLabel = "power engineer";
-                                                      else if (jt.includes("structural") || jt.includes("analysis")) roleLabel = "structural engineer";
-                                                      else if (jt.includes("fluid")) roleLabel = "fluids engineer";
-                                                      else if (jt.includes("test") || jt.includes("quality")) roleLabel = "quality engineer";
-                                                      else if (jt.includes("instrument") || jt.includes("control")) roleLabel = "controls engineer";
+                                                      // Extract role label directly from the job title
+                                                      const roleLabel = (job.title || "mechanical engineer")
+                                                        .replace(/\s*[-–—]\s*.+$/, "")  // strip suffixes after dashes
+                                                        .replace(/\s*[:(].+$/, "")        // strip parenthetical/colon suffixes
+                                                        .replace(/\b(I{1,3}|IV|[1-4])\b/g, "")  // strip level numbers
+                                                        .replace(/\b(Entry[- ]Level|Early Career|New Grad|Junior|Associate)\b/gi, "")
+                                                        .replace(/\s{2,}/g, " ")
+                                                        .trim()
+                                                        .toLowerCase() || "mechanical engineer";
 
                                                       const pickerOpen = jobContactPicker?.jobIdx === ji && jobContactPicker?.company === c.companyname;
                                                       const pickerAction = jobContactPicker?.action;
