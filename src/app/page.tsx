@@ -1593,48 +1593,43 @@ export default function HomePage() {
                                                   <div className="flex items-center gap-2 mt-2">
                                                     {contactWithEmail && template && (
                                                       <button
-                                                        onClick={() => {
+                                                        onClick={async () => {
                                                           const displayName = c.companyname
                                                             .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
                                                           const firstName = contactWithEmail.contactname.split(" ")[0];
 
-                                                          // Categorize the job title into a simple role type
+                                                          // Categorize the job title
                                                           const jt = (job.title || "").toLowerCase();
-                                                          let roleCategory = "engineering";
-                                                          if (jt.includes("mechanical")) roleCategory = "mechanical engineering";
-                                                          else if (jt.includes("design")) roleCategory = "design engineering";
-                                                          else if (jt.includes("project")) roleCategory = "project engineering";
-                                                          else if (jt.includes("manufacturing") || jt.includes("production")) roleCategory = "manufacturing engineering";
-                                                          else if (jt.includes("hvac") || jt.includes("mep")) roleCategory = "mechanical systems";
-                                                          else if (jt.includes("aerospace") || jt.includes("space")) roleCategory = "aerospace engineering";
-                                                          else if (jt.includes("commissioning")) roleCategory = "commissioning";
-                                                          else if (jt.includes("nuclear") || jt.includes("power")) roleCategory = "power engineering";
-                                                          else if (jt.includes("structural") || jt.includes("analysis")) roleCategory = "structural analysis";
-                                                          else if (jt.includes("quality") || jt.includes("test")) roleCategory = "quality engineering";
-                                                          else if (jt.includes("estimat")) roleCategory = "estimating";
-                                                          else if (jt.includes("field") || jt.includes("site")) roleCategory = "field engineering";
+                                                          let roleLabel = "mechanical engineer";
+                                                          if (jt.includes("design")) roleLabel = "design engineer";
+                                                          else if (jt.includes("project")) roleLabel = "project engineer";
+                                                          else if (jt.includes("manufacturing") || jt.includes("production")) roleLabel = "manufacturing engineer";
+                                                          else if (jt.includes("hvac") || jt.includes("mep")) roleLabel = "mechanical systems engineer";
+                                                          else if (jt.includes("aerospace") || jt.includes("space") || jt.includes("gn&c")) roleLabel = "aerospace engineer";
+                                                          else if (jt.includes("nuclear") || jt.includes("power") || jt.includes("steam")) roleLabel = "power engineer";
+                                                          else if (jt.includes("structural") || jt.includes("analysis")) roleLabel = "structural engineer";
+                                                          else if (jt.includes("commissioning")) roleLabel = "commissioning engineer";
+                                                          else if (jt.includes("quality") || jt.includes("test")) roleLabel = "quality engineer";
+                                                          else if (jt.includes("field") || jt.includes("site")) roleLabel = "field engineer";
+                                                          else if (jt.includes("estimat")) roleLabel = "estimator";
 
-                                                          // Match one line of relevant experience from the resume
-                                                          let skillLine = "I have experience taking SolidWorks designs from concept through prototype and fabrication.";
-                                                          if (roleCategory.includes("manufacturing") || roleCategory.includes("production")) {
-                                                            skillLine = "I have hands-on experience with CNC machining, 3D printing, and taking designs from prototype through fabrication.";
-                                                          } else if (roleCategory.includes("aerospace") || roleCategory.includes("space")) {
-                                                            skillLine = "I have experience with SolidWorks modeling, FEA simulation, and taking designs from concept through prototype.";
-                                                          } else if (roleCategory.includes("power") || roleCategory.includes("mechanical systems")) {
-                                                            skillLine = "I have experience with SolidWorks, CFD simulation, and mechanical system design from concept through fabrication.";
-                                                          } else if (roleCategory.includes("structural") || roleCategory.includes("analysis")) {
-                                                            skillLine = "I have experience with SolidWorks, FEA linear static analysis, and taking designs from concept through prototype.";
-                                                          } else if (roleCategory.includes("project") || roleCategory.includes("field") || roleCategory.includes("commissioning")) {
-                                                            skillLine = "I have hands-on fabrication experience, Scrum project management skills, and a strong mechanical design foundation.";
-                                                          } else if (roleCategory.includes("design")) {
-                                                            skillLine = "I have experience with SolidWorks parts, assemblies, and drawings, plus hands-on CNC and 3D printing fabrication.";
-                                                          }
+                                                          // Call AI for skill sentence
+                                                          let skillSentence = "I have experience taking SolidWorks designs from concept through prototype and fabrication.";
+                                                          try {
+                                                            const res = await fetch("/api/match-skills", {
+                                                              method: "POST",
+                                                              headers: { "Content-Type": "application/json" },
+                                                              body: JSON.stringify({ jobTitle: job.title, jobSummary: job.summary, companyName: displayName }),
+                                                            });
+                                                            const data = await res.json();
+                                                            if (data.sentence) skillSentence = data.sentence;
+                                                          } catch { /* use fallback */ }
 
                                                           const emailBody = `Hello ${firstName},
 
 I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I'm interested in your ${roleCategory} position at ${displayName}. ${skillLine}
+I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}. ${skillSentence}
 
 I have attached my résumé below. My projects and interests are included here: kohler.solokit.app.
 
@@ -1651,7 +1646,7 @@ akwood1@mines.edu`;
                                                             companyname: c.companyname,
                                                             body: emailBody,
                                                             attachments: ["resume"],
-                                                            subject: `${roleCategory.charAt(0).toUpperCase() + roleCategory.slice(1)} position — CO School of Mines, EIT`,
+                                                            subject: `Entry-level ${roleLabel} — CO School of Mines, EIT`,
                                                           });
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
