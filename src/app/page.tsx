@@ -449,7 +449,6 @@ export default function HomePage() {
   const [addLeadResults, setAddLeadResults] = useState<{name: string; address: string; address1: string; city: string; state: string; zip: string; types: string | null; rating: number | null; place_id: string}[]>([]);
   const [addLeadSearching, setAddLeadSearching] = useState(false);
   const [addLeadAdding, setAddLeadAdding] = useState<string | null>(null);
-  const [leadDescriptions, setLeadDescriptions] = useState<Record<string, string>>({});
   const [deletingCompany, setDeletingCompany] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [jobsCompany, setJobsCompany] = useState<string | null>(null);
@@ -825,11 +824,6 @@ export default function HomePage() {
       // Fetch company descriptions
       const names = (data.results || []).map((r: {name: string}) => r.name);
       if (names.length > 0) {
-        fetch("/api/company-descriptions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companies: names }),
-        }).then(r => r.json()).then(d => { if (d.descriptions) setLeadDescriptions(prev => ({...prev, ...d.descriptions})); }).catch(() => {});
       }
     } catch { /* user can still search manually */ }
     finally { setAddLeadSearching(false); }
@@ -852,11 +846,6 @@ export default function HomePage() {
       // Fetch company descriptions
       const names = (data.results || []).map((r: {name: string}) => r.name);
       if (names.length > 0) {
-        fetch("/api/company-descriptions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companies: names }),
-        }).then(r => r.json()).then(d => { if (d.descriptions) setLeadDescriptions(prev => ({...prev, ...d.descriptions})); }).catch(() => {});
       }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
@@ -2220,11 +2209,6 @@ akwood1@mines.edu`;
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm text-gray-900">{r.name}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{r.address}</div>
-                    {leadDescriptions[r.name] ? (
-                      <div className="text-[10px] text-emerald-700 font-medium mt-0.5">{leadDescriptions[r.name]}</div>
-                    ) : (
-                      r.types && <div className="text-[10px] text-gray-400 mt-0.5">{r.types}</div>
-                    )}
                   </div>
                   <button
                     onClick={() => addLeadFromResult(r)}
