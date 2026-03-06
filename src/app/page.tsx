@@ -1325,6 +1325,12 @@ export default function HomePage() {
                         const num = globalIdx;
                         const isExpanded = expandedCompany === c.companyname;
                         const letter = getBestLetter(c.companyname);
+                        const companyLetters = lettersMap.get(c.companyname) || [];
+                        const hasPrinted = companyLetters.some(l => l.status === "sent" || l.status === "printed");
+                        const hasEmailed = companyLetters.some(l => l.status === "emailed");
+                        const printedLetter = companyLetters.find(l => l.status === "sent" || l.status === "printed");
+                        const emailedLetter = companyLetters.find(l => l.status === "emailed");
+                        const isDraft = letter && !hasPrinted && !hasEmailed;
                         return (
                           <div key={c.companyname}>
                             <button
@@ -1349,48 +1355,43 @@ export default function HomePage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                {(c.email || letter?.contact_email) && !(letter?.status === "sent" || letter?.status === "printed") && (
+                                {/* Printed letter icon + date */}
+                                {hasPrinted && (
                                   <div className="flex items-center gap-1">
-                                    <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    <svg className="w-3.5 h-3.5 text-emerald-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    {letter?.sent_at && letter.status === "emailed" && (
+                                    {printedLetter?.sent_at && (
                                       <span className="text-[10px] text-gray-400 tabular-nums">
-                                        {new Date(letter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                        {new Date(printedLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                       </span>
                                     )}
                                   </div>
                                 )}
-                                {letter && (
-                                  <>
-                                    {(letter.status === "sent" || letter.status === "printed") && (
-                                      <div className="flex items-center gap-1">
-                                        <svg className="w-3.5 h-3.5 text-emerald-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        {letter.sent_at && (
-                                          <span className="text-[10px] text-gray-400 tabular-nums">
-                                            {new Date(letter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
-                                    {letter.status === "emailed" && (
-                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
-                                        emailed
+                                {/* Emailed icon + date */}
+                                {hasEmailed && (
+                                  <div className="flex items-center gap-1">
+                                    <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    {emailedLetter?.sent_at && (
+                                      <span className="text-[10px] text-gray-400 tabular-nums">
+                                        {new Date(emailedLetter.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                       </span>
                                     )}
-                                    {letter.status === "draft" && (
-                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
-                                        draft
-                                      </span>
-                                    )}
-                                    {letter.status !== "sent" && letter.status !== "printed" && letter.status !== "emailed" && letter.status !== "draft" && (
-                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge(letter.status)}`}>
-                                        {letter.status.replace(/_/g, " ")}
-                                      </span>
-                                    )}
-                                  </>
+                                  </div>
+                                )}
+                                {/* Email available indicator (only if no letters sent yet) */}
+                                {!hasPrinted && !hasEmailed && (c.email || letter?.contact_email) && (
+                                  <svg className="w-3.5 h-3.5 text-sky-300/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                )}
+                                {/* Draft badge */}
+                                {isDraft && (
+                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBadge("draft")}`}>
+                                    draft
+                                  </span>
                                 )}
                                 <svg
                                   className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-300 ${isExpanded ? "rotate-180" : ""}`}
