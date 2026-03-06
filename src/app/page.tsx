@@ -1587,8 +1587,6 @@ export default function HomePage() {
                                           {!jobsLoading2 && jobResults2.length > 0 && (
                                             <div className="divide-y divide-blue-100/60">
                                               {jobResults2.map((job, ji) => {
-                                                // Find the best contact with email for this company
-                                                const contactWithEmail = contacts.find(ct => ct.email);
                                                 return (
                                                 <div key={ji} className="px-4 py-3">
                                                   <p className="text-xs font-bold text-gray-900 leading-tight">{job.title}</p>
@@ -1599,40 +1597,52 @@ export default function HomePage() {
                                                   </div>
                                                   {job.summary && <p className="text-[10px] text-gray-500 mt-1.5 leading-relaxed">{job.summary}</p>}
                                                   <div className="flex items-center gap-2 mt-2">
-                                                    {contactWithEmail && template ? (
-                                                      <button
-                                                        onClick={async () => {
-                                                          const displayName = c.companyname
-                                                            .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
-                                                          const firstName = contactWithEmail.contactname.split(" ")[0];
+                                                    {(() => {
+                                                      const displayName = c.companyname
+                                                        .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
+                                                      const jt = (job.title || "").toLowerCase();
+                                                      let roleLabel = "mechanical engineer";
+                                                      if (jt.includes("design")) roleLabel = "design engineer";
+                                                      else if (jt.includes("project")) roleLabel = "project engineer";
+                                                      else if (jt.includes("manufacturing") || jt.includes("production")) roleLabel = "manufacturing engineer";
+                                                      else if (jt.includes("hvac") || jt.includes("mep")) roleLabel = "mechanical systems engineer";
+                                                      else if (jt.includes("aerospace") || jt.includes("space") || jt.includes("gn&c")) roleLabel = "aerospace engineer";
+                                                      else if (jt.includes("nuclear") || jt.includes("power") || jt.includes("steam") || jt.includes("thermal")) roleLabel = "power engineer";
+                                                      else if (jt.includes("structural") || jt.includes("analysis")) roleLabel = "structural engineer";
+                                                      else if (jt.includes("fluid")) roleLabel = "fluids engineer";
+                                                      else if (jt.includes("test") || jt.includes("quality")) roleLabel = "quality engineer";
+                                                      else if (jt.includes("instrument") || jt.includes("control")) roleLabel = "controls engineer";
 
-                                                          const jt = (job.title || "").toLowerCase();
-                                                          let roleLabel = "mechanical engineer";
-                                                          if (jt.includes("design")) roleLabel = "design engineer";
-                                                          else if (jt.includes("project")) roleLabel = "project engineer";
-                                                          else if (jt.includes("manufacturing") || jt.includes("production")) roleLabel = "manufacturing engineer";
-                                                          else if (jt.includes("hvac") || jt.includes("mep")) roleLabel = "mechanical systems engineer";
-                                                          else if (jt.includes("aerospace") || jt.includes("space") || jt.includes("gn&c")) roleLabel = "aerospace engineer";
-                                                          else if (jt.includes("nuclear") || jt.includes("power") || jt.includes("steam") || jt.includes("thermal")) roleLabel = "power engineer";
-                                                          else if (jt.includes("structural") || jt.includes("analysis")) roleLabel = "structural engineer";
-                                                          else if (jt.includes("fluid")) roleLabel = "fluids engineer";
-                                                          else if (jt.includes("test") || jt.includes("quality")) roleLabel = "quality engineer";
-                                                          else if (jt.includes("instrument") || jt.includes("control")) roleLabel = "controls engineer";
+                                                      async function getSkillMatch() {
+                                                        let skillSentence = "I have experience with SolidWorks design and hands-on prototyping and fabrication.";
+                                                        let matches: {job_skill: string; resume_skill: string}[] = [];
+                                                        try {
+                                                          const r = await fetch("/api/match-skills", {
+                                                            method: "POST",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ jobTitle: job.title, jobSummary: job.summary, companyName: displayName }),
+                                                          });
+                                                          const d = await r.json();
+                                                          if (d.sentence) skillSentence = d.sentence;
+                                                          if (d.matches) matches = d.matches;
+                                                        } catch { /* fallback */ }
+                                                        return { skillSentence, matches };
+                                                      }
 
-                                                          let skillSentence = "I have experience with SolidWorks design and hands-on CNC machining and fabrication.";
-                                                          let matches: {job_skill: string; resume_skill: string}[] = [];
-                                                          try {
-                                                            const r = await fetch("/api/match-skills", {
-                                                              method: "POST",
-                                                              headers: { "Content-Type": "application/json" },
-                                                              body: JSON.stringify({ jobTitle: job.title, jobSummary: job.summary, companyName: displayName }),
-                                                            });
-                                                            const d = await r.json();
-                                                            if (d.sentence) skillSentence = d.sentence;
-                                                            if (d.matches) matches = d.matches;
-                                                          } catch { /* fallback */ }
+                                                      // Best contact with email
+                                                      const bestContact = contacts.find(ct => ct.email);
+                                                      // Any contact at all (for letters)
+                                                      const anyContact = contacts[0];
 
-                                                          const emailBody = `Hello ${firstName},
+                                                      return (
+                                                        <>
+                                                          {/* Send Interest (email) — needs contact with email */}
+                                                          {bestContact && template && (
+                                                            <button
+                                                              onClick={async () => {
+                                                                const { skillSentence, matches } = await getSkillMatch();
+                                                                const firstName = bestContact.contactname.split(" ")[0];
+                                                                const emailBody = `Hello ${firstName},
 
 I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
@@ -1648,25 +1658,113 @@ Kohler Wood
 208-720-4635
 Lakewood, CO
 akwood1@mines.edu`;
+                                                                setEmailConfirm({
+                                                                  to: bestContact.email,
+                                                                  contactname: bestContact.contactname,
+                                                                  companyname: c.companyname,
+                                                                  body: emailBody,
+                                                                  attachments: ["resume"],
+                                                                  subject: `Entry-level ${roleLabel} — CO School of Mines, EIT`,
+                                                                  matches,
+                                                                });
+                                                              }}
+                                                              className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
+                                                            >
+                                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                              Email
+                                                            </button>
+                                                          )}
 
-                                                          setEmailConfirm({
-                                                            to: contactWithEmail.email,
-                                                            contactname: contactWithEmail.contactname,
-                                                            companyname: c.companyname,
-                                                            body: emailBody,
-                                                            attachments: ["resume"],
-                                                            subject: `Entry-level ${roleLabel} — CO School of Mines, EIT`,
-                                                            matches,
-                                                          });
-                                                        }}
-                                                        className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
-                                                      >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                                        Send Interest
-                                                      </button>
-                                                    ) : (
-                                                      <span className="text-[10px] text-gray-400 italic">Research a contact below to send interest</span>
-                                                    )}
+                                                          {/* Send Letter (physical) — needs any contact */}
+                                                          {anyContact && template && (
+                                                            <button
+                                                              onClick={async () => {
+                                                                const { skillSentence } = await getSkillMatch();
+                                                                const contactName = anyContact.contactname;
+                                                                const companyAddr = companyAddress || "";
+
+                                                                // Build a job-tailored physical letter
+                                                                const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                                                                const letterBody = `${today}
+
+${contactName}
+${c.companyname}
+${companyAddr}
+
+Hello ${contactName.split(" ")[0]},
+
+I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
+
+${skillSentence}
+
+I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+
+Thank you for your time, and I hope to hear from you.
+
+Sincerely,
+
+
+
+
+Kohler Wood, EIT
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`;
+
+                                                                // Save to DB via draft API
+                                                                try {
+                                                                  const res = await fetch("/api/draft", {
+                                                                    method: "POST",
+                                                                    headers: { "Content-Type": "application/json" },
+                                                                    body: JSON.stringify({
+                                                                      companyname: c.companyname,
+                                                                      contactname: contactName,
+                                                                      body: letterBody,
+                                                                    }),
+                                                                  });
+                                                                  const data = await res.json();
+                                                                  if (data.error) throw new Error(data.error);
+                                                                  toast(`Letter drafted for ${contactName} at ${displayName}`);
+                                                                  // Reload letters
+                                                                  const lr = await fetch("/api/letters?companyname=" + encodeURIComponent(c.companyname));
+                                                                  const ld = await lr.json();
+                                                                  if (ld.letters) {
+                                                                    setLettersMap(prev => {
+                                                                      const next = new Map(prev);
+                                                                      next.set(c.companyname, ld.letters);
+                                                                      return next;
+                                                                    });
+                                                                  }
+                                                                } catch (e) { toast((e as Error).message, "error"); }
+                                                              }}
+                                                              className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition-colors flex items-center gap-1"
+                                                            >
+                                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                              Letter
+                                                            </button>
+                                                          )}
+
+                                                          {/* Find Contacts — when no contacts exist */}
+                                                          {contacts.length === 0 && (
+                                                            <button
+                                                              onClick={() => researchContacts(c.companyname)}
+                                                              disabled={researching}
+                                                              className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors flex items-center gap-1"
+                                                            >
+                                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                                              Find Contacts
+                                                            </button>
+                                                          )}
+
+                                                          {/* No email available — show hint */}
+                                                          {contacts.length > 0 && !bestContact && (
+                                                            <span className="text-[10px] text-amber-500 italic">No email found — use Letter</span>
+                                                          )}
+                                                        </>
+                                                      );
+                                                    })()}
                                                   </div>
                                                 </div>
                                                 );
