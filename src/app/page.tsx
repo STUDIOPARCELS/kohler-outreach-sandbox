@@ -1693,7 +1693,7 @@ akwood1@mines.edu`;
                                                             const res = await fetch("/api/draft", {
                                                               method: "POST",
                                                               headers: { "Content-Type": "application/json" },
-                                                              body: JSON.stringify({ companyname: c.companyname, contactname: ct.contactname, body: letterBody }),
+                                                              body: JSON.stringify({ companyname: c.companyname, contactname: ct.contactname, body_final: letterBody, status: "draft" }),
                                                             });
                                                             const data = await res.json();
                                                             if (data.error) throw new Error(data.error);
