@@ -140,9 +140,17 @@ export async function POST(req: NextRequest) {
       let contactsFound = 0;
       try {
         const profiles = await researchContacts(manualCompany.name);
+        const mgmtPatterns = [
+          /manager/i, /director/i, /vp\b/i, /vice president/i, /president/i,
+          /ceo/i, /cto/i, /coo/i, /chief/i, /head of/i, /founder/i, /owner/i,
+          /principal/i, /partner/i, /svp/i, /evp/i, /general manager/i,
+          /plant manager/i, /superintendent/i,
+        ];
         for (const p of profiles) {
           const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(" ");
           if (!name) continue;
+          const title = p.current_title || "";
+          if (title && !mgmtPatterns.some(pat => pat.test(title))) continue;
           const teaser = p.teaser || {};
           let email = ((teaser.emails?.[0] ?? "") as string).includes("@") ? (teaser.emails?.[0] as string) : "";
           
