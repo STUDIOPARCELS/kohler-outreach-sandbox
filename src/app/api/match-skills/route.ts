@@ -69,3 +69,4 @@ Rules:
     return NextResponse.json({ sentence: fallback, debug: String(e) });
   }
 }
+// force rebuild 1772822999
