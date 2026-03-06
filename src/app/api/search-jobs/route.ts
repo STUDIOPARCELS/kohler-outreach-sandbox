@@ -15,21 +15,21 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         tools: [{ type: "web_search_preview" }],
-        input: `Search for ENTRY-LEVEL mechanical engineer job openings at "${companyname}" in Denver, Colorado area (within 50 miles).
+        input: `Search for mechanical engineer, design engineer, manufacturing engineer, or similar engineering job openings at "${companyname}" in the Denver/Boulder/Colorado Front Range area.
 
-CRITICAL FILTER: Only return positions that are entry-level, junior, associate, Engineer I, Engineer II, early career, new grad, or 0-3 years experience. 
+INCLUDE positions like: Engineer I, Engineer II, Mechanical Engineer, Design Engineer, Manufacturing Engineer, Test Engineer, Project Engineer, Applications Engineer, Field Engineer, or any engineering role a recent BSME graduate could apply to. These do NOT need to say "entry level" — most companies don't label them that way.
 
-DO NOT return any position that says Senior, Lead, Principal, Staff, Manager, Director, or requires 5+ years experience.
+EXCLUDE: Senior Engineer, Lead Engineer, Principal Engineer, Staff Engineer, Engineering Manager, Director, VP, or anything requiring 7+ years experience.
 
-Return ONLY a JSON array (no markdown, no backticks, no explanation) of up to 5 qualifying jobs. Each object:
-- "title": exact job title
+Return ONLY a JSON array (no markdown, no backticks) of up to 5 jobs. Each object:
+- "title": exact job title from the posting
 - "salary": salary range if found, or ""
 - "location": city, state
-- "summary": 1 sentence about the role
-- "apply_url": direct URL to the job posting
-- "source": domain name
+- "summary": 1 sentence describing the role and key responsibilities
+- "apply_url": direct URL to the job posting (real working link)
+- "source": website domain
 
-If no entry-level engineer jobs found at this company, return [].
+If truly no engineering jobs found at this company in Colorado, return [].
 ONLY the JSON array.`,
         text: { format: { type: "text" } },
       }),
@@ -57,8 +57,8 @@ ONLY the JSON array.`,
       const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed)) {
-        // Double-check: filter out senior/lead/principal titles that slipped through
-        const seniorPattern = /\b(senior|sr\.?|lead|principal|staff|manager|director|supervisor|chief|head of|vp|vice president)\b/i;
+        // Filter out clearly senior roles that slipped through
+        const seniorPattern = /\b(senior|sr\.?\s|lead\s|principal|staff\s|manager|director|supervisor|chief|vp\b|vice president)\b/i;
         jobs = parsed
           .filter((j: Record<string, unknown>) => j.title && j.apply_url && !seniorPattern.test(j.title as string))
           .slice(0, 6);
