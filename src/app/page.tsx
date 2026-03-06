@@ -1627,7 +1627,7 @@ export default function HomePage() {
 
                                                       async function handleContactAction(ct: typeof contacts[0], action: "email"|"letter") {
                                                         setJobContactPicker(null);
-                                                        let skillSentence = "I have experience with SolidWorks design and hands-on prototyping and fabrication.";
+                                                        let skillSentence = "I have hands-on experience taking CAD designs from concept through prototype and fabrication, including SolidWorks, CNC machining, and 3D printing.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
                                                         try {
                                                           const r = await fetch("/api/match-skills", {
@@ -2123,7 +2123,6 @@ akwood1@mines.edu`;
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-bold text-green-600 uppercase tracking-wider">Includes:</span>
                 <a href="/KOHLER_WOOD_RESUME.pdf" target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 text-[10px] font-medium text-green-800 bg-green-50 border border-green-200 rounded-full hover:underline">📄 Resume</a>
-                <span className="px-2 py-0.5 text-[10px] font-medium text-green-800 bg-green-50 border border-green-200 rounded-full">💳 solocard</span>
               </div>
               <div>
                 <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Letter Body</span>

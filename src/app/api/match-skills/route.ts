@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const KOHLER_SKILLS_LIST = `SolidWorks, GD&T, tolerance stack-ups, DFM/DFA, FEA, CFD (SolidWorks Flow Simulation), CNC machining, MIG welding, 3D printing, laser cutting, waterjet, plasma cutting, MATLAB, Python, C++, Arduino, FMEA, Scrum`;
 
-const DEFAULT_SKILL = "I have experience with SolidWorks design and hands-on prototyping and fabrication.";
+const DEFAULT_SKILL = "I have hands-on experience taking CAD designs from concept through prototype and fabrication, including SolidWorks, CNC machining, and 3D printing.";
 
 export async function POST(req: NextRequest) {
   const { jobTitle, jobSummary, companyName } = await req.json();
