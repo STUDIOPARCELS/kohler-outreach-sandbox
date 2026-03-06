@@ -189,7 +189,7 @@ const NICHE_ORDER = [
 ];
 
 /* ── Niche color themes ── */
-const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string; descBg: string; descText: string }> = {
+const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: string; accent: string; descBg: string; descText: string; headerStyle?: Record<string, string> }> = {
   "TEST": {
     bg: "from-slate-50 to-blue-50",
     headerBg: "from-slate-700 via-slate-800 to-slate-900",
@@ -208,7 +208,7 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Skiing": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-sky-800 to-slate-900",
+    headerBg: "from-sky-700 to-sky-900",
     border: "border-sky-300/60",
     accent: "text-sky-900",
     descBg: "from-sky-50/80 to-indigo-50/60 border-sky-200/50",
@@ -216,7 +216,7 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Outdoor Recreation & Equipment": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-emerald-900 to-green-950",
+    headerBg: "from-emerald-800 to-emerald-950",
     border: "border-emerald-300/60",
     accent: "text-emerald-900",
     descBg: "from-emerald-50/80 to-green-50/60 border-emerald-200/50",
@@ -224,15 +224,16 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Automotive / Vehicles": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-zinc-800 to-neutral-900",
-    border: "border-zinc-300/60",
-    accent: "text-zinc-900",
-    descBg: "from-zinc-50/80 to-gray-100/60 border-zinc-200/50",
-    descText: "text-zinc-800",
+    headerBg: "",
+    border: "border-slate-400/60",
+    accent: "text-slate-800",
+    descBg: "from-slate-50/80 to-blue-50/40 border-slate-200/50",
+    descText: "text-slate-800",
+    headerStyle: { background: "linear-gradient(135deg, #374151 0%, #1e3a5f 50%, #1e293b 100%)" },
   },
   "Woodworking / Furniture / Cabinetry / Prototyping": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-amber-800 to-yellow-950",
+    headerBg: "from-amber-700 to-amber-900",
     border: "border-amber-300/60",
     accent: "text-amber-900",
     descBg: "from-amber-50/80 to-yellow-50/60 border-amber-200/50",
@@ -240,15 +241,16 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Energy / Renewables / Power": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-orange-800 to-amber-950",
-    border: "border-orange-300/60",
+    headerBg: "",
+    border: "border-orange-400/60",
     accent: "text-orange-900",
-    descBg: "from-orange-50/80 to-amber-50/60 border-orange-200/50",
+    descBg: "from-orange-50/80 to-red-50/40 border-orange-200/50",
     descText: "text-orange-900",
+    headerStyle: { background: "linear-gradient(135deg, #c2410c 0%, #9a3412 50%, #7c2d12 100%)" },
   },
   "MEP / HVAC / Building Systems": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-teal-800 to-teal-950",
+    headerBg: "from-teal-900 to-teal-950",
     border: "border-teal-300/60",
     accent: "text-teal-900",
     descBg: "from-teal-50/80 to-cyan-50/60 border-teal-200/50",
@@ -256,15 +258,16 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Construction / Civil / Heavy Industry": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-stone-700 to-stone-900",
-    border: "border-stone-300/60",
-    accent: "text-stone-800",
-    descBg: "from-stone-50/80 to-gray-100/60 border-stone-200/50",
-    descText: "text-stone-800",
+    headerBg: "",
+    border: "border-yellow-400/60",
+    accent: "text-yellow-900",
+    descBg: "from-yellow-50/80 to-orange-50/40 border-yellow-200/50",
+    descText: "text-yellow-900",
+    headerStyle: { background: "linear-gradient(135deg, #92400e 0%, #78350f 50%, #451a03 100%)" },
   },
   "Manufacturing / Automation / Product Design": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-indigo-900 to-blue-950",
+    headerBg: "from-blue-950 via-indigo-950 to-slate-950",
     border: "border-indigo-300/60",
     accent: "text-indigo-900",
     descBg: "from-indigo-50/80 to-blue-50/60 border-indigo-200/50",
@@ -272,7 +275,7 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Water / Environmental / Geotech": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-cyan-800 to-cyan-950",
+    headerBg: "from-cyan-600 to-cyan-800",
     border: "border-cyan-300/60",
     accent: "text-cyan-900",
     descBg: "from-cyan-50/80 to-sky-50/60 border-cyan-200/50",
@@ -280,23 +283,24 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Quantum / Deep Tech / Electronics / Robotics": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-rose-900 to-pink-950",
-    border: "border-rose-300/60",
-    accent: "text-rose-900",
-    descBg: "from-rose-50/80 to-pink-50/60 border-rose-200/50",
-    descText: "text-rose-900",
+    headerBg: "from-violet-800 to-purple-950",
+    border: "border-violet-300/60",
+    accent: "text-violet-900",
+    descBg: "from-violet-50/80 to-purple-50/60 border-violet-200/50",
+    descText: "text-violet-900",
   },
   "Aerospace / Space": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-blue-900 to-indigo-950",
-    border: "border-blue-300/60",
-    accent: "text-blue-900",
-    descBg: "from-blue-50/80 to-indigo-50/60 border-blue-200/50",
-    descText: "text-blue-900",
+    headerBg: "",
+    border: "border-gray-400/60",
+    accent: "text-gray-900",
+    descBg: "from-gray-50/80 to-slate-100/60 border-gray-200/50",
+    descText: "text-gray-800",
+    headerStyle: { background: "linear-gradient(135deg, #0f172a 0%, #020617 50%, #0c1222 100%)" },
   },
   "Medical / Biotech": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-red-800 to-rose-950",
+    headerBg: "from-red-700 to-red-900",
     border: "border-red-300/60",
     accent: "text-red-900",
     descBg: "from-red-50/80 to-rose-50/60 border-red-200/50",
@@ -304,27 +308,29 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
   },
   "Food / Beverage Manufacturing": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-lime-800 to-green-950",
-    border: "border-lime-300/60",
+    headerBg: "",
+    border: "border-lime-400/60",
     accent: "text-lime-900",
-    descBg: "from-lime-50/80 to-green-50/60 border-lime-200/50",
+    descBg: "from-lime-50/80 to-yellow-50/40 border-lime-200/50",
     descText: "text-lime-900",
+    headerStyle: { background: "linear-gradient(135deg, #4d7c0f 0%, #365314 50%, #1a2e05 100%)" },
   },
   "Staffing / Recruiting": {
     bg: "from-gray-50 to-slate-50",
-    headerBg: "from-violet-800 to-purple-950",
-    border: "border-violet-300/60",
-    accent: "text-violet-900",
-    descBg: "from-violet-50/80 to-purple-50/60 border-violet-200/50",
-    descText: "text-violet-900",
+    headerBg: "from-fuchsia-800 to-fuchsia-950",
+    border: "border-fuchsia-300/60",
+    accent: "text-fuchsia-900",
+    descBg: "from-fuchsia-50/80 to-pink-50/60 border-fuchsia-200/50",
+    descText: "text-fuchsia-900",
   },
   "Metals / Material Science": {
     bg: "from-slate-50 to-gray-50",
-    headerBg: "from-zinc-700 to-slate-800",
-    border: "border-zinc-300/60",
-    accent: "text-zinc-900",
-    descBg: "from-zinc-50/80 to-gray-100/60 border-zinc-200/50",
-    descText: "text-zinc-800",
+    headerBg: "",
+    border: "border-amber-400/60",
+    accent: "text-amber-900",
+    descBg: "from-amber-50/60 to-stone-50/60 border-amber-200/50",
+    descText: "text-amber-900",
+    headerStyle: { background: "linear-gradient(135deg, #78716c 0%, #57534e 50%, #44403c 100%)" },
   },
   "Real Estate / Facilities": {
     bg: "from-gray-50 to-slate-50",
@@ -1322,7 +1328,8 @@ export default function HomePage() {
                     className={`relative px-5 py-4 ${colors.headerBg ? `bg-gradient-to-r ${colors.headerBg}` : ""}`}
                     style={{
                       boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.1)",
-                      ...(!colors.headerBg ? { background: "linear-gradient(135deg, #5b2333 0%, #3d1522 50%, #2a0e18 100%)" } : {}),
+                      ...(!colors.headerBg && !(colors as Record<string, unknown>).headerStyle ? { background: "linear-gradient(135deg, #5b2333 0%, #3d1522 50%, #2a0e18 100%)" } : {}),
+                      ...((colors as Record<string, unknown>).headerStyle as Record<string, string> || {}),
                     }}
                   >
                     <div className="flex items-center justify-between">
@@ -1811,7 +1818,7 @@ export default function HomePage() {
             {/* Header with close X */}
             <div
               className={`px-5 py-4 ${NICHE_COLORS[addLeadNiche]?.headerBg ? `bg-gradient-to-r ${NICHE_COLORS[addLeadNiche].headerBg}` : ""} shrink-0 flex items-center justify-between`}
-              style={!NICHE_COLORS[addLeadNiche]?.headerBg ? { background: "linear-gradient(135deg, #334155, #1e293b)" } : undefined}
+              style={(NICHE_COLORS[addLeadNiche] as Record<string, unknown>)?.headerStyle as Record<string, string> || (!NICHE_COLORS[addLeadNiche]?.headerBg ? { background: "linear-gradient(135deg, #334155, #1e293b)" } : undefined)}
             >
               <h3 className="text-white font-bold text-sm flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
