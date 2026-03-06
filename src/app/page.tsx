@@ -440,7 +440,7 @@ export default function HomePage() {
   const [batchStatus, setBatchStatus] = useState("");
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
-  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean; attachments: string[]; subject?: string} | null>(null);
+  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean; attachments: string[]; subject?: string; matches?: {job_skill: string; resume_skill: string}[]} | null>(null);
   const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string; editing?: boolean} | null>(null);
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
@@ -1617,8 +1617,10 @@ export default function HomePage() {
                                                           else if (jt.includes("structural") || jt.includes("analysis")) roleLabel = "structural engineer";
                                                           else if (jt.includes("fluid")) roleLabel = "fluids engineer";
                                                           else if (jt.includes("test") || jt.includes("quality")) roleLabel = "quality engineer";
+                                                          else if (jt.includes("instrument") || jt.includes("control")) roleLabel = "controls engineer";
 
-                                                          let skillSentence = "I have experience taking SolidWorks designs from concept through prototype and fabrication.";
+                                                          let skillSentence = "I have experience with SolidWorks design and hands-on CNC machining and fabrication.";
+                                                          let matches: {job_skill: string; resume_skill: string}[] = [];
                                                           try {
                                                             const r = await fetch("/api/match-skills", {
                                                               method: "POST",
@@ -1627,13 +1629,16 @@ export default function HomePage() {
                                                             });
                                                             const d = await r.json();
                                                             if (d.sentence) skillSentence = d.sentence;
+                                                            if (d.matches) matches = d.matches;
                                                           } catch { /* fallback */ }
 
                                                           const emailBody = `Hello ${firstName},
 
-I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}. ${skillSentence}
+I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
+
+${skillSentence}
 
 I have attached my résumé below. My projects and interests are included here: kohler.solokit.app.
 
@@ -1651,6 +1656,7 @@ akwood1@mines.edu`;
                                                             body: emailBody,
                                                             attachments: ["resume"],
                                                             subject: `Entry-level ${roleLabel} — CO School of Mines, EIT`,
+                                                            matches,
                                                           });
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
@@ -1821,6 +1827,20 @@ akwood1@mines.edu`;
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
                 <p className="text-sm text-gray-700 mt-0.5">{emailConfirm.subject || "Mechanical Engineer — CO School of Mines, EIT"}</p>
               </div>
+              {emailConfirm.matches && emailConfirm.matches.length > 0 && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Skill Match</span>
+                  <div className="mt-1.5 space-y-1.5">
+                    {emailConfirm.matches.map((m, i) => (
+                      <div key={i} className="flex items-center gap-2 text-[11px]">
+                        <span className="text-gray-500 flex-1 truncate">{m.job_skill}</span>
+                        <svg className="w-3 h-3 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        <span className="text-emerald-800 font-semibold flex-1 truncate">{m.resume_skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
                 {emailConfirm.editing ? (
