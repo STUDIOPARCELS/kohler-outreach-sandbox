@@ -132,8 +132,8 @@ function assembleLetter(
 
   // Standardize wording across all templates (including database default)
   body = body.replace(
-    "If you are considering an entry-level BSME, I would love to interview with your team.",
-    "If you are considering an entry-level BSME, I would love to interview with your team."
+    "If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
+    "If you are considering an entry-level BSME/EIT, I would love to interview with your team."
   );
 
   // Remove exclamation mark from closing
@@ -144,8 +144,8 @@ function assembleLetter(
 
   // Ensure "with my skill set" in closing
   body = body.replace(
-    "entry-level BSME, I would love to interview",
-    "entry-level BSME with my skill set, I would love to interview"
+    "entry-level BSME/EIT, I would love to interview",
+    "entry-level BSME/EIT with my skill set, I would love to interview"
   );
 
   // Remove duplicate paragraphs (safety net)
@@ -349,11 +349,11 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-I hope you're doing well. My name is Kohler Wood and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME with my skill set, I would love to interview with your team.
+I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -449,6 +449,7 @@ export default function HomePage() {
   const [addLeadResults, setAddLeadResults] = useState<{name: string; address: string; address1: string; city: string; state: string; zip: string; types: string | null; rating: number | null; place_id: string}[]>([]);
   const [addLeadSearching, setAddLeadSearching] = useState(false);
   const [addLeadAdding, setAddLeadAdding] = useState<string | null>(null);
+  const [leadDescriptions, setLeadDescriptions] = useState<Record<string, string>>({});
   const [deletingCompany, setDeletingCompany] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [jobsCompany, setJobsCompany] = useState<string | null>(null);
@@ -821,6 +822,15 @@ export default function HomePage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setAddLeadResults(data.results || []);
+      // Fetch company descriptions
+      const names = (data.results || []).map((r: {name: string}) => r.name);
+      if (names.length > 0) {
+        fetch("/api/company-descriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companies: names }),
+        }).then(r => r.json()).then(d => { if (d.descriptions) setLeadDescriptions(prev => ({...prev, ...d.descriptions})); }).catch(() => {});
+      }
     } catch { /* user can still search manually */ }
     finally { setAddLeadSearching(false); }
   }
@@ -839,6 +849,15 @@ export default function HomePage() {
       if (data.error) throw new Error(data.error);
       setAddLeadResults(data.results || []);
       if ((data.results || []).length === 0) toast("No results found for that search", "error");
+      // Fetch company descriptions
+      const names = (data.results || []).map((r: {name: string}) => r.name);
+      if (names.length > 0) {
+        fetch("/api/company-descriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companies: names }),
+        }).then(r => r.json()).then(d => { if (d.descriptions) setLeadDescriptions(prev => ({...prev, ...d.descriptions})); }).catch(() => {});
+      }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
@@ -1107,7 +1126,7 @@ export default function HomePage() {
                   OUTREACH | MISSION CONTROL
                 </h1>
                 <p className="text-slate-300 mt-1 text-xs sm:text-base font-medium uppercase tracking-wide">
-                  ENTRY LEVEL BSME · DENVER METRO
+                  ENTRY LEVEL BSME / EIT · DENVER METRO
                 </p>
               </div>
               <div className="flex items-stretch gap-2 sm:gap-4 flex-wrap">
@@ -1636,7 +1655,7 @@ export default function HomePage() {
                                                           const firstName = ct.contactname.split(" ")[0];
                                                           const emailBody = `Hello ${firstName},
 
-I hope you're doing well. My name is Kohler Wood and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
 
@@ -1670,13 +1689,13 @@ ${companyAddr}
 
 Hello ${ct.contactname.split(" ")[0]},
 
-I hope you're doing well. My name is Kohler Wood and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
 
 ${skillSentence}
 
-I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME with my skill set, I would love to interview with your team.
+I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -1969,7 +1988,7 @@ akwood1@mines.edu`;
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
-                <p className="text-sm text-gray-700 mt-0.5">{emailConfirm.subject || "Mechanical Engineer — CO School of Mines"}</p>
+                <p className="text-sm text-gray-700 mt-0.5">{emailConfirm.subject || "Mechanical Engineer — CO School of Mines, EIT"}</p>
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
@@ -1987,8 +2006,8 @@ akwood1@mines.edu`;
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME with my skill set, I would love to interview with your team.",
-                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME with my skill set, I would love to interview with your team."
+                        "I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
+                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
                       );
                       return preview;
                     })()}
@@ -2211,8 +2230,11 @@ akwood1@mines.edu`;
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm text-gray-900">{r.name}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{r.address}</div>
-                    {r.types && <div className="text-xs text-gray-400 mt-0.5">{r.types}</div>}
-                    {r.types && <div className="text-[10px] text-gray-400 mt-0.5">{r.types}</div>}
+                    {leadDescriptions[r.name] ? (
+                      <div className="text-[10px] text-emerald-700 font-medium mt-0.5">{leadDescriptions[r.name]}</div>
+                    ) : (
+                      r.types && <div className="text-[10px] text-gray-400 mt-0.5">{r.types}</div>
+                    )}
                   </div>
                   <button
                     onClick={() => addLeadFromResult(r)}
