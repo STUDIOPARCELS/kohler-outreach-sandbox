@@ -1659,14 +1659,7 @@ akwood1@mines.edu`;
                                                         Send Interest
                                                       </button>
                                                     ) : (
-                                                      <button
-                                                        onClick={() => researchContacts(c.companyname)}
-                                                        disabled={researching}
-                                                        className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors flex items-center gap-1"
-                                                      >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                                        Find Contact to Apply
-                                                      </button>
+                                                      <span className="text-[10px] text-gray-400 italic">Research a contact below to send interest</span>
                                                     )}
                                                   </div>
                                                 </div>
