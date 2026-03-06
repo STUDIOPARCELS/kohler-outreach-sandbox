@@ -48,18 +48,7 @@ export async function POST(req: NextRequest) {
     existing = data;
   }
 
-  // Fallback: if no contactname match, check for company-level draft without contact
-  if (!existing && contactname) {
-    const { data } = await supabaseAdmin
-      .from("reachout_company_inserts")
-      .select("id, contactname")
-      .eq("companyname", companyname)
-      .is("contactname", null)
-      .maybeSingle();
-    existing = data;
-  }
-
-  // If still no match and no contactname given, find any existing draft
+  // If no contactname given, find any existing draft (for body_final updates)
   if (!existing && !contactname) {
     const { data } = await supabaseAdmin
       .from("reachout_company_inserts")

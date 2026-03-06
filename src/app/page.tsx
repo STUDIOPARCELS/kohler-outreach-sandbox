@@ -406,7 +406,7 @@ export default function HomePage() {
   const toast = useToast();
 
   const [template, setTemplate] = useState<Template | null>(null);
-  const [lettersMap, setLettersMap] = useState<Map<string, LetterRow>>(new Map());
+  const [lettersMap, setLettersMap] = useState<Map<string, LetterRow[]>>(new Map());
   const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactLetters, setContactLetters] = useState<Map<string, LetterRow>>(new Map());
@@ -447,6 +447,36 @@ export default function HomePage() {
   const gridRef = useRef<HTMLDivElement>(null);
   const orderedNichesRef = useRef<string[]>([]);
 
+  /* ── Multi-letter helpers ── */
+  const allLetters = Array.from(lettersMap.values()).flat();
+  const totalLetterCount = allLetters.length;
+  const getBestLetter = (companyname: string): LetterRow | null => {
+    const letters = lettersMap.get(companyname);
+    if (!letters || letters.length === 0) return null;
+    // Priority: emailed > sent/printed > draft
+    return letters.find(l => l.status === "emailed") 
+      || letters.find(l => l.status === "sent" || l.status === "printed")
+      || letters[0];
+  };
+  const getContactLetter = (companyname: string, contactname: string): LetterRow | null => {
+    const letters = lettersMap.get(companyname);
+    if (!letters) return null;
+    return letters.find(l => l.contactname === contactname) || null;
+  };
+  const upsertLetterInMap = (prev: Map<string, LetterRow[]>, companyname: string, letter: LetterRow): Map<string, LetterRow[]> => {
+    const m = new Map(prev);
+    const existing = m.get(companyname) || [];
+    const idx = existing.findIndex(l => l.id === letter.id);
+    if (idx >= 0) {
+      const updated = [...existing];
+      updated[idx] = letter;
+      m.set(companyname, updated);
+    } else {
+      m.set(companyname, [...existing, letter]);
+    }
+    return m;
+  };
+
   /* ── Load template + letters + companies ── */
   const loadData = useCallback(async () => {
     try {
@@ -461,8 +491,12 @@ export default function HomePage() {
 
       if (tplData && !tplData.error) setTemplate(tplData);
       if (!qData.error && Array.isArray(qData)) {
-        const map = new Map<string, LetterRow>();
-        for (const l of qData) map.set(l.companyname, l);
+        const map = new Map<string, LetterRow[]>();
+        for (const l of qData) {
+          const existing = map.get(l.companyname) || [];
+          existing.push(l);
+          map.set(l.companyname, existing);
+        }
         setLettersMap(map);
       }
       if (!compData.error) setCompanies(compData);
@@ -486,7 +520,7 @@ export default function HomePage() {
     setEditing(false);
     setSelectedContactIdx(0);
     setExpandLoading(true);
-    setCurrentLetter(lettersMap.get(companyname) || null);
+    setCurrentLetter(getBestLetter(companyname));
 
     try {
       const [contRes, compRes, lettersRes] = await Promise.all([
@@ -512,7 +546,7 @@ export default function HomePage() {
         setContacts(realContacts);
 
         // Auto-create draft if contacts exist but no letter
-        const existingLetter = lettersMap.get(companyname);
+        const existingLetter = getBestLetter(companyname);
         if (!existingLetter && realContacts.length > 0) {
           const bestContact = realContacts.find((c: Contact) => c.email) || realContacts[0];
           try {
@@ -537,7 +571,7 @@ export default function HomePage() {
                 status: draftData.status || "draft",
               };
               setCurrentLetter(newLetter);
-              setLettersMap((prev) => { const m = new Map(prev); m.set(companyname, newLetter); return m; });
+              setLettersMap((prev) => upsertLetterInMap(prev, companyname, newLetter));
             }
           } catch (err) {
             console.error("Auto-create draft failed:", err);
@@ -583,17 +617,19 @@ export default function HomePage() {
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      const letter = lettersMap.get(expandedCompany);
       const updated: LetterRow = {
-        ...(letter || { id: d.id || "", companyname: expandedCompany, status: "draft" }),
+        id: d.id || "",
+        companyname: expandedCompany,
         contactname: c.contactname,
         contact_title: c.title,
         contact_email: c.email,
-        body_final: undefined,
+        status: d.status || "draft",
+        body_final: d.body_final || undefined,
+        sent_at: d.sent_at || undefined,
       };
-      if (d.id) updated.id = d.id;
       setCurrentLetter(updated);
-      setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+      setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
+      setContactLetters((prev) => { const m = new Map(prev); m.set(c.contactname, updated); return m; });
       toast(`Contact set: ${c.contactname}`);
     } catch (e: unknown) {
       toast((e as Error).message, "error");
@@ -610,6 +646,7 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           companyname: expandedCompany,
+          contactname: currentLetter?.contactname || null,
           body_final: editBody,
         }),
       });
@@ -618,7 +655,7 @@ export default function HomePage() {
       if (currentLetter) {
         const updated = { ...currentLetter, body_final: editBody };
         setCurrentLetter(updated);
-        setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+        setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
       }
       setEditing(false);
       toast("Letter saved");
@@ -696,10 +733,14 @@ export default function HomePage() {
       const qRes = await fetch("/api/queue");
       const qData = await qRes.json();
       if (!qData.error && Array.isArray(qData)) {
-        const map = new Map<string, LetterRow>();
-        for (const l of qData) map.set(l.companyname, l);
+        const map = new Map<string, LetterRow[]>();
+        for (const l of qData) {
+          const existing = map.get(l.companyname) || [];
+          existing.push(l);
+          map.set(l.companyname, existing);
+        }
         setLettersMap(map);
-        setCurrentLetter(map.get(companyname) || null);
+        setCurrentLetter(map.get(companyname)?.[0] || null);
       }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
@@ -837,7 +878,7 @@ export default function HomePage() {
         if (currentLetter) {
           const updated = { ...currentLetter, contact_email: data.email };
           setCurrentLetter(updated);
-          setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+          setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
         }
       } else {
         toast(data.message || "No email found", "error");
@@ -873,7 +914,7 @@ export default function HomePage() {
       toast(`Email sent to ${emailConfirm.to}`);
       const updated = { ...currentLetter, status: "emailed", sent_at: new Date().toISOString() };
       setCurrentLetter(updated);
-      setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+      setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
@@ -892,7 +933,7 @@ export default function HomePage() {
       const now = new Date().toISOString();
       const updated = { ...currentLetter, status: "sent", sent_at: now, printed_at: now };
       setCurrentLetter(updated);
-      setLettersMap((prev) => { const m = new Map(prev); m.set(expandedCompany, updated); return m; });
+      setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
       toast("Marked as sent");
     } catch {
       // still print even if logging fails
@@ -991,13 +1032,13 @@ export default function HomePage() {
                   <div className="text-xs text-white/50 uppercase tracking-wider">Companies</div>
                 </div>
                 <div className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-white/10 rounded-xl border border-white/15 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] relative">
-                  <div className="text-2xl font-bold text-white">{lettersMap.size}</div>
+                  <div className="text-2xl font-bold text-white">{totalLetterCount}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Letters</div>
                   <button onClick={() => { setShowMailedList(!showMailedList); setShowEmailedList(false); }} className="text-xs text-emerald-300/80 font-semibold mt-0.5 hover:text-green-200 cursor-pointer">
-                    {Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed").length} printed
+                    {allLetters.filter(l => l.status === "sent" || l.status === "printed").length} printed
                   </button>
                   {showMailedList && (() => {
-                    const mailed = Array.from(lettersMap.values()).filter(l => l.status === "sent" || l.status === "printed");
+                    const mailed = allLetters.filter(l => l.status === "sent" || l.status === "printed");
                     return (
                       <div className="absolute top-full mt-2 left-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 min-w-[280px] max-h-60 overflow-y-auto">
                         <div className="px-3 py-2 border-b bg-gray-50 rounded-t-xl">
@@ -1024,10 +1065,10 @@ export default function HomePage() {
                   <div className="text-2xl font-bold text-white">{companies.filter(c => c.email).length}</div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Emails</div>
                   <button onClick={() => { setShowEmailedList(!showEmailedList); setShowMailedList(false); }} className="text-xs text-sky-300 font-semibold mt-0.5 hover:text-sky-200 cursor-pointer">
-                    {Array.from(lettersMap.values()).filter(l => l.status === "emailed").length} sent
+                    {allLetters.filter(l => l.status === "emailed").length} sent
                   </button>
                   {showEmailedList && (() => {
-                    const emailed = Array.from(lettersMap.values()).filter(l => l.status === "emailed");
+                    const emailed = allLetters.filter(l => l.status === "emailed");
                     return (
                       <div className="absolute top-full mt-2 right-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 min-w-[280px] max-h-60 overflow-y-auto">
                         <div className="px-3 py-2 border-b bg-sky-50 rounded-t-xl">
@@ -1061,8 +1102,8 @@ export default function HomePage() {
 
         {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
-          const allLetters = Array.from(lettersMap.values());
-          const sentOrPrinted = allLetters.filter(l => l.sent_at || l.printed_at || l.status === "sent" || l.status === "printed" || l.status === "emailed");
+          const calendarLetters = Array.from(lettersMap.values()).flat();
+          const sentOrPrinted = calendarLetters.filter(l => l.sent_at || l.printed_at || l.status === "sent" || l.status === "printed" || l.status === "emailed");
 
           // Group sent letters by day-of-month for March 2026
           const sentByDay = new Map<number, { companyname: string; contactname?: string }[]>();
@@ -1226,7 +1267,7 @@ export default function HomePage() {
               });
               const visibleItems = isFullyExpanded ? sortedItems : sortedItems.slice(0, PREVIEW_COUNT);
               const hiddenCount = items.length - PREVIEW_COUNT;
-              const sentCount = items.filter(c => { const l = lettersMap.get(c.companyname); return l && (l.status === "sent" || l.status === "printed" || l.status === "emailed"); }).length;
+              const sentCount = items.filter(c => { const letters = lettersMap.get(c.companyname); return letters && letters.some(l => l.status === "sent" || l.status === "printed" || l.status === "emailed"); }).length;
               const emailCount = items.filter(c => c.email).length;
 
               return (
@@ -1283,7 +1324,7 @@ export default function HomePage() {
                         globalIdx++;
                         const num = globalIdx;
                         const isExpanded = expandedCompany === c.companyname;
-                        const letter = lettersMap.get(c.companyname);
+                        const letter = getBestLetter(c.companyname);
                         return (
                           <div key={c.companyname}>
                             <button
@@ -1723,8 +1764,8 @@ export default function HomePage() {
 
       {/* ── Find New Leads Dialog ── */}
       {addLeadNiche && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm no-print" onClick={() => setAddLeadNiche(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm no-print" onClick={() => setAddLeadNiche(null)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-lg w-full sm:mx-4 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header with close X */}
             <div
               className={`px-5 py-4 ${NICHE_COLORS[addLeadNiche]?.headerBg ? `bg-gradient-to-r ${NICHE_COLORS[addLeadNiche].headerBg}` : ""} shrink-0 flex items-center justify-between`}
@@ -1749,8 +1790,8 @@ export default function HomePage() {
                   value={addLeadSearch}
                   onChange={(e) => setAddLeadSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") searchPlaces(); }}
-                  placeholder="Search company name in Denver metro..."
-                  className="flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
+                  placeholder="Search company name..."
+                  className="flex-1 rounded-lg border border-gray-200 px-3 py-3 sm:py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
                   autoFocus
                 />
                 <button
