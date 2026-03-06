@@ -1626,7 +1626,7 @@ export default function HomePage() {
 
                                                       async function handleContactAction(ct: typeof contacts[0], action: "email"|"letter") {
                                                         setJobContactPicker(null);
-                                                        let skillSentence = "I have hands-on experience taking CAD designs from concept through prototype and fabrication, including SolidWorks, CNC machining, and 3D printing.";
+                                                        let skillSentence = "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
                                                         try {
                                                           const r = await fetch("/api/match-skills", {

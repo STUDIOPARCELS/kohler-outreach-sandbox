@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const KOHLER_SKILLS_LIST = `SolidWorks, GD&T, tolerance stack-ups, DFM/DFA, FEA, CFD (SolidWorks Flow Simulation), CNC machining, MIG welding, 3D printing, laser cutting, waterjet, plasma cutting, MATLAB, Python, C++, Arduino, FMEA, Scrum`;
 
-const DEFAULT_SKILL = "I have hands-on experience taking CAD designs from concept through prototype and fabrication, including SolidWorks, CNC machining, and 3D printing.";
+const DEFAULT_SKILL = "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
 
 export async function POST(req: NextRequest) {
   const { jobTitle, jobSummary, companyName } = await req.json();
@@ -24,35 +24,42 @@ ${jobSummary ? `DESCRIPTION: ${jobSummary}` : ""}
 
 RESUME SKILLS: ${KOHLER_SKILLS_LIST}
 
-WHAT COUNTS AS A MATCH (same skill, same tool, same method):
+WHAT COUNTS AS A MATCH:
 - Job says "SolidWorks" or "CAD" → resume has "SolidWorks" → YES
 - Job says "GD&T" → resume has "GD&T" → YES
 - Job says "tolerance analysis" → resume has "tolerance stack-ups" → YES
 - Job says "FEA" or "finite element" → resume has "FEA" → YES
-- Job says "CFD" → resume has "CFD (SolidWorks Flow Simulation)" → YES
+- Job says "CFD" → resume has "CFD" → YES
 - Job says "CNC" or "machining" → resume has "CNC machining" → YES
 - Job says "welding" → resume has "MIG welding" → YES
 - Job says "3D printing" or "additive" → resume has "3D printing" → YES
 - Job says "FMEA" → resume has "FMEA" → YES
 - Job says "MATLAB" → resume has "MATLAB" → YES
 - Job says "Python" → resume has "Python" → YES
-- Job says "fabrication" and means hands-on metal/wood work → resume has "CNC machining" or "MIG welding" → YES
+- Job says "fabrication" meaning hands-on metal/wood work → resume has "CNC machining" or "MIG welding" → YES
 
 WHAT DOES NOT COUNT:
-- "assembly" ≠ "MIG welding" (assembling parts is not welding)
-- "equipment maintenance" ≠ "CNC machining" (maintaining ≠ operating)
-- "operating equipment" ≠ "CNC machining" (field operations ≠ CNC)
+- "assembly" ≠ "MIG welding"
+- "equipment maintenance" ≠ "CNC machining"
+- "operating equipment" ≠ "CNC machining"
 - "safety" ≠ "FMEA" unless job specifically says "FMEA"
-- "sub-system integration" ≠ "DFM/DFA" (integration ≠ design for manufacturing)
-- If the job description is too vague to identify specific technical tools → NO matches
+- "sub-system integration" ≠ "DFM/DFA"
+- If the job description is too vague → NO matches
 
-CRITICAL: The sentence MUST use the EXACT resume skill names from the matches. If you match "SolidWorks" and "GD&T", the sentence must say "SolidWorks" and "GD&T" — not paraphrased versions.
+CRITICAL WRITING RULES:
+- The sentence must read NATURALLY as a standalone paragraph in a cover letter
+- It must flow smoothly — not just a list of two words
+- BAD: "I have experience with SolidWorks and FEA." (too short, reads like a fragment)
+- GOOD: "I have experience with SolidWorks modeling and FEA simulation, and have taken designs from concept through prototype."
+- GOOD: "I have hands-on experience with CNC machining, MIG welding, and 3D printing for prototype fabrication."
+- Add brief context that makes the skills feel connected to real work
+- 15-25 words, start with "I have"
+- Use EXACT resume skill names from the matches
 
 Return ONLY JSON (no markdown):
-{"sentence":"I have experience with [exact resume skill 1], [exact resume skill 2], and [exact resume skill 3].","matches":[{"job_skill":"exact term from job","resume_skill":"exact term from resume list above"}]}
+{"sentence":"I have [natural flowing sentence with matched skills and brief context].","matches":[{"job_skill":"from job","resume_skill":"from resume"}]}
 
-If fewer than 2 genuine matches: {"sentence":"${DEFAULT_SKILL}","matches":[]}
-Sentence under 20 words, start with "I have experience with".`,
+If fewer than 2 genuine matches: {"sentence":"${DEFAULT_SKILL}","matches":[]}`,
         text: { format: { type: "text" } },
       }),
     });
@@ -84,5 +91,3 @@ Sentence under 20 words, start with "I have experience with".`,
     return NextResponse.json({ sentence: DEFAULT_SKILL, matches: [], source: "error" });
   }
 }
-// rebuild 1772831235
-// noreply rebuild 1772831637
