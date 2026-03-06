@@ -784,21 +784,21 @@ export default function HomePage() {
   }
 
   const NICHE_SEARCH_TERMS: Record<string, string[]> = {
-    "Skiing": ["ski manufacturer Denver", "ski equipment Colorado", "snowboard factory Denver"],
-    "Acoustics / Audio / Musical Instruments": ["audio equipment manufacturer Denver", "loudspeaker maker Colorado", "musical instrument builder Denver"],
-    "Outdoor Recreation & Equipment": ["outdoor gear manufacturer Denver", "bicycle maker Colorado", "outdoor equipment company Denver"],
-    "Woodworking / Furniture / Cabinetry / Prototyping": ["custom cabinet shop Denver", "woodworking shop Colorado", "furniture maker Denver"],
-    "Automotive / Vehicles": ["custom vehicle builder Denver", "van conversion Colorado", "automotive shop Denver"],
-    "Energy / Renewables / Power": ["energy engineering company Denver", "oil gas engineering Denver", "renewable energy Colorado"],
-    "Manufacturing / Automation / Product Design": ["manufacturing company Denver", "automation company Colorado", "product design firm Denver"],
-    "Metals / Material Science": ["metal fabrication Denver", "materials company Colorado", "precision machining Denver"],
-    "Quantum / Deep Tech / Electronics / Robotics": ["robotics company Denver", "electronics manufacturer Colorado", "tech hardware Denver"],
-    "Construction / Civil / Heavy Industry": ["construction engineering firm Denver", "general contractor Colorado", "heavy civil construction Denver"],
-    "MEP / HVAC / Building Systems": ["mechanical contractor Denver", "HVAC engineering Colorado", "MEP firm Denver"],
-    "Water / Environmental / Geotech": ["water engineering firm Denver", "environmental engineering Colorado", "geotechnical company Denver"],
-    "Aerospace / Space": ["aerospace company Denver", "space company Colorado", "defense engineering Denver"],
-    "Medical / Biotech": ["medical device company Denver", "biotech company Colorado", "surgical equipment Denver"],
-    "Food / Beverage Manufacturing": ["food manufacturing Denver", "beverage production Colorado", "food processing Denver"],
+    "Skiing": ["ski manufacturer Colorado", "snowboard manufacturer Denver", "ski equipment factory Colorado"],
+    "Acoustics / Audio / Musical Instruments": ["audio electronics manufacturer Denver", "loudspeaker manufacturer Colorado", "musical instrument maker Denver"],
+    "Outdoor Recreation & Equipment": ["outdoor equipment manufacturer Denver", "bicycle frame manufacturer Colorado", "camping gear manufacturer Denver"],
+    "Woodworking / Furniture / Cabinetry / Prototyping": ["custom cabinetry manufacturer Denver", "woodworking fabrication shop Colorado", "CNC woodworking Denver"],
+    "Automotive / Vehicles": ["custom vehicle fabrication Denver", "van conversion builder Colorado", "automotive fabrication shop Denver"],
+    "Energy / Renewables / Power": ["oil gas engineering firm Denver", "solar energy engineering Colorado", "power plant engineering Denver"],
+    "Manufacturing / Automation / Product Design": ["CNC machine shop Denver", "industrial automation company Colorado", "product design engineering Denver"],
+    "Metals / Material Science": ["metal fabrication shop Denver", "precision machining company Colorado", "welding fabrication Denver"],
+    "Quantum / Deep Tech / Electronics / Robotics": ["robotics manufacturer Denver", "electronics engineering company Colorado", "circuit board manufacturer Denver"],
+    "Construction / Civil / Heavy Industry": ["civil engineering firm Denver", "structural engineering company Colorado", "heavy construction engineering Denver"],
+    "MEP / HVAC / Building Systems": ["mechanical engineering firm Denver", "HVAC engineering company Colorado", "MEP design firm Denver"],
+    "Water / Environmental / Geotech": ["water treatment engineering Denver", "environmental engineering firm Colorado", "geotechnical engineering Denver"],
+    "Aerospace / Space": ["aerospace manufacturer Denver", "satellite manufacturer Colorado", "rocket propulsion company Denver"],
+    "Medical / Biotech": ["medical device manufacturer Denver", "surgical instrument manufacturer Colorado", "biotech engineering Denver"],
+    "Food / Beverage Manufacturing": ["food processing plant Denver", "beverage manufacturing facility Colorado", "food production factory Denver"],
   };
 
   async function openFindLeads(niche: string) {
@@ -1873,48 +1873,18 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* Search input */}
-            <div className="px-5 py-4 border-b border-gray-100 shrink-0">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={addLeadSearch}
-                  onChange={(e) => setAddLeadSearch(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") searchPlaces(); }}
-                  placeholder="Search company name..."
-                  className="flex-1 rounded-lg border border-gray-200 px-3 py-3 sm:py-2.5 text-sm focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
-                  autoFocus
-                />
-                <button
-                  onClick={searchPlaces}
-                  disabled={addLeadSearching || !addLeadSearch.trim()}
-                  className="px-4 py-2.5 text-sm font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center gap-1.5 shrink-0"
-                >
-                  {addLeadSearching ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                  )}
-                  Search
-                </button>
-              </div>
-            </div>
-
             {/* Results list */}
             <div className="overflow-y-auto flex-1 px-2 py-2">
-              {addLeadResults.length === 0 && !addLeadSearching && (
-                <div className="text-center py-10 px-4">
-                  <svg className="w-10 h-10 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <p className="text-sm text-gray-400">No results found</p>
-                  <p className="text-xs text-gray-300 mt-1">Try a different search term above</p>
-                </div>
-              )}
               {addLeadSearching && (
                 <div className="flex items-center justify-center py-10 gap-2">
                   <div className="w-5 h-5 border-2 border-gray-200 border-t-sky-500 rounded-full animate-spin" />
-                  <span className="text-sm text-gray-400">Searching Google Places...</span>
+                  <span className="text-sm text-gray-400">Finding companies...</span>
+                </div>
+              )}
+              {addLeadResults.length === 0 && !addLeadSearching && (
+                <div className="text-center py-8 px-4">
+                  <p className="text-sm text-gray-400">No engineering companies found</p>
+                  <p className="text-xs text-gray-300 mt-1">Try a specific company name below</p>
                 </div>
               )}
               {addLeadResults.map((r) => (
@@ -1942,6 +1912,28 @@ export default function HomePage() {
                   </button>
                 </div>
               ))}
+              {/* Compact search bar at bottom */}
+              {!addLeadSearching && (
+                <div className="px-3 py-3 border-t border-gray-100 mt-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={addLeadSearch}
+                      onChange={(e) => setAddLeadSearch(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") searchPlaces(); }}
+                      placeholder="Search for a specific company..."
+                      className="flex-1 rounded-lg border border-gray-200 px-2.5 py-2 text-xs focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 focus:outline-none transition-all"
+                    />
+                    <button
+                      onClick={searchPlaces}
+                      disabled={addLeadSearching || !addLeadSearch.trim()}
+                      className="px-3 py-2 text-xs font-bold rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 transition-colors shrink-0"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
