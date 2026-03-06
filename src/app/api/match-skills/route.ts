@@ -17,35 +17,41 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: "gpt-5.4-2026-03-05",
-        input: `Match a job posting to this applicant's resume skills. Be honest — match real overlaps, reject fake ones.
+        input: `Match a job posting's required skills to this applicant's resume. Be honest — match real overlaps, reject fake ones.
 
 JOB: "${jobTitle}" ${companyName ? `at ${companyName}` : ""}
 ${jobSummary ? `DESCRIPTION: ${jobSummary}` : ""}
 
 RESUME SKILLS: ${KOHLER_SKILLS_LIST}
 
-WHAT COUNTS AS A MATCH:
-- Job says "SolidWorks" and resume has "SolidWorks" → YES, match
-- Job says "GD&T" and resume has "GD&T" → YES, match
-- Job says "tolerance analysis" and resume has "tolerance stack-ups" → YES, same skill
-- Job says "CAD" and resume has "SolidWorks" → YES, SolidWorks is CAD
-- Job says "FEA" or "finite element" and resume has "FEA" → YES, match
-- Job says "CFD" and resume has "CFD" → YES, match
-- Job says "CNC" or "machining" and resume has "CNC machining" → YES, match
-- Job says "welding" and resume has "MIG welding" → YES, match
-- Job says "additive manufacturing" or "3D printing" and resume has "3D printing" → YES
+WHAT COUNTS AS A MATCH (same skill, same tool, same method):
+- Job says "SolidWorks" or "CAD" → resume has "SolidWorks" → YES
+- Job says "GD&T" → resume has "GD&T" → YES
+- Job says "tolerance analysis" → resume has "tolerance stack-ups" → YES
+- Job says "FEA" or "finite element" → resume has "FEA" → YES
+- Job says "CFD" → resume has "CFD (SolidWorks Flow Simulation)" → YES
+- Job says "CNC" or "machining" → resume has "CNC machining" → YES
+- Job says "welding" → resume has "MIG welding" → YES
+- Job says "3D printing" or "additive" → resume has "3D printing" → YES
+- Job says "FMEA" → resume has "FMEA" → YES
+- Job says "MATLAB" → resume has "MATLAB" → YES
+- Job says "Python" → resume has "Python" → YES
+- Job says "fabrication" and means hands-on metal/wood work → resume has "CNC machining" or "MIG welding" → YES
 
 WHAT DOES NOT COUNT:
-- Job says "equipment maintenance" and resume has "CNC machining" → NO, different
-- Job says "safety" and resume has "FMEA" → NO, unless job specifically says "FMEA"
-- Job says "operating equipment" and resume has "CNC machining" → NO, operating ≠ machining
-- Job says "field work" and resume has anything → NO, no field experience on resume
-- If the job description is too vague to identify specific technical skills → NO matches
+- "assembly" ≠ "MIG welding" (assembling parts is not welding)
+- "equipment maintenance" ≠ "CNC machining" (maintaining ≠ operating)
+- "operating equipment" ≠ "CNC machining" (field operations ≠ CNC)
+- "safety" ≠ "FMEA" unless job specifically says "FMEA"
+- "sub-system integration" ≠ "DFM/DFA" (integration ≠ design for manufacturing)
+- If the job description is too vague to identify specific technical tools → NO matches
+
+CRITICAL: The sentence MUST use the EXACT resume skill names from the matches. If you match "SolidWorks" and "GD&T", the sentence must say "SolidWorks" and "GD&T" — not paraphrased versions.
 
 Return ONLY JSON (no markdown):
-{"sentence":"I have experience with [2-3 matched skills].","matches":[{"job_skill":"from job","resume_skill":"from resume"}]}
+{"sentence":"I have experience with [exact resume skill 1], [exact resume skill 2], and [exact resume skill 3].","matches":[{"job_skill":"exact term from job","resume_skill":"exact term from resume list above"}]}
 
-If fewer than 2 real matches: {"sentence":"${DEFAULT_SKILL}","matches":[]}
+If fewer than 2 genuine matches: {"sentence":"${DEFAULT_SKILL}","matches":[]}
 Sentence under 20 words, start with "I have experience with".`,
         text: { format: { type: "text" } },
       }),

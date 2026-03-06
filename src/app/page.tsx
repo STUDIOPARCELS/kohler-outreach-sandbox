@@ -1744,6 +1744,16 @@ akwood1@mines.edu`;
                                                                 Find Contacts
                                                               </button>
                                                             )}
+                                                            {job.apply_url && (
+                                                              <a
+                                                                href={job.apply_url}
+                                                                target="_blank" rel="noopener noreferrer"
+                                                                className="px-3 py-1.5 text-[10px] font-medium rounded-lg bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 transition-colors flex items-center gap-1"
+                                                              >
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                                                Job Link
+                                                              </a>
+                                                            )}
                                                           </div>
                                                           {/* Contact picker dropdown */}
                                                           {pickerOpen && (
