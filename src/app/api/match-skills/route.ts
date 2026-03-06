@@ -57,10 +57,12 @@ Rules:
     }
 
     const data = await res.json();
-    let sentence = (data.content?.[0]?.text || fallback).trim();
+    let sentence = (data.content?.[0]?.text || "").trim();
     // Strip any quotes the model might add
     sentence = sentence.replace(/^["']|["']$/g, "").trim();
-    if (!sentence.startsWith("I have")) sentence = fallback;
+    if (!sentence || !sentence.toLowerCase().startsWith("i have")) {
+      return NextResponse.json({ sentence: fallback, aiRaw: sentence || "(empty)" });
+    }
     return NextResponse.json({ sentence });
   } catch (e) {
     console.error("match-skills error:", e);
