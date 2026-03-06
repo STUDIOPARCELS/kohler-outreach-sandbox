@@ -132,8 +132,8 @@ function assembleLetter(
 
   // Standardize wording across all templates (including database default)
   body = body.replace(
-    "If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
-    "If you are considering an entry-level BSME/EIT, I would love to interview with your team."
+    "If you are considering an entry-level BSME, I would love to interview with your team.",
+    "If you are considering an entry-level BSME, I would love to interview with your team."
   );
 
   // Remove exclamation mark from closing
@@ -144,8 +144,8 @@ function assembleLetter(
 
   // Ensure "with my skill set" in closing
   body = body.replace(
-    "entry-level BSME/EIT, I would love to interview",
-    "entry-level BSME/EIT with my skill set, I would love to interview"
+    "entry-level BSME, I would love to interview",
+    "entry-level BSME with my skill set, I would love to interview"
   );
 
   // Remove duplicate paragraphs (safety net)
@@ -349,11 +349,11 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood and recent BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME with my skill set, I would love to interview with your team.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -985,7 +985,7 @@ export default function HomePage() {
           to: emailConfirm.to,
           companyname: expandedCompany,
           contactname: emailConfirm.contactname,
-          subject: emailConfirm.subject || `Mechanical Engineer — CO School of Mines, EIT`,
+          subject: emailConfirm.subject || `Mechanical Engineer — CO School of Mines`,
           body: emailConfirm.body || assembled?.body || "",
           letterId,
           attachments: emailConfirm.attachments,
@@ -1107,7 +1107,7 @@ export default function HomePage() {
                   OUTREACH | MISSION CONTROL
                 </h1>
                 <p className="text-slate-300 mt-1 text-xs sm:text-base font-medium uppercase tracking-wide">
-                  ENTRY LEVEL BSME / EIT · DENVER METRO
+                  ENTRY LEVEL BSME · DENVER METRO
                 </p>
               </div>
               <div className="flex items-stretch gap-2 sm:gap-4 flex-wrap">
@@ -1636,7 +1636,7 @@ export default function HomePage() {
                                                           const firstName = ct.contactname.split(" ")[0];
                                                           const emailBody = `Hello ${firstName},
 
-I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood and recent BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
 
@@ -1656,7 +1656,7 @@ akwood1@mines.edu`;
                                                             companyname: c.companyname,
                                                             body: emailBody,
                                                             attachments: ["resume"],
-                                                            subject: `Entry-level ${roleLabel} — CO School of Mines, EIT`,
+                                                            subject: `Entry-level ${roleLabel} — CO School of Mines`,
                                                             matches,
                                                           });
                                                         } else {
@@ -1670,13 +1670,13 @@ ${companyAddr}
 
 Hello ${ct.contactname.split(" ")[0]},
 
-I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood and recent BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
 
 ${skillSentence}
 
-I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME with my skill set, I would love to interview with your team.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -1685,7 +1685,7 @@ Sincerely,
 
 
 
-Kohler Wood, EIT
+Kohler Wood
 208-720-4635
 Lakewood, CO
 akwood1@mines.edu`;
@@ -1969,7 +1969,7 @@ akwood1@mines.edu`;
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
-                <p className="text-sm text-gray-700 mt-0.5">{emailConfirm.subject || "Mechanical Engineer — CO School of Mines, EIT"}</p>
+                <p className="text-sm text-gray-700 mt-0.5">{emailConfirm.subject || "Mechanical Engineer — CO School of Mines"}</p>
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
@@ -1987,8 +1987,8 @@ akwood1@mines.edu`;
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
-                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
+                        "I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME with my skill set, I would love to interview with your team.",
+                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME with my skill set, I would love to interview with your team."
                       );
                       return preview;
                     })()}
@@ -2128,6 +2128,21 @@ akwood1@mines.edu`;
                     ))}
                   </div>
                 )}
+              </div>
+              <div>
+                <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Attachments</span>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  <div className="flex items-center gap-0 rounded-full border border-green-300/80 overflow-hidden" style={{ background: "rgba(21,128,61,0.08)" }}>
+                    <a href="/KOHLER_WOOD_RESUME.pdf" target="_blank" rel="noopener noreferrer" className="px-3 py-1 text-xs font-medium text-green-800 hover:underline flex items-center gap-1.5">
+                      📄 Resume PDF
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-0 rounded-full border border-green-300/80 overflow-hidden" style={{ background: "rgba(21,128,61,0.08)" }}>
+                    <span className="px-3 py-1 text-xs font-medium text-green-800 flex items-center gap-1.5">
+                      💳 solocard
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
