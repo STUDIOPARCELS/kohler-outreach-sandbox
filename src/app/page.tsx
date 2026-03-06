@@ -1826,19 +1826,26 @@ akwood1@mines.edu`;
                     <p className="text-sm font-semibold text-gray-900 mt-0.5">{emailConfirm.companyname}</p>
                   </div>
                 </div>
-                {emailConfirm.matches && emailConfirm.matches.length > 0 && (
-                  <div className="w-56 shrink-0 rounded-lg border border-emerald-200 bg-emerald-50/40 p-2.5">
-                    <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">Skill Match</span>
-                    <div className="mt-1 space-y-1">
-                      {emailConfirm.matches.map((m, i) => (
-                        <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                          <span className="text-gray-500 flex-1 truncate">{m.job_skill}</span>
-                          <svg className="w-2.5 h-2.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                          <span className="text-emerald-800 font-semibold flex-1 truncate">{m.resume_skill}</span>
-                        </div>
-                      ))}
+                {emailConfirm.matches !== undefined && (
+                  emailConfirm.matches.length > 0 ? (
+                    <div className="w-56 shrink-0 rounded-lg border border-emerald-200 bg-emerald-50/40 p-2.5">
+                      <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">Skill Match</span>
+                      <div className="mt-1 space-y-1">
+                        {emailConfirm.matches.map((m, i) => (
+                          <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                            <span className="text-gray-500 flex-1 truncate">{m.job_skill}</span>
+                            <svg className="w-2.5 h-2.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            <span className="text-emerald-800 font-semibold flex-1 truncate">{m.resume_skill}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="w-56 shrink-0 rounded-lg border border-gray-200 bg-gray-50/40 p-2.5">
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Skill Match</span>
+                      <p className="text-[10px] text-gray-400 mt-1.5">No direct skill overlap — using general intro</p>
+                    </div>
+                  )
                 )}
               </div>
               <div>
