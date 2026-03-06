@@ -119,6 +119,11 @@ export async function POST(req: NextRequest) {
     for (const p of finalProfiles) {
       const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "";
       if (!name) continue;
+      // STRICT: reject abbreviated or incomplete names
+      const nameParts = name.trim().split(/\s+/);
+      if (nameParts.length < 2) continue; // must have first + last
+      const lastName = nameParts[nameParts.length - 1];
+      if (lastName.length <= 2 || /^[A-Z]\.?$/.test(lastName)) continue; // reject "B.", "M.", single initials
 
       const title = p.current_title || "";
       // STRICT: reject contacts with no title — unknown role
