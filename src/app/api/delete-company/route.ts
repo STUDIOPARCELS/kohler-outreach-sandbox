@@ -9,6 +9,23 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    // Fetch all data before deleting (for undo support)
+    const { data: companyData } = await supabaseAdmin
+      .from("companies")
+      .select("*")
+      .eq("companyname", companyname)
+      .single();
+
+    const { data: contactsData } = await supabaseAdmin
+      .from("contacts")
+      .select("*")
+      .eq("companyname", companyname);
+
+    const { data: lettersData } = await supabaseAdmin
+      .from("reachout_company_inserts")
+      .select("*")
+      .eq("companyname", companyname);
+
     // Delete contacts first (FK-safe)
     await supabaseAdmin.from("contacts").delete().eq("companyname", companyname);
 
@@ -31,7 +48,16 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, deleted: companyname });
+    // Return deleted data so frontend can undo
+    return NextResponse.json({
+      success: true,
+      deleted: companyname,
+      backup: {
+        company: companyData,
+        contacts: (contactsData || []).map(({ id, ...rest }: Record<string, unknown>) => rest),
+        letters: (lettersData || []).map(({ id, ...rest }: Record<string, unknown>) => rest),
+      },
+    });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }

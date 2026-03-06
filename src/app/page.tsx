@@ -850,12 +850,36 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      toast(`Removed ${companyname}`);
+
       setDeleteConfirm(null);
       if (expandedCompany === companyname) setExpandedCompany(null);
       // Remove from local state immediately
       setCompanies(prev => prev.filter(c => c.companyname !== companyname));
       setLettersMap(prev => { const m = new Map(prev); m.delete(companyname); return m; });
+
+      // Show undo toast with backup data
+      const backup = data.backup;
+      toast(`Removed ${companyname}`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              const restoreRes = await fetch("/api/restore-company", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(backup),
+              });
+              const restoreData = await restoreRes.json();
+              if (restoreData.error) throw new Error(restoreData.error);
+              toast(`Restored ${companyname}`);
+              await loadData();
+            } catch (e: unknown) {
+              toast((e as Error).message, "error");
+            }
+          },
+        },
+        duration: 8000,
+      });
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
