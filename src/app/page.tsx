@@ -140,9 +140,9 @@ function assembleLetter(
   if (signIdx > 0) {
     const before = body.substring(0, signIdx).replace(/\n{3,}/g, "\n\n");
     const after = body.substring(signIdx);
-    // Ensure 5 blank lines between Sincerely and Kohler Wood for handwritten signature
-    body = before + after.replace(/Sincerely,\n*Kohler Wood/, "Sincerely,\n\n\n\n\n\nKohler Wood")
-                        .replace(/Sincerely,\n{2,5}Kohler Wood/, "Sincerely,\n\n\n\n\n\nKohler Wood");
+    // Ensure 4 blank lines between Sincerely and Kohler Wood for handwritten signature
+    body = before + after.replace(/Sincerely,\n*Kohler Wood/, "Sincerely,\n\n\n\n\nKohler Wood")
+                        .replace(/Sincerely,\n{2,6}Kohler Wood/, "Sincerely,\n\n\n\n\nKohler Wood");
   } else {
     body = body.replace(/\n{3,}/g, "\n\n");
   }
@@ -342,8 +342,6 @@ I've included my résumé and card — which links to my projects and interests.
 Thank you for your time, and I hope to hear from you.
 
 Sincerely,
-
-
 
 
 
