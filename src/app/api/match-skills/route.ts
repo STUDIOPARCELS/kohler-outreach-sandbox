@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: "o4-mini",
+        model: "o3",
         input: `You must match an applicant's resume skills to a specific job's requirements.
 
 STEP 1: Read the job posting below and identify the top 2-3 required technical skills.
