@@ -1533,30 +1533,80 @@ export default function HomePage() {
                                     </div>
                                     )}
 
-                                    {/* Quick actions row */}
-                                    <div className="mb-3 flex items-center gap-2">
-                                      <a
-                                        href={`https://www.indeed.com/jobs?q=${encodeURIComponent("mechanical engineer " + c.companyname)}&l=Denver%2C+CO&sort=date`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60 transition-colors"
+                                    {/* Jobs */}
+                                    <div className="mb-3">
+                                      <button
+                                        onClick={async () => {
+                                          if (jobsCompany === c.companyname) { setJobsCompany(null); return; }
+                                          setJobsCompany(c.companyname);
+                                          setJobsLoading2(true);
+                                          setJobResults2([]);
+                                          try {
+                                            const res = await fetch("/api/search-jobs", {
+                                              method: "POST",
+                                              headers: { "Content-Type": "application/json" },
+                                              body: JSON.stringify({ companyname: c.companyname }),
+                                            });
+                                            const data = await res.json();
+                                            setJobResults2(data.jobs || []);
+                                          } catch { setJobResults2([]); }
+                                          finally { setJobsLoading2(false); }
+                                        }}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${jobsCompany === c.companyname ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60"}`}
                                       >
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
-                                        Indeed
-                                      </a>
-                                      <a
-                                        href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent("mechanical engineer " + c.companyname)}&location=Denver%2C+Colorado`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200/60 transition-colors"
-                                      >
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        LinkedIn
-                                      </a>
+                                        {jobsLoading2 && jobsCompany === c.companyname ? "Searching..." : "Jobs"}
+                                      </button>
+
+                                      {jobsCompany === c.companyname && (
+                                        <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/30 overflow-hidden">
+                                          {jobsLoading2 && (
+                                            <div className="flex items-center justify-center py-6 gap-2">
+                                              <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                                              <span className="text-xs text-blue-500">Searching job boards...</span>
+                                            </div>
+                                          )}
+                                          {!jobsLoading2 && jobResults2.length === 0 && (
+                                            <div className="px-4 py-5 text-center">
+                                              <p className="text-xs text-gray-400">No current openings found</p>
+                                              <a
+                                                href={`https://www.indeed.com/jobs?q=${encodeURIComponent("mechanical engineer " + c.companyname)}&l=Denver%2C+CO`}
+                                                target="_blank" rel="noopener noreferrer"
+                                                className="inline-block mt-2 text-xs text-blue-500 hover:text-blue-700 underline"
+                                              >
+                                                Search Indeed →
+                                              </a>
+                                            </div>
+                                          )}
+                                          {!jobsLoading2 && jobResults2.length > 0 && (
+                                            <div className="divide-y divide-blue-100/60">
+                                              {jobResults2.map((job, ji) => (
+                                                <div key={ji} className="px-4 py-3 hover:bg-blue-50/50 transition-colors">
+                                                  <div className="flex items-start justify-between gap-3">
+                                                    <div className="min-w-0 flex-1">
+                                                      <p className="text-xs font-bold text-gray-900 leading-tight">{job.title}</p>
+                                                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                        {job.location && <span className="text-[10px] text-gray-500">{job.location}</span>}
+                                                        {job.salary && <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">{job.salary}</span>}
+                                                      </div>
+                                                      {job.summary && <p className="text-[10px] text-gray-500 mt-1 leading-relaxed line-clamp-2">{job.summary}</p>}
+                                                    </div>
+                                                    <a
+                                                      href={job.apply_url}
+                                                      target="_blank" rel="noopener noreferrer"
+                                                      className="shrink-0 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                                    >
+                                                      Apply
+                                                    </a>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
                                     </div>
 
                                     {/* Contacts */}
