@@ -440,7 +440,7 @@ export default function HomePage() {
   const [batchStatus, setBatchStatus] = useState("");
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
-  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean; attachments: string[]} | null>(null);
+  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean; attachments: string[]; subject?: string} | null>(null);
   const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string; editing?: boolean} | null>(null);
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
@@ -972,7 +972,8 @@ export default function HomePage() {
   }
 
   async function confirmSendEmail() {
-    if (!emailConfirm || !expandedCompany || !currentLetter || !assembled) return;
+    if (!emailConfirm || !expandedCompany) return;
+    const letterId = currentLetter?.id;
     setEmailConfirm(null);
     setEmailing(true);
     try {
@@ -983,18 +984,20 @@ export default function HomePage() {
           to: emailConfirm.to,
           companyname: expandedCompany,
           contactname: emailConfirm.contactname,
-          subject: `Mechanical Engineer — CO School of Mines, EIT`,
-          body: assembled.body,
-          letterId: currentLetter.id,
+          subject: emailConfirm.subject || `Mechanical Engineer — CO School of Mines, EIT`,
+          body: emailConfirm.body || assembled?.body || "",
+          letterId,
           attachments: emailConfirm.attachments,
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       toast(`Email sent to ${emailConfirm.to}`);
-      const updated = { ...currentLetter, status: "emailed", sent_at: new Date().toISOString(), emailed_at: new Date().toISOString() };
-      setCurrentLetter(updated);
-      setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
+      if (currentLetter) {
+        const updated = { ...currentLetter, status: "emailed", sent_at: new Date().toISOString(), emailed_at: new Date().toISOString() };
+        setCurrentLetter(updated);
+        setLettersMap((prev) => upsertLetterInMap(prev, expandedCompany, updated));
+      }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
@@ -1591,15 +1594,36 @@ export default function HomePage() {
                                                     {contactWithEmail && template && (
                                                       <button
                                                         onClick={() => {
-                                                          const niche = companies.find(co => co.companyname === c.companyname)?.niche;
-                                                          const freshBody = assembleLetter(template, c.companyname, "", contactWithEmail.contactname, contactWithEmail.title, companyAddress, niche).body;
-                                                          const jobRef = `\n\nP.S. I noticed your posting for "${job.title}" and am very interested in this role.`;
+                                                          const displayName = c.companyname
+                                                            .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Company|SE\s*&\s*Co\.\s*KG)$/i, "").trim();
+                                                          const firstName = contactWithEmail.contactname.split(" ")[0];
+
+                                                          // Build a job-tailored email body
+                                                          const jobTitle = job.title || "the open engineering position";
+                                                          const emailBody = `Hello ${firstName},
+
+I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+
+I noticed your opening for ${jobTitle} at ${displayName} and wanted to reach out directly. I have hands-on experience taking SolidWorks designs from concept through prototype and fabrication, including CNC machining, 3D printing, and metal/wood fabrication at the Labriola Innovation Hub at Mines.${job.summary ? `
+
+What drew me to this role: ${job.summary.slice(0, 150).trim()}${job.summary.length > 150 ? "..." : ""}` : ""}
+
+I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+
+Thank you for your time, and I hope to hear from you.
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`;
+
                                                           setEmailConfirm({
                                                             to: contactWithEmail.email,
                                                             contactname: contactWithEmail.contactname,
                                                             companyname: c.companyname,
-                                                            body: freshBody + jobRef,
+                                                            body: emailBody,
                                                             attachments: ["resume"],
+                                                            subject: `Interest in ${jobTitle} — CO School of Mines, EIT`,
                                                           });
                                                         }}
                                                         className="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
@@ -1773,7 +1797,7 @@ export default function HomePage() {
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</span>
-                <p className="text-sm text-gray-700 mt-0.5">Mechanical Engineer — CO School of Mines, EIT</p>
+                <p className="text-sm text-gray-700 mt-0.5">{emailConfirm.subject || "Mechanical Engineer — CO School of Mines, EIT"}</p>
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Body</span>
