@@ -1689,6 +1689,7 @@ Kohler Wood, EIT
 208-720-4635
 Lakewood, CO
 akwood1@mines.edu`;
+                                                          // Save draft to DB
                                                           try {
                                                             const res = await fetch("/api/draft", {
                                                               method: "POST",
@@ -1697,12 +1698,16 @@ akwood1@mines.edu`;
                                                             });
                                                             const data = await res.json();
                                                             if (data.error) throw new Error(data.error);
-                                                            toast(`Letter drafted for ${ct.contactname} at ${displayName}`);
-                                                            // Update lettersMap directly with returned draft
                                                             if (data && data.id) {
                                                               setLettersMap(prev => upsertLetterInMap(prev, c.companyname, data));
                                                             }
                                                           } catch (e) { toast((e as Error).message, "error"); }
+                                                          // Open letter preview popup
+                                                          setLetterConfirm({
+                                                            contactname: ct.contactname,
+                                                            companyname: c.companyname,
+                                                            body: letterBody,
+                                                          });
                                                         }
                                                       }
 
