@@ -2131,6 +2131,11 @@ akwood1@mines.edu`;
                   )
                 )}
               </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-bold text-green-600 uppercase tracking-wider">Includes:</span>
+                <a href="/KOHLER_WOOD_RESUME.pdf" target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 text-[10px] font-medium text-green-800 bg-green-50 border border-green-200 rounded-full hover:underline">📄 Resume</a>
+                <span className="px-2 py-0.5 text-[10px] font-medium text-green-800 bg-green-50 border border-green-200 rounded-full">💳 solocard</span>
+              </div>
               <div>
                 <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Letter Body</span>
                 {letterConfirm.editing ? (
@@ -2147,21 +2152,6 @@ akwood1@mines.edu`;
                     ))}
                   </div>
                 )}
-              </div>
-              <div>
-                <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Attachments</span>
-                <div className="flex flex-wrap gap-2 mt-1.5">
-                  <div className="flex items-center gap-0 rounded-full border border-green-300/80 overflow-hidden" style={{ background: "rgba(21,128,61,0.08)" }}>
-                    <a href="/KOHLER_WOOD_RESUME.pdf" target="_blank" rel="noopener noreferrer" className="px-3 py-1 text-xs font-medium text-green-800 hover:underline flex items-center gap-1.5">
-                      📄 Resume PDF
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-0 rounded-full border border-green-300/80 overflow-hidden" style={{ background: "rgba(21,128,61,0.08)" }}>
-                    <span className="px-3 py-1 text-xs font-medium text-green-800 flex items-center gap-1.5">
-                      💳 solocard
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
