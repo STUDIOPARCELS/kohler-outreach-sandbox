@@ -87,6 +87,18 @@ function cleanCompanyName(name: string): string {
     }
   }
   
+  // Fix brand-style lowercase abbreviations that should be uppercase in formal letters
+  const uppercaseFixes: Record<string, string> = {
+    " bp": " BP",
+    " usa": " USA",
+    " llc": " LLC",
+  };
+  for (const [from, to] of Object.entries(uppercaseFixes)) {
+    if (clean.toLowerCase().endsWith(from)) {
+      clean = clean.slice(0, clean.length - from.length) + to;
+    }
+  }
+  
   return clean;
 }
 
@@ -141,8 +153,8 @@ function assembleLetter(
     const before = body.substring(0, signIdx).replace(/\n{3,}/g, "\n\n");
     const after = body.substring(signIdx);
     // Ensure 4 blank lines between Sincerely and Kohler Wood for handwritten signature
-    body = before + after.replace(/Sincerely,\n*Kohler Wood/, "Sincerely,\n\n\n\n\nKohler Wood")
-                        .replace(/Sincerely,\n{2,6}Kohler Wood/, "Sincerely,\n\n\n\n\nKohler Wood");
+    body = before + after.replace(/Sincerely,\n*Kohler Wood/, "Sincerely,\n\n\n\nKohler Wood")
+                        .replace(/Sincerely,\n{2,6}Kohler Wood/, "Sincerely,\n\n\n\nKohler Wood");
   } else {
     body = body.replace(/\n{3,}/g, "\n\n");
   }
@@ -346,7 +358,6 @@ Sincerely,
 
 
 
-
 Kohler Wood
 208-720-4635
 Lakewood, CO
@@ -355,7 +366,7 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
+    "I have hands-on experience with thermal systems, fluid dynamics, and taking SolidWorks designs from concept through fabrication — I'd welcome the chance to apply that to energy infrastructure."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
     "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
@@ -364,7 +375,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
+    "I have coursework in fluid mechanics and materials selection, plus hands-on fabrication experience — I'd welcome the chance to contribute to water and environmental infrastructure."
   ),
   "Aerospace / Space": nicheTemplate(
     "My father owns a Cessna 172 — an experience that shaped my engineering interest today."
