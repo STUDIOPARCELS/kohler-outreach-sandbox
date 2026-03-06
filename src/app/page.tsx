@@ -783,6 +783,44 @@ export default function HomePage() {
     });
   }
 
+  const NICHE_SEARCH_TERMS: Record<string, string[]> = {
+    "Skiing": ["ski manufacturer Denver", "ski equipment Colorado", "snowboard factory Denver"],
+    "Acoustics / Audio / Musical Instruments": ["audio equipment manufacturer Denver", "loudspeaker maker Colorado", "musical instrument builder Denver"],
+    "Outdoor Recreation & Equipment": ["outdoor gear manufacturer Denver", "bicycle maker Colorado", "outdoor equipment company Denver"],
+    "Woodworking / Furniture / Cabinetry / Prototyping": ["custom cabinet shop Denver", "woodworking shop Colorado", "furniture maker Denver"],
+    "Automotive / Vehicles": ["custom vehicle builder Denver", "van conversion Colorado", "automotive shop Denver"],
+    "Energy / Renewables / Power": ["energy engineering company Denver", "oil gas engineering Denver", "renewable energy Colorado"],
+    "Manufacturing / Automation / Product Design": ["manufacturing company Denver", "automation company Colorado", "product design firm Denver"],
+    "Metals / Material Science": ["metal fabrication Denver", "materials company Colorado", "precision machining Denver"],
+    "Quantum / Deep Tech / Electronics / Robotics": ["robotics company Denver", "electronics manufacturer Colorado", "tech hardware Denver"],
+    "Construction / Civil / Heavy Industry": ["construction engineering firm Denver", "general contractor Colorado", "heavy civil construction Denver"],
+    "MEP / HVAC / Building Systems": ["mechanical contractor Denver", "HVAC engineering Colorado", "MEP firm Denver"],
+    "Water / Environmental / Geotech": ["water engineering firm Denver", "environmental engineering Colorado", "geotechnical company Denver"],
+    "Aerospace / Space": ["aerospace company Denver", "space company Colorado", "defense engineering Denver"],
+    "Medical / Biotech": ["medical device company Denver", "biotech company Colorado", "surgical equipment Denver"],
+    "Food / Beverage Manufacturing": ["food manufacturing Denver", "beverage production Colorado", "food processing Denver"],
+  };
+
+  async function openFindLeads(niche: string) {
+    const terms = NICHE_SEARCH_TERMS[niche] || ["engineering company Denver"];
+    const term = terms[Math.floor(Math.random() * terms.length)];
+    setAddLeadNiche(niche);
+    setAddLeadSearch(term);
+    setAddLeadResults([]);
+    setAddLeadSearching(true);
+    try {
+      const res = await fetch("/api/search-places", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: term }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setAddLeadResults(data.results || []);
+    } catch { /* user can still search manually */ }
+    finally { setAddLeadSearching(false); }
+  }
+
   async function searchPlaces() {
     if (!addLeadSearch.trim()) return;
     setAddLeadSearching(true);
@@ -1339,11 +1377,7 @@ export default function HomePage() {
                       </div>
                       {niche !== "TEST" && (
                         <button
-                          onClick={() => {
-                            setAddLeadNiche(niche);
-                            setAddLeadSearch("");
-                            setAddLeadResults([]);
-                          }}
+                          onClick={() => openFindLeads(niche)}
                           className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
                           title="Find new companies in this niche"
                         >
@@ -1873,8 +1907,8 @@ export default function HomePage() {
                   <svg className="w-10 h-10 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <p className="text-sm text-gray-400">Search for a company to see results</p>
-                  <p className="text-xs text-gray-300 mt-1">e.g. "metal fabrication" or "Powder7"</p>
+                  <p className="text-sm text-gray-400">No results found</p>
+                  <p className="text-xs text-gray-300 mt-1">Try a different search term above</p>
                 </div>
               )}
               {addLeadSearching && (

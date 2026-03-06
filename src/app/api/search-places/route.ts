@@ -29,9 +29,9 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json();
     
-    // Filter out non-engineering business types
+    // Filter out obviously non-engineering business types
     const rejectTypes = new Set([
-      "restaurant", "food", "cafe", "bakery", "bar", "meal_delivery", "meal_takeaway",
+      "restaurant", "cafe", "bar", "meal_delivery", "meal_takeaway",
       "store", "shopping_mall", "clothing_store", "shoe_store", "jewelry_store",
       "grocery_or_supermarket", "supermarket", "convenience_store", "department_store",
       "gym", "spa", "beauty_salon", "hair_care", "laundry", "dry_cleaning",
@@ -39,9 +39,9 @@ export async function POST(req: NextRequest) {
       "church", "place_of_worship", "cemetery", "funeral_home",
       "lodging", "hotel", "motel", "campground", "rv_park",
       "car_wash", "gas_station", "parking",
-      "bank", "finance", "insurance_agency", "accounting",
+      "bank", "insurance_agency", "accounting",
       "real_estate_agency", "lawyer", "dentist", "doctor", "veterinary_care",
-      "pharmacy", "hospital",
+      "pharmacy",
       "library", "museum", "art_gallery", "movie_theater", "amusement_park",
       "night_club", "bowling_alley", "casino",
       "post_office", "city_hall", "courthouse", "fire_station", "police",
