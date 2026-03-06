@@ -146,11 +146,18 @@ export async function POST(req: NextRequest) {
           /principal/i, /partner/i, /svp/i, /evp/i, /general manager/i,
           /plant manager/i, /superintendent/i,
         ];
+        const rejectPatterns = [
+          /talent/i, /people\s*operations/i, /human\s*resources/i, /\bhr\b/i,
+          /sales/i, /marketing/i, /recruiting/i, /acquisition/i,
+          /information\s*technology/i, /\bit\s/i, /data\s*operations/i,
+          /proposal\s*manager/i, /account\s*manager/i, /communications/i,
+        ];
         for (const p of profiles) {
           const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(" ");
           if (!name) continue;
           const title = p.current_title || "";
           if (title && !mgmtPatterns.some(pat => pat.test(title))) continue;
+          if (title && rejectPatterns.some(pat => pat.test(title))) continue;
           const teaser = p.teaser || {};
           let email = ((teaser.emails?.[0] ?? "") as string).includes("@") ? (teaser.emails?.[0] as string) : "";
           

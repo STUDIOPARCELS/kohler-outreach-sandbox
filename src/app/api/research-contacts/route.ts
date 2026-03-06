@@ -106,6 +106,13 @@ export async function POST(req: NextRequest) {
       /principal/i, /partner/i, /svp/i, /evp/i, /general manager/i,
       /plant manager/i, /superintendent/i, /pres$/i,
     ];
+    // Reject non-engineering management (HR, sales, IT, recruiting, marketing)
+    const rejectPatterns = [
+      /talent/i, /people\s*operations/i, /human\s*resources/i, /\bhr\b/i,
+      /sales/i, /marketing/i, /recruiting/i, /acquisition/i,
+      /information\s*technology/i, /\bit\s/i, /data\s*operations/i,
+      /proposal\s*manager/i, /account\s*manager/i, /communications/i,
+    ];
 
     for (const p of finalProfiles) {
       const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "";
@@ -114,6 +121,8 @@ export async function POST(req: NextRequest) {
       // Filter out individual contributors
       const title = p.current_title || "";
       if (title && !mgmtPatterns.some(pat => pat.test(title))) continue;
+      // Reject non-engineering management (HR, sales, etc)
+      if (title && rejectPatterns.some(pat => pat.test(title))) continue;
 
       const teaser = p.teaser || {};
 
