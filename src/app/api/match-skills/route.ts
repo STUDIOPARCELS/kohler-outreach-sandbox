@@ -1,39 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Kohler's actual resume skills mapped to job keywords
-const SKILL_MAP: [RegExp, string][] = [
-  // Power / Energy / Nuclear
-  [/power|energy|nuclear|steam|turbine|boiler|generat|combustion/i,
-    "I have experience with SolidWorks, CFD flow simulation, and mechanical system design from concept through fabrication."],
-  // Aerospace / Space / Defense
-  [/aerospace|space|satellite|rocket|missile|defense|propulsion|guidance|orbit/i,
-    "I have experience with SolidWorks modeling, FEA simulation, and GD&T for precision mechanical assemblies."],
-  // HVAC / MEP / Building systems
-  [/hvac|mep|plumbing|piping|duct|building\s*system|commissioning|retrofit/i,
-    "I have experience with SolidWorks, CFD flow simulation, and mechanical system design from concept through installation."],
-  // Manufacturing / Production / CNC
-  [/manufactur|production|cnc|machining|fabricat|weld|assembly line|quality|inspect/i,
-    "I have hands-on experience with CNC machining, MIG welding, and taking SolidWorks designs through prototype and production."],
-  // Structural / Analysis / FEA
-  [/structural|stress|analysis|fea|finite element|fatigue|load|vibrat/i,
-    "I have experience with FEA linear static and buckling analysis in SolidWorks and mechanical design validation."],
-  // Design / R&D / Product development
-  [/design|r&d|product\s*develop|prototyp|concept|innovat|new\s*product/i,
-    "I have experience with SolidWorks parts, assemblies, and drawings, plus hands-on CNC and 3D printing prototyping."],
-  // Project / Field / Construction
-  [/project\s*eng|field|construction|site|estimat|superintendent|coord/i,
-    "I have hands-on fabrication experience, Scrum project management skills, and a strong mechanical design foundation."],
-  // Water / Environmental / Civil
-  [/water|wastewater|treatment|environ|civil|infrastruc|dam|tunnel|bridge/i,
-    "I have experience with SolidWorks, mechanical system design, and taking CAD concepts through prototype and fabrication."],
-  // Robotics / Automation / Controls
-  [/robot|automat|control|plc|sensor|actuator|mechatron|arduino/i,
-    "I have experience with Arduino, MATLAB, SolidWorks, and taking electromechanical designs from concept through prototype."],
-  // Medical / Biotech
-  [/medical|biotech|biomedic|implant|surgical|device|pharma|health/i,
-    "I have experience with SolidWorks, GD&T, DFM/DFA, and taking precision designs from concept through prototype."],
-];
+const KOHLER_SKILLS = `SolidWorks (parts/assemblies/drawings), GD&T, tolerance stack-ups, DFM/DFA, FEA linear static and buckling, CFD SolidWorks Flow Simulation, CNC machining (router/mill/laser/waterjet/plasma), MIG welding, FDM/SLA 3D printing, MATLAB, Python, C++, Arduino, FMEA, Scrum project management`;
 
+// Deterministic fallback
+const SKILL_MAP: [RegExp, string][] = [
+  [/power|energy|nuclear|steam|turbine|boiler|generat/i, "I have experience with SolidWorks, CFD flow simulation, and mechanical system design from concept through fabrication."],
+  [/aerospace|space|satellite|rocket|missile|defense|propulsion|guidance/i, "I have experience with SolidWorks modeling, FEA simulation, and GD&T for precision mechanical assemblies."],
+  [/hvac|mep|plumbing|piping|building\s*system|commissioning/i, "I have experience with SolidWorks, CFD flow simulation, and mechanical system design from concept through installation."],
+  [/manufactur|production|cnc|machining|fabricat|weld|quality/i, "I have hands-on experience with CNC machining, MIG welding, and taking SolidWorks designs through prototype and production."],
+  [/structural|stress|analysis|fea|finite element/i, "I have experience with FEA linear static and buckling analysis in SolidWorks and mechanical design validation."],
+  [/design|r&d|product\s*develop|prototyp|concept/i, "I have experience with SolidWorks parts, assemblies, and drawings, plus hands-on CNC and 3D printing prototyping."],
+  [/project\s*eng|field|construction|site|estimat/i, "I have hands-on fabrication experience, Scrum project management skills, and a strong mechanical design foundation."],
+  [/water|wastewater|environ|civil|infrastruc/i, "I have experience with SolidWorks, mechanical system design, and taking CAD concepts through prototype and fabrication."],
+  [/robot|automat|control|plc|sensor|mechatron/i, "I have experience with Arduino, MATLAB, SolidWorks, and taking electromechanical designs from concept through prototype."],
+  [/medical|biotech|device|surgical|implant/i, "I have experience with SolidWorks, GD&T, DFM/DFA, and taking precision designs from concept through prototype."],
+];
 const DEFAULT_SKILL = "I have experience taking SolidWorks designs from concept through prototype and fabrication.";
 
 export async function POST(req: NextRequest) {
@@ -42,25 +23,21 @@ export async function POST(req: NextRequest) {
 
   const combined = `${jobTitle} ${jobSummary || ""} ${companyName || ""}`;
 
-  // Try AI first if key exists
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (apiKey && apiKey.length > 10) {
+  // Try OpenAI first
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (apiKey) {
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "gpt-4.1-mini",
           max_tokens: 80,
           messages: [{
             role: "user",
             content: `Write ONE sentence for a cover letter. Applicant: entry-level BSME/EIT.
 
-Skills: SolidWorks (parts/assemblies/drawings), GD&T, tolerance stack-ups, DFM/DFA, FEA, CFD, CNC machining, MIG welding, 3D printing (FDM/SLA), laser/waterjet/plasma cutting, MATLAB, Python, C++, Arduino, FMEA, Scrum.
+Skills: ${KOHLER_SKILLS}
 
 Job: "${jobTitle}" ${companyName ? `at ${companyName}` : ""}.
 ${jobSummary ? `Desc: ${jobSummary.slice(0, 200)}` : ""}
@@ -71,20 +48,17 @@ Rules: ONE sentence, under 25 words. Start with "I have experience". Name specif
       });
       if (res.ok) {
         const data = await res.json();
-        let sentence = (data.content?.[0]?.text || "").trim().replace(/^["']|["']$/g, "");
+        let sentence = (data.choices?.[0]?.message?.content || "").trim().replace(/^["']|["']$/g, "");
         if (sentence.toLowerCase().startsWith("i have")) {
-          return NextResponse.json({ sentence, source: "ai" });
+          return NextResponse.json({ sentence, source: "openai" });
         }
       }
-    } catch { /* fall through to deterministic */ }
+    } catch { /* fall through */ }
   }
 
-  // Deterministic fallback: match job keywords to best skill sentence
+  // Deterministic fallback
   for (const [pattern, sentence] of SKILL_MAP) {
-    if (pattern.test(combined)) {
-      return NextResponse.json({ sentence, source: "match" });
-    }
+    if (pattern.test(combined)) return NextResponse.json({ sentence, source: "match" });
   }
-
   return NextResponse.json({ sentence: DEFAULT_SKILL, source: "default" });
 }
