@@ -1664,7 +1664,7 @@ akwood1@mines.edu`;
                                                             companyname: c.companyname,
                                                             body: emailBody,
                                                             attachments: ["resume"],
-                                                            subject: `Entry-level ${roleLabel} — CO School of Mines`,
+                                                            subject: `Mechanical Engineer — CO School of Mines, EIT`,
                                                             matches,
                                                           });
                                                         } else {
@@ -1998,7 +1998,9 @@ akwood1@mines.edu`;
                         "I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
                         "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
                       );
-                      return preview;
+                      return preview.split("kohler.solokit.app").map((part, idx, arr) => (
+                        <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
+                      ));
                     })()}
                   </div>
                 )}
@@ -2120,10 +2122,6 @@ akwood1@mines.edu`;
                   )
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-bold text-green-600 uppercase tracking-wider">Includes:</span>
-                <a href="/KOHLER_WOOD_RESUME.pdf" target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 text-[10px] font-medium text-green-800 bg-green-50 border border-green-200 rounded-full hover:underline">📄 Resume</a>
-              </div>
               <div>
                 <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Letter Body</span>
                 {letterConfirm.editing ? (
@@ -2140,6 +2138,18 @@ akwood1@mines.edu`;
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+            <div className="px-6 py-3 border-t border-gray-100" style={{ background: "rgba(44,15,56,0.04)" }}>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#2c0f38" }}>Attachments</span>
+                <a href="/KOHLER_WOOD_RESUME.pdf" target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 text-[10px] font-medium rounded-full border hover:underline flex items-center gap-1" style={{ color: "#2c0f38", borderColor: "rgba(44,15,56,0.25)", background: "rgba(44,15,56,0.06)" }}>
+                  📄 Resume PDF
+                </a>
+                <button className="px-2 py-1 text-[10px] rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors flex items-center gap-1">
+                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Add
+                </button>
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
