@@ -99,12 +99,13 @@ export async function POST(req: NextRequest) {
     }
 
     const saved = [];
-    // Management title patterns — reject individual contributors
+    // Management title patterns — ONLY these get through
     const mgmtPatterns = [
       /manager/i, /director/i, /vp\b/i, /vice president/i, /president/i,
       /ceo/i, /cto/i, /coo/i, /chief/i, /head of/i, /founder/i, /owner/i,
       /principal/i, /partner/i, /svp/i, /evp/i, /general manager/i,
-      /plant manager/i, /superintendent/i, /pres$/i,
+      /plant manager/i, /superintendent/i, /supervisor/i, /pres$/i,
+      /lead\b/i, /senior\s+director/i, /executive/i,
     ];
     // Reject non-engineering management (HR, sales, IT, recruiting, marketing)
     const rejectPatterns = [
@@ -112,17 +113,20 @@ export async function POST(req: NextRequest) {
       /sales/i, /marketing/i, /recruiting/i, /acquisition/i,
       /information\s*technology/i, /\bit\s/i, /data\s*operations/i,
       /proposal\s*manager/i, /account\s*manager/i, /communications/i,
+      /legal/i, /counsel/i, /finance\s*manager/i, /comptroller/i,
     ];
 
     for (const p of finalProfiles) {
       const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "";
       if (!name) continue;
 
-      // Filter out individual contributors
       const title = p.current_title || "";
-      if (title && !mgmtPatterns.some(pat => pat.test(title))) continue;
+      // STRICT: reject contacts with no title — unknown role
+      if (!title) continue;
+      // STRICT: reject individual contributors — title must match a management pattern
+      if (!mgmtPatterns.some(pat => pat.test(title))) continue;
       // Reject non-engineering management (HR, sales, etc)
-      if (title && rejectPatterns.some(pat => pat.test(title))) continue;
+      if (rejectPatterns.some(pat => pat.test(title))) continue;
 
       const teaser = p.teaser || {};
 

@@ -28,7 +28,35 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json();
-    const results = (data.results || []).slice(0, 8).map(
+    
+    // Filter out non-engineering business types
+    const rejectTypes = new Set([
+      "restaurant", "food", "cafe", "bakery", "bar", "meal_delivery", "meal_takeaway",
+      "store", "shopping_mall", "clothing_store", "shoe_store", "jewelry_store",
+      "grocery_or_supermarket", "supermarket", "convenience_store", "department_store",
+      "gym", "spa", "beauty_salon", "hair_care", "laundry", "dry_cleaning",
+      "school", "university", "secondary_school", "primary_school",
+      "church", "place_of_worship", "cemetery", "funeral_home",
+      "lodging", "hotel", "motel", "campground", "rv_park",
+      "car_wash", "gas_station", "parking",
+      "bank", "finance", "insurance_agency", "accounting",
+      "real_estate_agency", "lawyer", "dentist", "doctor", "veterinary_care",
+      "pharmacy", "hospital",
+      "library", "museum", "art_gallery", "movie_theater", "amusement_park",
+      "night_club", "bowling_alley", "casino",
+      "post_office", "city_hall", "courthouse", "fire_station", "police",
+      "travel_agency", "car_rental", "taxi_stand",
+      "pet_store", "florist", "book_store",
+    ]);
+
+    const filtered = (data.results || []).filter((r: Record<string, unknown>) => {
+      const types = (r.types as string[]) || [];
+      // Reject if ANY type matches a non-engineering category
+      const hasRejectType = types.some(t => rejectTypes.has(t));
+      return !hasRejectType;
+    });
+
+    const results = filtered.slice(0, 8).map(
       (r: Record<string, unknown>) => {
         const address = (r.formatted_address as string) || "";
         const parts = address.split(",").map((s) => s.trim());
