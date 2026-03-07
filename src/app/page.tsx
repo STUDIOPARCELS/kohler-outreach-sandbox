@@ -1672,7 +1672,14 @@ export default function HomePage() {
 
                                                       async function handleContactAction(ct: typeof contacts[0], action: "email"|"letter") {
                                                         setJobContactPicker(null);
-                                                        let skillSentence = "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
+                                                        // Niche-aware defaults (no 3D printing for ski/outdoor/woodworking)
+                                                        const NICHE_DEFAULTS: Record<string, string> = {
+                                                          "Skiing": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through prototype and fabrication.",
+                                                          "Outdoor Recreation & Equipment": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through prototype and fabrication.",
+                                                          "Woodworking / Furniture / Cabinetry / Prototyping": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through fabrication.",
+                                                          "Acoustics / Audio / Musical Instruments": "I have experience with SolidWorks, 3D printing, and CNC machining, and have taken designs from concept through prototype.",
+                                                        };
+                                                        let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
                                                         try {
                                                           const r = await fetch("/api/match-skills", {
@@ -1681,7 +1688,7 @@ export default function HomePage() {
                                                             body: JSON.stringify({ jobTitle: job.title, jobSummary: job.summary, companyName: displayName }),
                                                           });
                                                           const d = await r.json();
-                                                          if (d.sentence) skillSentence = d.sentence;
+                                                          if (d.sentence && d.source !== "default") skillSentence = d.sentence;
                                                           if (d.matches) matches = d.matches;
                                                         } catch { /* fallback */ }
 
