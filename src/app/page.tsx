@@ -446,6 +446,9 @@ export default function HomePage() {
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
   const [addLeadNiche, setAddLeadNiche] = useState<string | null>(null);
+  const [batchJobsNiche, setBatchJobsNiche] = useState<string | null>(null);
+  const [batchJobsResults, setBatchJobsResults] = useState<{company: string; jobs: {title: string; salary?: string; location?: string; summary?: string; apply_url: string; source?: string}[]}[]>([]);
+  const [batchJobsProgress, setBatchJobsProgress] = useState<{done: number; total: number}>({done: 0, total: 0});
   const [addLeadSearch, setAddLeadSearch] = useState("");
   const [addLeadResults, setAddLeadResults] = useState<{name: string; address: string; address1: string; city: string; state: string; zip: string; types: string | null; rating: number | null; place_id: string}[]>([]);
   const [addLeadSearching, setAddLeadSearching] = useState(false);
@@ -1393,15 +1396,49 @@ export default function HomePage() {
                         </p>
                       </div>
                       {niche !== "TEST" && (
-                        <button
-                          onClick={() => openFindLeads(niche)}
-                          className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
-                          title="Find new companies in this niche"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={async () => {
+                              setBatchJobsNiche(niche);
+                              setBatchJobsResults([]);
+                              setBatchJobsProgress({done: 0, total: items.length});
+                              const results: typeof batchJobsResults = [];
+                              for (const company of items) {
+                                try {
+                                  const res = await fetch("/api/search-jobs", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ companyname: company.companyname }),
+                                  });
+                                  const data = await res.json();
+                                  if (data.jobs && data.jobs.length > 0) {
+                                    results.push({ company: company.companyname, jobs: data.jobs });
+                                    setBatchJobsResults([...results]);
+                                  }
+                                } catch { /* skip */ }
+                                setBatchJobsProgress(prev => ({...prev, done: prev.done + 1}));
+                              }
+                              if (results.length === 0) {
+                                setBatchJobsResults([{ company: "No Results", jobs: [] }]);
+                              }
+                            }}
+                            className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                            title="Search jobs for all companies in this niche"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => openFindLeads(niche)}
+                            className="text-white/60 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                            title="Find new companies in this niche"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -2170,6 +2207,68 @@ akwood1@mines.edu`;
                     Print
                   </button>
                 </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Batch Jobs Dialog ── */}
+      {batchJobsNiche && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm no-print" onClick={() => setBatchJobsNiche(null)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full sm:mx-4 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div
+              className={`px-5 py-4 ${NICHE_COLORS[batchJobsNiche]?.headerBg ? `bg-gradient-to-r ${NICHE_COLORS[batchJobsNiche].headerBg}` : ""} shrink-0 flex items-center justify-between`}
+              style={!NICHE_COLORS[batchJobsNiche]?.headerBg ? { background: "linear-gradient(135deg, #334155, #1e293b)" } : undefined}
+            >
+              <div>
+                <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  Jobs · {batchJobsNiche}
+                </h3>
+                <p className="text-xs text-white/60 mt-0.5">
+                  {batchJobsProgress.done < batchJobsProgress.total
+                    ? `Searching ${batchJobsProgress.done + 1} of ${batchJobsProgress.total} companies...`
+                    : `${batchJobsResults.filter(r => r.jobs.length > 0).length} companies with openings`}
+                </p>
+              </div>
+              <button onClick={() => setBatchJobsNiche(null)} className="text-white/60 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
+              {batchJobsProgress.done < batchJobsProgress.total && (
+                <div className="px-5 py-3 bg-blue-50/50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                    <span className="text-xs text-blue-600">Searching... ({batchJobsProgress.done}/{batchJobsProgress.total})</span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${(batchJobsProgress.done / batchJobsProgress.total) * 100}%` }} />
+                  </div>
+                </div>
+              )}
+              {batchJobsResults.filter(r => r.jobs.length > 0).map((result) => (
+                <div key={result.company} className="px-5 py-3">
+                  <p className="text-xs font-bold text-gray-800 mb-1.5">{result.company}</p>
+                  {result.jobs.map((job, ji) => (
+                    <div key={ji} className="ml-3 mb-2 last:mb-0">
+                      <p className="text-xs font-semibold text-gray-700">{job.title}</p>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {job.location && <span className="text-[10px] text-gray-400">{job.location}</span>}
+                        {job.salary && <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">{job.salary}</span>}
+                      </div>
+                      {job.apply_url && (
+                        <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline mt-0.5 inline-block">View posting →</a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {batchJobsProgress.done >= batchJobsProgress.total && batchJobsResults.filter(r => r.jobs.length > 0).length === 0 && (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-sm text-gray-400">No entry-level engineering jobs found across this niche</p>
+                </div>
               )}
             </div>
           </div>
