@@ -2277,25 +2277,17 @@ akwood1@mines.edu`;
                       onClick={() => {
                         const currentNiche = batchJobsNiche;
                         setBatchJobsNiche(null);
-                        // Expand the niche so the company is visible
                         if (currentNiche) setExpandedNiches(prev => { const n = new Set(prev); n.add(currentNiche); return n; });
                         setExpandedCompany(result.company);
                         setJobsCompany(result.company);
-                        setJobsLoading2(true);
-                        setJobResults2([]);
-                        setJobsSearched(false);
-                        // Scroll to company card after dialog closes, niche expands, and React renders
+                        // Use the jobs we already have — no re-search
+                        setJobResults2(result.jobs);
+                        setJobsLoading2(false);
+                        setJobsSearched(true);
                         setTimeout(() => {
                           const el = document.querySelector(`[data-company="${CSS.escape(result.company)}"]`);
                           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
                         }, 300);
-                        fetch("/api/search-jobs", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ companyname: result.company }),
-                        }).then(r => r.json()).then(d => {
-                          setJobResults2(d.jobs || []);
-                        }).catch(() => setJobResults2([])).finally(() => { setJobsLoading2(false); setJobsSearched(true); });
                       }}
                       className="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
                     >
