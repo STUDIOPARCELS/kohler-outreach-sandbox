@@ -169,6 +169,14 @@ function assembleLetter(
   return { subject, body };
 }
 
+/* ── Niche personal connection sentences (Option A: prepended before AI skill sentence) ── */
+const NICHE_PERSONAL: Record<string, string> = {
+  "Skiing": "I grew up in Sun Valley, ID and have skied all my life, and the chance to engineer products I'd love to use would be a dream come true.",
+  "Acoustics / Audio / Musical Instruments": "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior design project. I'd jump at the chance to engineer in this industry.",
+  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors, and the chance to engineer products I'd love to use would be a dream come true.",
+  "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
+};
+
 const NICHE_ORDER = [
   "TEST",
   "Skiing",
@@ -1676,6 +1684,12 @@ export default function HomePage() {
                                                           if (d.sentence) skillSentence = d.sentence;
                                                           if (d.matches) matches = d.matches;
                                                         } catch { /* fallback */ }
+
+                                                        // Prepend niche personal connection sentence (Option A)
+                                                        const nichePersonal = c.niche ? NICHE_PERSONAL[c.niche] : undefined;
+                                                        if (nichePersonal) {
+                                                          skillSentence = nichePersonal + " " + skillSentence;
+                                                        }
 
                                                         if (action === "email") {
                                                           const firstName = ct.contactname.split(" ")[0];
