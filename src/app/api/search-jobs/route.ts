@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
 Location: Colorado preferred, but include remote positions and nearby states if Colorado results are limited.
 
-INCLUDE: Any engineering role — mechanical, design, manufacturing, test, project, systems, field, process, quality, structural, reliability, environmental, electrical, civil, chemical, petroleum, or related. Include both entry-level AND mid-level (Engineer I, II). Only EXCLUDE Senior/Lead/Principal/Staff/Manager/Director/VP or 8+ years required.
+INCLUDE: Any engineering role — mechanical, design, manufacturing, test, project, systems, field, process, quality, structural, reliability, environmental, electrical, civil, chemical, petroleum, or related. Include Engineer I, entry-level, early career, new grad, associate, junior, or 0-3 years experience. EXCLUDE: Engineer II, Engineer III, Senior, Lead, Principal, Staff, Manager, Director, VP, or 5+ years required.
 
 For each job, extract the required technical skills from the posting.
 
@@ -51,7 +51,7 @@ ONLY the JSON array.`,
       const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed)) {
-        const rejectPattern = /\b(senior|sr\.?\s|lead\s|principal|staff\s|manager|director|supervisor|chief|vp\b|vice president)\b/i;
+        const rejectPattern = /\b(senior|sr\.?\s|lead\s|principal|staff\s|manager|director|supervisor|chief|vp\b|vice president)\b|\bII\b|\bIII\b|\bIV\b/i;
         jobs = parsed
           .filter((j: Record<string, unknown>) => j.title && j.apply_url && !rejectPattern.test(j.title as string))
           .slice(0, 8);
