@@ -1467,7 +1467,7 @@ export default function HomePage() {
                         const emailedLetter = companyLetters.find(l => l.emailed_at);
                         const isDraft = letter && !hasPrinted && !hasEmailed;
                         return (
-                          <div key={c.companyname}>
+                          <div key={c.companyname} data-company={c.companyname}>
                             <button
                               onClick={() => expandCompany(c.companyname)}
                               className={`w-full text-left px-4 py-3 sm:py-2.5 flex items-center justify-between transition-all duration-200 ${
@@ -2275,12 +2275,20 @@ akwood1@mines.edu`;
                     <p className="text-xs font-bold text-gray-800">{result.company}</p>
                     <button
                       onClick={() => {
+                        const currentNiche = batchJobsNiche;
                         setBatchJobsNiche(null);
+                        // Expand the niche so the company is visible
+                        if (currentNiche) setExpandedNiches(prev => { const n = new Set(prev); n.add(currentNiche); return n; });
                         setExpandedCompany(result.company);
                         setJobsCompany(result.company);
                         setJobsLoading2(true);
                         setJobResults2([]);
                         setJobsSearched(false);
+                        // Scroll to company card after dialog closes, niche expands, and React renders
+                        setTimeout(() => {
+                          const el = document.querySelector(`[data-company="${CSS.escape(result.company)}"]`);
+                          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }, 300);
                         fetch("/api/search-jobs", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
