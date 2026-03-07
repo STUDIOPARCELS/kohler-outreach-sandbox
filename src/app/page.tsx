@@ -2271,7 +2271,30 @@ akwood1@mines.edu`;
               )}
               {batchJobsResults.filter(r => r.jobs.length > 0).map((result) => (
                 <div key={result.company} className="px-5 py-3">
-                  <p className="text-xs font-bold text-gray-800 mb-1.5">{result.company}</p>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-bold text-gray-800">{result.company}</p>
+                    <button
+                      onClick={() => {
+                        setBatchJobsNiche(null);
+                        setExpandedCompany(result.company);
+                        setJobsCompany(result.company);
+                        setJobsLoading2(true);
+                        setJobResults2([]);
+                        setJobsSearched(false);
+                        fetch("/api/search-jobs", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ companyname: result.company }),
+                        }).then(r => r.json()).then(d => {
+                          setJobResults2(d.jobs || []);
+                        }).catch(() => setJobResults2([])).finally(() => { setJobsLoading2(false); setJobsSearched(true); });
+                      }}
+                      className="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1"
+                    >
+                      Open
+                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                  </div>
                   {result.jobs.map((job, ji) => (
                     <div key={ji} className="ml-3 mb-2 last:mb-0">
                       <p className="text-xs font-semibold text-gray-700">{job.title}</p>
