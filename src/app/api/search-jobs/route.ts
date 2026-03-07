@@ -15,18 +15,18 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         tools: [{ type: "web_search_preview" }],
-        input: `Search for engineering job openings at "${companyname}" in Denver/Boulder/Colorado Front Range area.
+        input: `Search for current engineering job openings at "${companyname}". Search multiple sources: the company's careers page, Indeed, LinkedIn, Glassdoor, and ZipRecruiter. Try searching "${companyname} engineer jobs" and "${companyname} careers".
 
-INCLUDE these roles: Engineer I, Engineer II, Mechanical Engineer, Design Engineer, Manufacturing Engineer, Test Engineer, Project Engineer, Systems Engineer, Field Engineer, Quality Engineer, Structural Engineer, Applications Engineer, R&D Engineer, Build Engineer, Process Engineer, or any engineering role a BSME graduate could realistically apply to.
+Location: Colorado preferred, but include remote positions and nearby states if Colorado results are limited.
 
-EXCLUDE ONLY: Senior Engineer, Lead Engineer, Principal Engineer, Staff Engineer, Engineering Manager, Director, VP, or anything explicitly requiring 8+ years experience.
+INCLUDE: Any engineering role — mechanical, design, manufacturing, test, project, systems, field, process, quality, structural, reliability, environmental, electrical, civil, chemical, petroleum, or related. Include both entry-level AND mid-level (Engineer I, II). Only EXCLUDE Senior/Lead/Principal/Staff/Manager/Director/VP or 8+ years required.
 
-For each job, extract the REQUIRED TECHNICAL SKILLS listed in the job posting (tools, software, methods). This is critical.
+For each job, extract the required technical skills from the posting.
 
 Return ONLY a JSON array (no markdown, no backticks):
-[{"title":"exact title","salary":"range or empty","location":"city, state","summary":"1 sentence role description; required skills: [skill1, skill2, skill3]","apply_url":"real URL to the job posting","source":"domain"}]
+[{"title":"exact title","salary":"range or empty string","location":"city, state","summary":"1 sentence role description; required skills: [skill1, skill2, skill3]","apply_url":"real URL to the actual job posting","source":"domain name"}]
 
-If no engineering jobs found at this company in Colorado, return [].
+If genuinely no engineering jobs found at this company anywhere, return [].
 ONLY the JSON array.`,
         text: { format: { type: "text" } },
       }),
@@ -54,7 +54,7 @@ ONLY the JSON array.`,
         const rejectPattern = /\b(senior|sr\.?\s|lead\s|principal|staff\s|manager|director|supervisor|chief|vp\b|vice president)\b/i;
         jobs = parsed
           .filter((j: Record<string, unknown>) => j.title && j.apply_url && !rejectPattern.test(j.title as string))
-          .slice(0, 6);
+          .slice(0, 8);
       }
     } catch { /* parse failed */ }
 
@@ -64,4 +64,3 @@ ONLY the JSON array.`,
     return NextResponse.json({ jobs: [], source: "error" });
   }
 }
-// clean rebuild 1772831531
