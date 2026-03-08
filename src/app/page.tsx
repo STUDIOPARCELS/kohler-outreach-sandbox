@@ -1695,7 +1695,13 @@ export default function HomePage() {
                                                         // Prepend niche personal connection sentence (Option A)
                                                         const nichePersonal = c.niche ? NICHE_PERSONAL[c.niche] : undefined;
                                                         if (nichePersonal) {
-                                                          skillSentence = nichePersonal + " " + skillSentence;
+                                                          if (matches.length >= 2) {
+                                                            // Real skill match: personal hook + matched skills
+                                                            skillSentence = nichePersonal + " " + skillSentence;
+                                                          } else {
+                                                            // No match: personal sentence stands alone — no generic skills
+                                                            skillSentence = nichePersonal;
+                                                          }
                                                         }
 
                                                         if (action === "email") {
