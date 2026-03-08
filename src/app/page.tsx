@@ -17,6 +17,9 @@ interface LetterRow {
   sent_at?: string;
   emailed_at?: string;
   created_at?: string;
+  job_title?: string;
+  job_url?: string;
+  job_skills_matched?: {job_skill: string; resume_skill: string}[];
 }
 
 interface Template {
@@ -449,8 +452,8 @@ export default function HomePage() {
   const [batchStatus, setBatchStatus] = useState("");
   const [backfilling, setBackfilling] = useState(false);
   const [emailing, setEmailing] = useState(false);
-  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean; attachments: string[]; subject?: string; matches?: {job_skill: string; resume_skill: string}[]} | null>(null);
-  const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string; editing?: boolean; matches?: {job_skill: string; resume_skill: string}[]} | null>(null);
+  const [emailConfirm, setEmailConfirm] = useState<{to: string; contactname: string; companyname: string; body: string; editing?: boolean; attachments: string[]; subject?: string; matches?: {job_skill: string; resume_skill: string}[]; job_title?: string; job_url?: string} | null>(null);
+  const [letterConfirm, setLetterConfirm] = useState<{contactname: string; companyname: string; body: string; editing?: boolean; matches?: {job_skill: string; resume_skill: string}[]; job_title?: string; job_url?: string} | null>(null);
   const [findingEmail, setFindingEmail] = useState(false);
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
   const [addLeadNiche, setAddLeadNiche] = useState<string | null>(null);
@@ -996,6 +999,7 @@ export default function HomePage() {
   async function confirmSendEmail() {
     if (!emailConfirm || !expandedCompany) return;
     const letterId = currentLetter?.id;
+    const jobData = { job_title: emailConfirm.job_title, job_url: emailConfirm.job_url, job_skills_matched: emailConfirm.matches };
     setEmailConfirm(null);
     setEmailing(true);
     try {
@@ -1010,6 +1014,7 @@ export default function HomePage() {
           body: emailConfirm.body || assembled?.body || "",
           letterId,
           attachments: emailConfirm.attachments,
+          ...jobData,
         }),
       });
       const data = await res.json();
@@ -1528,6 +1533,12 @@ export default function HomePage() {
                                     draft
                                   </span>
                                 )}
+                                {/* Job reference */}
+                                {letter?.job_title && (
+                                  <span className="text-[9px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full truncate max-w-[120px]" title={letter.job_title}>
+                                    {letter.job_title}
+                                  </span>
+                                )}
                                 <svg
                                   className={`w-3.5 h-3.5 transition-transform duration-200 text-gray-300 ${isExpanded ? "rotate-180" : ""}`}
                                   fill="none"
@@ -1730,6 +1741,8 @@ akwood1@mines.edu`;
                                                             attachments: ["resume"],
                                                             subject: `Mechanical Engineer — CO School of Mines, EIT`,
                                                             matches,
+                                                            job_title: job.title || undefined,
+                                                            job_url: job.apply_url || undefined,
                                                           });
                                                         } else {
                                                           const companyAddr = companyAddress || "";
@@ -1766,7 +1779,7 @@ akwood1@mines.edu`;
                                                             const res = await fetch("/api/draft", {
                                                               method: "POST",
                                                               headers: { "Content-Type": "application/json" },
-                                                              body: JSON.stringify({ companyname: c.companyname, contactname: ct.contactname, body_final: letterBody, status: "draft" }),
+                                                              body: JSON.stringify({ companyname: c.companyname, contactname: ct.contactname, body_final: letterBody, status: "draft", job_title: job.title || null, job_url: job.apply_url || null, job_skills_matched: matches.length > 0 ? matches : null }),
                                                             });
                                                             const data = await res.json();
                                                             if (data.error) throw new Error(data.error);
@@ -1780,6 +1793,8 @@ akwood1@mines.edu`;
                                                             companyname: c.companyname,
                                                             body: letterBody,
                                                             matches,
+                                                            job_title: job.title || undefined,
+                                                            job_url: job.apply_url || undefined,
                                                           });
                                                         }
                                                       }
@@ -2162,6 +2177,15 @@ akwood1@mines.edu`;
                   <div>
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Company</span>
                     <p className="text-sm font-semibold text-gray-900 mt-0.5">{letterConfirm.companyname}</p>
+                    {letterConfirm.job_title && (
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className="text-[9px] font-bold text-blue-500 uppercase">RE:</span>
+                        <span className="text-[11px] text-blue-700 font-medium">{letterConfirm.job_title}</span>
+                        {letterConfirm.job_url && (
+                          <a href={letterConfirm.job_url} target="_blank" rel="noopener noreferrer" className="text-[9px] text-blue-400 hover:text-blue-600 hover:underline">↗ posting</a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {letterConfirm.matches !== undefined && (

@@ -11,7 +11,7 @@ function getBaseUrl(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { to, companyname, contactname, subject, body, letterId, attachments: requestedAttachments } =
+    const { to, companyname, contactname, subject, body, letterId, attachments: requestedAttachments, job_title, job_url, job_skills_matched } =
       await req.json();
 
     if (!to || !body) {
@@ -164,15 +164,19 @@ export async function POST(req: NextRequest) {
       attachments,
     });
 
-    // Update letter status to "emailed"
+    // Update letter status to "emailed" + save job tracking
     if (letterId) {
+      const updateFields: Record<string, unknown> = {
+        status: "emailed",
+        sent_at: new Date().toISOString(),
+        emailed_at: new Date().toISOString(),
+      };
+      if (job_title) updateFields.job_title = job_title;
+      if (job_url) updateFields.job_url = job_url;
+      if (job_skills_matched) updateFields.job_skills_matched = job_skills_matched;
       await supabaseAdmin
         .from("reachout_company_inserts")
-        .update({
-          status: "emailed",
-          sent_at: new Date().toISOString(),
-          emailed_at: new Date().toISOString(),
-        })
+        .update(updateFields)
         .eq("id", letterId);
     }
 
