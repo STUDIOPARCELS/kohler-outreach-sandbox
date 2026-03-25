@@ -169,7 +169,7 @@ function assembleLetter(
 /* ── Niche personal connection sentences (Option A: prepended before AI skill sentence) ── */
 const NICHE_PERSONAL: Record<string, string> = {
   "Skiing": "I grew up in Sun Valley, ID and have skied all my life, and the chance to engineer products I'd love to use would be a dream come true.",
-  "Acoustics / Audio / Musical Instruments": "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I have hands-on experience with SolidWorks, CNC machining, and metal fabrication.",
+  "Acoustics / Audio / Musical Instruments": "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I would love the opportunity to engineer in this industry.",
   "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors, and the chance to engineer products I'd love to use would be a dream come true.",
   "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
 };
@@ -400,7 +400,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
-    "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I have hands-on experience with SolidWorks, CNC machining, and metal fabrication."
+    "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I would love the opportunity to engineer in this industry."
   ),
   "Skiing": nicheTemplate(
     "I grew up in Sun Valley, ID and have skied all my life, and the chance to engineer products I'd love to use would be a dream come true."
@@ -1682,7 +1682,7 @@ export default function HomePage() {
                                                           "Skiing": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through prototype and fabrication.",
                                                           "Outdoor Recreation & Equipment": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through prototype and fabrication.",
                                                           "Woodworking / Furniture / Cabinetry / Prototyping": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through fabrication.",
-                                                          "Acoustics / Audio / Musical Instruments": "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I have hands-on experience with SolidWorks, CNC machining, and metal fabrication.",
+                                                          "Acoustics / Audio / Musical Instruments": "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I would love the opportunity to engineer in this industry.",
                                                         };
                                                         let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
