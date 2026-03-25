@@ -2106,7 +2106,7 @@ akwood1@mines.edu`;
                   {emailConfirm.attachments.includes("resume") ? (
                     <div className="flex items-center gap-0 rounded-full border border-purple-300/80 overflow-hidden" style={{ background: "rgba(44,15,56,0.08)" }}>
                       <a
-                        href="/KOHLER_WOOD_RESUME_V2.pdf"
+                        href="/KOHLER_WOOD_RESUME.pdf"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs font-medium flex items-center gap-1.5 px-2.5 py-1 hover:underline transition-colors"
@@ -2247,7 +2247,7 @@ akwood1@mines.edu`;
             <div className="px-6 py-3 border-t border-gray-100" style={{ background: "rgba(44,15,56,0.04)" }}>
               <div className="flex items-center gap-3">
                 <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#2c0f38" }}>Attachments</span>
-                <a href="/KOHLER_WOOD_RESUME_V2.pdf" target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 text-[10px] font-medium rounded-full border hover:underline flex items-center gap-1" style={{ color: "#2c0f38", borderColor: "rgba(44,15,56,0.25)", background: "rgba(44,15,56,0.06)" }}>
+                <a href="/KOHLER_WOOD_RESUME.pdf" target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 text-[10px] font-medium rounded-full border hover:underline flex items-center gap-1" style={{ color: "#2c0f38", borderColor: "rgba(44,15,56,0.25)", background: "rgba(44,15,56,0.06)" }}>
                   📄 Resume PDF
                 </a>
                 <button className="px-2 py-1 text-[10px] rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors flex items-center gap-1">
