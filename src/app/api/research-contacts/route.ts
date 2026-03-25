@@ -41,27 +41,19 @@ export async function POST(req: NextRequest) {
       }),
     });
 
+    let searchData: Record<string, unknown> = {};
     if (!searchRes.ok) {
-      const errText = await searchRes.text();
-      return NextResponse.json(
-        { error: `RocketReach error ${searchRes.status}: ${errText.slice(0, 200)}` },
-        { status: 500 }
-      );
+      // RocketReach HTTP error — skip to web search fallback
+      searchData = { code: "http_error", profiles: [] };
+    } else {
+      searchData = await searchRes.json();
     }
-
-    const searchData = await searchRes.json();
-    if (searchData.code === "throttled") {
-      return NextResponse.json(
-        { error: "RocketReach rate limit hit. Try again in ~40 minutes." },
-        { status: 429 }
-      );
-    }
-
-    const profiles = searchData.profiles || [];
     
-    // If no results with Colorado filter, retry without location
+    const profiles = (searchData.code === "throttled" || searchData.code === "http_error") ? [] : ((searchData.profiles || []) as Record<string, unknown>[]);
+    
+    // If no results with Colorado filter, retry without location (skip if throttled)
     let finalProfiles = profiles;
-    if (finalProfiles.length === 0) {
+    if (finalProfiles.length === 0 && searchData.code !== "throttled") {
       const retryRes = await fetch(`${RR_BASE}/v2/api/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Api-Key": RR_API_KEY },
