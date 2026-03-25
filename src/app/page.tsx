@@ -135,8 +135,8 @@ function assembleLetter(
 
   // Standardize wording across all templates (including database default)
   body = body.replace(
-    "If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
-    "If you are considering an entry-level BSME/EIT, I would love to interview with your team."
+    "I would love to interview with your team.",
+    "I would love to interview with your team."
   );
 
   // Remove exclamation mark from closing
@@ -144,12 +144,6 @@ function assembleLetter(
 
   // Fix dash before "which links" in old drafts
   body = body.replace("résumé and card — which links", "résumé and card, which links");
-
-  // Ensure "with my skill set" in closing
-  body = body.replace(
-    "entry-level BSME/EIT, I would love to interview",
-    "entry-level BSME/EIT with my skill set, I would love to interview"
-  );
 
   // Remove duplicate paragraphs (safety net)
   body = deduplicateParagraphs(body);
@@ -365,7 +359,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I've included my résumé and card, which links to my projects and interests. I would love to interview with your team.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -1761,7 +1755,7 @@ I'm writing because I'm interested in the work you're doing at ${displayName} an
 
 ${skillSentence}
 
-I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I've included my résumé and card, which links to my projects and interests. I would love to interview with your team.
 
 Thank you for your time, and I hope to hear from you.
 
@@ -2074,8 +2068,8 @@ akwood1@mines.edu`;
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my résumé and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
-                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
+                        "I've included my résumé and card, which links to my projects and interests. I would love to interview with your team.",
+                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. I would love to interview with your team."
                       );
                       return preview.split("kohler.solokit.app").map((part, idx, arr) => (
                         <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
