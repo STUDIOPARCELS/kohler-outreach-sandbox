@@ -211,7 +211,7 @@ ONLY the JSON array.`,
     ];
 
     for (const p of finalProfiles) {
-      const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "";
+      const name = String(p.name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "");
       if (!name) continue;
       // STRICT: reject abbreviated or incomplete names
       const nameParts = name.trim().split(/\s+/);
