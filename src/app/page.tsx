@@ -2333,7 +2333,7 @@ akwood1@mines.edu`;
                         {job.salary && <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">{job.salary}</span>}
                       </div>
                       {job.apply_url && (
-                        <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline mt-0.5 inline-block">Careers page →</a>
+                        <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline mt-0.5 inline-block">Apply{job.source ? ` · ${job.source}` : ""} →</a>
                       )}
                     </div>
                   ))}
