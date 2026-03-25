@@ -370,7 +370,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my resume and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I've included my resume and card, which links to my work and study. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
 Thank you, and I hope to hear from you!
 
@@ -1755,7 +1755,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I have attached my resume below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I have attached my resume below. My work and study are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
 Thank you, and I hope to hear from you!
 
@@ -1789,7 +1789,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I've included my resume and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
+I've included my resume and card, which links to my work and study. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
 Thank you, and I hope to hear from you!
 
@@ -2104,8 +2104,8 @@ akwood1@mines.edu`;
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my resume and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
-                        "I've attached my resume below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
+                        "I've included my resume and card, which links to my work and study. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
+                        "I've attached my resume below. My work and study are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
                       );
                       return preview.split("kohler.solokit.app").map((part, idx, arr) => (
                         <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>

@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
 
     // Adjust wording for email context — replace entire closing paragraph
     emailBody = emailBody.replace(
-      "I've included my resume and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
-      "I've attached my resume below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
+      "I've included my resume and card, which links to my work and study. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.",
+      "I've attached my resume below. My work and study are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team."
     );
 
     // Strip the plain-text signature (everything from "Sincerely," on)

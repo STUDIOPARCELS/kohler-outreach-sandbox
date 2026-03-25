@@ -9,8 +9,8 @@ export async function POST() {
   let body = tpl.body_template;
   body = body.replace("Dear Hiring Manager", "Hello Hiring Manager");
   body = body.replace(
-    "my resume and card — which links to my projects and areas of study",
-    "my resume and a link to my projects and areas of study at kohler.solokit.app"
+    "my resume and card — which links to my work and study",
+    "my resume and a link to my work and study at kohler.solokit.app"
   );
 
   const { error } = await supabaseAdmin
