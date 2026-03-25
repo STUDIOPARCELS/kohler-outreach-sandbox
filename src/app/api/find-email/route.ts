@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
-const RR_API_KEY = "ac2b96kfab306c1fce8fda977e8fc6262f0f17a";
+const RR_API_KEY = process.env.ROCKETREACH_API_KEY!;
 const RR_BASE = "https://api.rocketreach.co";
 
 export async function POST(req: NextRequest) {
