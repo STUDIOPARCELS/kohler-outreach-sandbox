@@ -169,7 +169,7 @@ function assembleLetter(
 /* ── Niche personal connection sentences (Option A: prepended before AI skill sentence) ── */
 const NICHE_PERSONAL: Record<string, string> = {
   "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
-  "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at Mines and have been studying and performing classical piano for the last three years.",
+  "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years.",
   "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and am an advanced skier with hands-on experience in SolidWorks and CNC fabrication.",
   "Automotive / Vehicles": "I have hands-on experience with SolidWorks modeling, GD&T, and CNC machining, and I've taken designs from concept through prototype and fabrication.",
   "Energy / Renewables / Power": "I have experience with FEA and CFD thermal simulation in SolidWorks Flow Simulation, and I've taken designs from concept through CNC fabrication.",
@@ -411,7 +411,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
-    "I built an adaptive bass guitar for my capstone project at Mines and have been studying and performing classical piano for the last three years."
+    "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years."
   ),
   "Skiing": nicheTemplate(
     "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship."
@@ -1693,7 +1693,7 @@ export default function HomePage() {
                                                           "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
                                                           "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and am an advanced skier with hands-on experience in SolidWorks and CNC fabrication.",
                                                           "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
-                                                          "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at Mines and have been studying and performing classical piano for the last three years.",
+                                                          "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years.",
                                                         };
                                                         let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
