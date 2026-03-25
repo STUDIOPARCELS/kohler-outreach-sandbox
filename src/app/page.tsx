@@ -658,7 +658,6 @@ export default function HomePage() {
           contactname: c.contactname,
           contact_title: c.title,
           contact_email: c.email,
-          body_final: null,
         }),
       });
       const d = await res.json();
@@ -1963,8 +1962,9 @@ akwood1@mines.edu`;
                                             <button
                                               onClick={() => {
                                                 applyContact(i);
-                                                const freshBody = template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "";
-                                                setLetterConfirm({ contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody });
+                                                const savedLetter = contactLetters.get(ct.contactname);
+                                                const body = savedLetter?.body_final || (template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "");
+                                                setLetterConfirm({ contactname: ct.contactname, companyname: expandedCompany || "", body });
                                               }}
                                               className="px-3 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors whitespace-nowrap shrink-0"
                                             >
@@ -1974,8 +1974,9 @@ akwood1@mines.edu`;
                                               <button
                                                 onClick={() => {
                                                   applyContact(i);
-                                                  const freshBody = template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "";
-                                                  setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body: freshBody, attachments: ["resume"] });
+                                                  const savedLetter = contactLetters.get(ct.contactname);
+                                                  const body = savedLetter?.body_final || (template ? assembleLetter(template, expandedCompany || "", "", ct.contactname, ct.title, companyAddress, companies.find(co => co.companyname === expandedCompany)?.niche).body : "");
+                                                  setEmailConfirm({ to: ct.email, contactname: ct.contactname, companyname: expandedCompany || "", body, attachments: ["resume"] });
                                                 }}
                                                 className="px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors whitespace-nowrap shrink-0"
                                               >

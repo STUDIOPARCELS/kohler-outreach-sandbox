@@ -62,9 +62,14 @@ export async function POST(req: NextRequest) {
 
   let result;
   if (existing) {
+    // Don't overwrite body_final with null if one is already saved
+    const updateFields = { contactname: contactname || null, ...fields, updated_at: new Date().toISOString() };
+    if (fields.body_final === null || fields.body_final === undefined) {
+      delete updateFields.body_final;
+    }
     result = await supabaseAdmin
       .from("reachout_company_inserts")
-      .update({ contactname: contactname || null, ...fields, updated_at: new Date().toISOString() })
+      .update(updateFields)
       .eq("id", existing.id)
       .select()
       .single();
