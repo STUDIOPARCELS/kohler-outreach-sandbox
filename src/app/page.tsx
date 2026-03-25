@@ -560,6 +560,12 @@ export default function HomePage() {
     setEditing(false);
     setSelectedContactIdx(0);
     setExpandLoading(true);
+    setContacts([]);
+    setJobContactPicker(null);
+    setJobsCompany(null);
+    setJobResults2([]);
+    setJobsSearched(false);
+    setCompanyAddress("");
     setCurrentLetter(getBestLetter(companyname));
 
     try {
