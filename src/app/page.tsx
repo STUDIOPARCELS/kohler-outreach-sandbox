@@ -174,21 +174,10 @@ function assembleLetter(
 
 /* ── Niche personal connection sentences (Option A: prepended before AI skill sentence) ── */
 const NICHE_PERSONAL: Record<string, string> = {
-  "Skiing": "I grew up in Sun Valley, ID and have skied all my life. At JG Works in Hailey I fabricated mono-ski hardware for Special Olympics athletes, and I have hands-on experience with SolidWorks, CNC machining, and taking designs from concept through fabrication.",
+  "Skiing": "I grew up in Sun Valley, ID and have skied all my life, and the chance to engineer products I'd love to use would be a dream come true.",
   "Acoustics / Audio / Musical Instruments": "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I have hands-on experience with SolidWorks, CNC machining, and metal fabrication.",
-  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID — skiing, diving, and spending my life outdoors. I have hands-on experience with SolidWorks, CNC machining, and taking designs from concept through fabrication.",
-  "Automotive / Vehicles": "I have hands-on experience with SolidWorks modeling, GD&T, and CNC machining, and I've taken designs from concept through prototype and fabrication.",
-  "Energy / Renewables / Power": "I have experience with FEA, CFD thermal simulation in SolidWorks Flow Simulation, and taking designs from SolidWorks through CNC fabrication.",
-  "Manufacturing / Automation / Product Design": "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication.",
-  "Metals / Material Science": "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through finished parts.",
-  "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and programmed Arduino-based controls.",
-  "Construction / Civil / Heavy Industry": "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects.",
-  "MEP / HVAC / Building Systems": "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation.",
-  "Water / Environmental / Geotech": "I have experience with FEA, SolidWorks Flow Simulation for internal flow analysis, and taking designs from concept through CNC fabrication.",
-  "Aerospace / Space": "I have experience with FEA, SolidWorks modeling with GD&T, and taking precision designs from concept through CNC fabrication.",
-  "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities, and I'd welcome the chance to apply that experience in medical device engineering.",
+  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors, and the chance to engineer products I'd love to use would be a dream come true.",
   "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
-  "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work.",
 };
 
 const NICHE_ORDER = [
@@ -393,7 +382,7 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I have experience with FEA, CFD thermal simulation in SolidWorks Flow Simulation, and taking designs from SolidWorks through CNC fabrication."
+    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to apply that to energy infrastructure."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
     "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
@@ -402,16 +391,16 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I interned at a fabrication shop in Sun Valley where I assisted with layout, fabrication, and installation of steel railings for residential projects."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I have experience with FEA, SolidWorks Flow Simulation for internal flow analysis, and taking designs from concept through CNC fabrication."
+    "I have experience taking CAD designs from concept through prototype and fabrication, and I'd welcome the chance to contribute to your team."
   ),
   "Aerospace / Space": nicheTemplate(
-    "I have experience with FEA, SolidWorks modeling with GD&T, and taking precision designs from concept through CNC fabrication."
+    "My father owns a Cessna 172 — an experience that shaped my engineering interest today."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and programmed Arduino-based controls."
+    "I've designed electromechanical systems with 3D-printed interfaces for my senior capstone, and I'd welcome the chance to contribute to your team."
   ),
   "Automotive / Vehicles": nicheTemplate(
-    "I have hands-on experience with SolidWorks modeling, GD&T, and CNC machining, and I've taken designs from concept through prototype and fabrication."
+    "I've had an interest in automobiles since I was young, and I'd jump at the chance to contribute to your team."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
     "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
@@ -420,10 +409,10 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I have hands-on experience with SolidWorks, CNC machining, and metal fabrication."
   ),
   "Skiing": nicheTemplate(
-    "I grew up in Sun Valley, ID and have skied all my life. At JG Works in Hailey I fabricated mono-ski hardware for Special Olympics athletes, and I have hands-on experience with SolidWorks, CNC machining, and taking designs from concept through fabrication."
+    "I grew up in Sun Valley, ID and have skied all my life, and the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Outdoor Recreation & Equipment": nicheTemplate(
-    "I grew up in Sun Valley, ID — skiing, diving, and spending my life outdoors. I have hands-on experience with SolidWorks, CNC machining, and taking designs from concept through fabrication."
+    "I grew up in Sun Valley, ID and have spent my life in the outdoors, and the chance to engineer products I'd love to use would be a dream come true."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
     "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet."
@@ -435,7 +424,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
   ),
   "Metals / Material Science": nicheTemplate(
-    "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through finished parts."
+    "I have hands-on experience with materials processing, taking SolidWorks designs from concept through prototype, and I'd welcome the chance to contribute to your team."
   ),
 };
 
@@ -1696,9 +1685,9 @@ export default function HomePage() {
                                                         setJobContactPicker(null);
                                                         // Niche-aware defaults (no 3D printing for ski/outdoor/woodworking)
                                                         const NICHE_DEFAULTS: Record<string, string> = {
-                                                          "Skiing": "I grew up in Sun Valley, ID and have skied all my life. At JG Works in Hailey I fabricated mono-ski hardware for Special Olympics athletes, and I have hands-on experience with SolidWorks, CNC machining, and taking designs from concept through fabrication.",
-                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID — skiing, diving, and spending my life outdoors. I have hands-on experience with SolidWorks, CNC machining, and taking designs from concept through fabrication.",
-                                                          "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
+                                                          "Skiing": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through prototype and fabrication.",
+                                                          "Outdoor Recreation & Equipment": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through prototype and fabrication.",
+                                                          "Woodworking / Furniture / Cabinetry / Prototyping": "I have experience with SolidWorks and CNC machining, and have taken designs from concept through fabrication.",
                                                           "Acoustics / Audio / Musical Instruments": "I've studied and performed classical piano for three years and built an adaptive bass guitar as my senior capstone — redesigning the plucking mechanism for reliability. I have hands-on experience with SolidWorks, CNC machining, and metal fabrication.",
                                                         };
                                                         let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
