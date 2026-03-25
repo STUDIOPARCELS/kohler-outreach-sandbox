@@ -169,20 +169,20 @@ function assembleLetter(
 /* ── Niche personal connection sentences (Option A: prepended before AI skill sentence) ── */
 const NICHE_PERSONAL: Record<string, string> = {
   "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
-  "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years.",
-  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors, and I have hands-on experience with SolidWorks and CNC fabrication.",
-  "Automotive / Vehicles": "I have hands-on experience with SolidWorks modeling, GD&T, and CNC machining, and I've taken designs from concept through prototype and fabrication.",
-  "Energy / Renewables / Power": "I have experience with FEA and CFD thermal simulation in SolidWorks Flow Simulation, and I've taken designs from concept through CNC fabrication.",
-  "Manufacturing / Automation / Product Design": "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication.",
-  "Metals / Material Science": "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through prototype.",
-  "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and programmed Arduino-based controls.",
-  "Construction / Civil / Heavy Industry": "I interned at a fabrication shop where I assisted with layout, fabrication, and installation of steel railings for residential projects.",
-  "MEP / HVAC / Building Systems": "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation.",
-  "Water / Environmental / Geotech": "I have experience with FEA and SolidWorks Flow Simulation for internal flow and heat transfer analysis, and I've taken designs from concept through CNC fabrication.",
-  "Aerospace / Space": "I have experience with FEA, SolidWorks modeling with GD&T, and FMEA, and I've taken precision designs from concept through CNC fabrication.",
+  "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
+  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing, hiking, and building things with my hands.",
+  "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
+  "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
+  "Manufacturing / Automation / Product Design": "I operate CNC routers, mills, and 3D printers, and my work at the Labriola Innovation Hub involves taking SolidWorks models through to finished fabrication.",
+  "Metals / Material Science": "My shop experience includes CNC machining, MIG welding, and metal fabrication.",
+  "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
+  "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
+  "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
+  "Water / Environmental / Geotech": "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis.",
+  "Aerospace / Space": "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis.",
   "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
   "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
-  "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work.",
+  "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
 };
 
 const NICHE_ORDER = [
@@ -387,37 +387,37 @@ akwood1@mines.edu`;
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Energy / Renewables / Power": nicheTemplate(
-    "I have experience with FEA and CFD thermal simulation in SolidWorks Flow Simulation, and I've taken designs from concept through CNC fabrication."
+    "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype."
   ),
   "MEP / HVAC / Building Systems": nicheTemplate(
-    "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation."
+    "At Mines I studied CFD and heat transfer simulation for mechanical system design."
   ),
   "Construction / Civil / Heavy Industry": nicheTemplate(
-    "I interned at a fabrication shop where I assisted with layout, fabrication, and installation of steel railings for residential projects."
+    "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship."
   ),
   "Water / Environmental / Geotech": nicheTemplate(
-    "I have experience with FEA and SolidWorks Flow Simulation for internal flow and heat transfer analysis, and I've taken designs from concept through CNC fabrication."
+    "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis."
   ),
   "Aerospace / Space": nicheTemplate(
-    "I have experience with FEA, SolidWorks modeling with GD&T, and FMEA, and I've taken precision designs from concept through CNC fabrication."
+    "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis."
   ),
   "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and programmed Arduino-based controls."
+    "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls."
   ),
   "Automotive / Vehicles": nicheTemplate(
-    "I have hands-on experience with SolidWorks modeling, GD&T, and CNC machining, and I've taken designs from concept through prototype and fabrication."
+    "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
-    "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication."
+    "I operate CNC routers, mills, and 3D printers, and my work at the Labriola Innovation Hub involves taking SolidWorks models through to finished fabrication."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
-    "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years."
+    "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years."
   ),
   "Skiing": nicheTemplate(
     "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship."
   ),
   "Outdoor Recreation & Equipment": nicheTemplate(
-    "I grew up in Sun Valley, ID and have spent my life in the outdoors, and I have hands-on experience with SolidWorks and CNC fabrication."
+    "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing, hiking, and building things with my hands."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
     "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet."
@@ -426,10 +426,10 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability."
   ),
   "Food / Beverage Manufacturing": nicheTemplate(
-    "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
+    "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work."
   ),
   "Metals / Material Science": nicheTemplate(
-    "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through prototype."
+    "My shop experience includes CNC machining, MIG welding, and metal fabrication."
   ),
 };
 
@@ -1702,11 +1702,22 @@ export default function HomePage() {
                                                         // Niche-aware defaults (no 3D printing for ski/outdoor/woodworking)
                                                         const NICHE_DEFAULTS: Record<string, string> = {
                                                           "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
-                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors, and I have hands-on experience with SolidWorks and CNC fabrication.",
+                                                          "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
+                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing, hiking, and building things with my hands.",
+                                                          "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
+                                                          "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
+                                                          "Manufacturing / Automation / Product Design": "I operate CNC routers, mills, and 3D printers, and my work at the Labriola Innovation Hub involves taking SolidWorks models through to finished fabrication.",
+                                                          "Metals / Material Science": "My shop experience includes CNC machining, MIG welding, and metal fabrication.",
+                                                          "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
+                                                          "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
+                                                          "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
+                                                          "Water / Environmental / Geotech": "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis.",
+                                                          "Aerospace / Space": "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis.",
+                                                          "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
                                                           "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
-                                                          "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years.",
+                                                          "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
                                                         };
-                                                        let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
+                                                        let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
                                                         try {
                                                           const r = await fetch("/api/match-skills", {
