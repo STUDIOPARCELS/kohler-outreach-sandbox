@@ -143,6 +143,8 @@ ONLY the JSON array.`,
                   const name = (ac.name || "").trim();
                   const title = (ac.title || "").trim();
                   if (!name || name.split(/\s+/).length < 2) continue;
+                  // Reject placeholder/fake names
+                  if (/^(First|Last|John|Jane|Test|Example)\s+(Last|Doe|Name|User|Person)$/i.test(name)) continue;
 
                   const { data: existing } = await supabaseAdmin
                     .from("contacts")
