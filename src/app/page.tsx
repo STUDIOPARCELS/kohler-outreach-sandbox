@@ -1748,11 +1748,9 @@ export default function HomePage() {
 
 I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
+I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-${skillSentence}
-
-I have attached my resume below. My projects and interests are included here: kohler.solokit.app.
+I have attached my resume below. My projects and interests are included here: kohler.solokit.app. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
 Thank you, and I hope to hear from you!
 
@@ -1784,9 +1782,7 @@ Hello ${ct.contactname.split(" ")[0]},
 
 I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
 
-I'm writing because I'm interested in the work you're doing at ${displayName} and noticed a recent opening for an entry-level ${roleLabel}.
-
-${skillSentence}
+I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
 I've included my resume and card, which links to my projects and interests. If you are considering an entry-level BSME/EIT with my skill set, I would love to interview with your team.
 
