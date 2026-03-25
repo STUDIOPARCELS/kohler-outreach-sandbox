@@ -1571,6 +1571,16 @@ export default function HomePage() {
                                         <h4 className="text-sm font-bold text-gray-900">{c.companyname}</h4>
                                         {companyAddress && <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line">{companyAddress}</p>}
                                       </div>
+                                      <div className="flex items-center gap-0.5 shrink-0">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); expandCompany(c.companyname); }}
+                                          className="text-gray-300 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                                          title="Minimize"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                          </svg>
+                                        </button>
                                       {deleteConfirm === c.companyname ? (
                                         <div className="flex items-center gap-1.5 shrink-0">
                                           <span className="text-xs text-red-600 font-semibold">Remove?</span>
@@ -1599,6 +1609,7 @@ export default function HomePage() {
                                           </svg>
                                         </button>
                                       )}
+                                      </div>
                                     </div>
 
                                     {/* Company description */}
