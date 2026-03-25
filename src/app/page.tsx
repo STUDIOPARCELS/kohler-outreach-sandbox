@@ -2266,8 +2266,8 @@ akwood1@mines.edu`;
 
       {/* ── Batch Jobs Dialog ── */}
       {batchJobsNiche && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm no-print" onMouseDown={(e) => { if (e.target === e.currentTarget) setBatchJobsNiche(null); }}>
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full sm:mx-4 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-start pt-4 sm:items-center sm:pt-0 justify-center bg-black/50 backdrop-blur-sm no-print" onMouseDown={(e) => { if (e.target === e.currentTarget) setBatchJobsNiche(null); }}>
+          <div className="bg-white rounded-b-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full sm:mx-4 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col">
             <div
               className={`px-5 py-4 ${NICHE_COLORS[batchJobsNiche]?.headerBg ? `bg-gradient-to-r ${NICHE_COLORS[batchJobsNiche].headerBg}` : ""} shrink-0 flex items-center justify-between`}
               style={!NICHE_COLORS[batchJobsNiche]?.headerBg ? { background: "linear-gradient(135deg, #334155, #1e293b)" } : undefined}
