@@ -1723,13 +1723,8 @@ export default function HomePage() {
                                                         const nichePersonal = c.niche ? NICHE_PERSONAL[c.niche] : undefined;
                                                         if (nichePersonal) {
                                                           if (matches.length >= 2) {
-                                                            // Real skill match: personal hook + matched skills
-                                                            // Avoid double "I have experience" by replacing second instance
-                                                            let combined = skillSentence;
-                                                            if (nichePersonal.includes("I have") && combined.startsWith("I have")) {
-                                                              combined = combined.replace(/^I have (hands-on )?experience /, "I also have experience ");
-                                                            }
-                                                            skillSentence = nichePersonal + " " + combined;
+                                                            // Real skill match: AI sentence stands alone, no niche prepend
+                                                            // skillSentence already set by AI match — leave it
                                                           } else {
                                                             // No match: personal sentence stands alone — no generic skills
                                                             skillSentence = nichePersonal;
