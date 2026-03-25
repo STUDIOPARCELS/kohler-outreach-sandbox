@@ -55,8 +55,8 @@ Search these sources and return the ACTUAL URL from your search results for each
 2. LinkedIn: search "${companyname} engineer jobs Colorado site:linkedin.com/jobs"
 3. Company careers page${careersUrl ? `: ${careersUrl}` : ""}
 
-INCLUDE: Any engineering role — mechanical, design, manufacturing, test, project, systems, field, process, quality, structural, reliability, environmental, electrical, civil, chemical, petroleum, or related. Include Engineer I, entry-level, early career, new grad, associate, junior, or 0-3 years experience.
-EXCLUDE: Engineer II, Engineer III, Senior, Lead, Principal, Staff, Manager, Director, VP, or 5+ years required.
+INCLUDE: Any engineering role — mechanical, design, manufacturing, test, project, systems, field, process, quality, structural, reliability, environmental, electrical, civil, chemical, petroleum, or related. Include Engineer I, entry-level, early career, new grad, associate, junior, or 0-3 years experience. Must require a Bachelor's degree in engineering or related field.
+EXCLUDE: Engineer II, Engineer III, Senior, Lead, Principal, Staff, Manager, Director, VP, or 5+ years required. Also exclude any position that requires only a GED, high school diploma, or associate degree. Also exclude technician, operator, assembler, machinist, and warehouse roles.
 
 CRITICAL: For apply_url, ONLY use URLs that appeared in your web search results. Each must link to the SPECIFIC JOB POSTING page. If you cannot find a direct link, leave apply_url as an empty string.
 
@@ -89,7 +89,7 @@ ONLY the JSON array.`,
       const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed)) {
-        const rejectPattern = /\b(senior|sr\.?\s|lead\s|principal|staff\s|manager|director|supervisor|chief|vp\b|vice president)\b|\bII\b|\bIII\b|\bIV\b/i;
+        const rejectPattern = /\b(senior|sr\.?\s|lead\s|principal|staff\s|manager|director|supervisor|chief|vp\b|vice president)\b|\bII\b|\bIII\b|\bIV\b|\b(technician|operator|assembler|machinist|warehouse|forklift|picker|clerk)\b/i;
         jobs = parsed
           .filter((j: Record<string, unknown>) => j.title && !rejectPattern.test(j.title as string))
           .slice(0, 8)
