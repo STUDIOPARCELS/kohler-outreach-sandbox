@@ -2273,7 +2273,31 @@ akwood1@mines.edu`;
             <div className="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
               <button onClick={() => setLetterConfirm(null)} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Close</button>
               {letterConfirm.editing ? (
-                <button onClick={async () => { setEditBody(letterConfirm.body); await saveLetter(); setLetterConfirm({ ...letterConfirm, editing: false }); }} disabled={saving} className="px-5 py-2 text-sm font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors">{saving ? "Saving..." : "Save"}</button>
+                <button onClick={async () => {
+                  // Save directly — don't rely on editBody state (React batching issue)
+                  const bodyToSave = letterConfirm.body;
+                  setSaving(true);
+                  try {
+                    await fetch("/api/draft", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        companyname: letterConfirm.companyname,
+                        contactname: letterConfirm.contactname,
+                        body_final: bodyToSave,
+                      }),
+                    });
+                    if (currentLetter) {
+                      const updated = { ...currentLetter, body_final: bodyToSave };
+                      setCurrentLetter(updated);
+                      setLettersMap((prev) => upsertLetterInMap(prev, letterConfirm.companyname, updated));
+                      setContactLetters((prev) => { const m = new Map(prev); m.set(letterConfirm.contactname, updated); return m; });
+                    }
+                    toast("Letter saved");
+                  } catch { toast("Save failed", "error"); }
+                  finally { setSaving(false); }
+                  setLetterConfirm({ ...letterConfirm, editing: false });
+                }} disabled={saving} className="px-5 py-2 text-sm font-bold rounded-lg bg-green-700 text-white hover:bg-green-800 transition-colors">{saving ? "Saving..." : "Save"}</button>
               ) : (
                 <>
                   <button onClick={() => setLetterConfirm({ ...letterConfirm, editing: true })} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Edit</button>
