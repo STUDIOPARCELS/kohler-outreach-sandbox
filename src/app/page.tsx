@@ -143,7 +143,7 @@ function assembleLetter(
   body = body.replace("I hope to hear from you!", "I hope to hear from you.");
 
   // Fix dash before "which links" in old drafts
-  body = body.replace("résumé and card — which links", "résumé and card, which links");
+  body = body.replace("resume and card — which links", "resume and card, which links");
 
   // Remove duplicate paragraphs (safety net)
   body = deduplicateParagraphs(body);
@@ -170,7 +170,7 @@ function assembleLetter(
 const NICHE_PERSONAL: Record<string, string> = {
   "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
   "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years.",
-  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and am an advanced skier with hands-on experience in SolidWorks and CNC fabrication.",
+  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors, and I have hands-on experience with SolidWorks and CNC fabrication.",
   "Automotive / Vehicles": "I have hands-on experience with SolidWorks modeling, GD&T, and CNC machining, and I've taken designs from concept through prototype and fabrication.",
   "Energy / Renewables / Power": "I have experience with FEA and CFD thermal simulation in SolidWorks Flow Simulation, and I've taken designs from concept through CNC fabrication.",
   "Manufacturing / Automation / Product Design": "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication.",
@@ -370,9 +370,9 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my résumé and card, which links to my projects and interests. I would love to interview with your team.
+I've included my resume and card, which links to my projects and interests. I would love to interview with your team.
 
-Thank you for your time, and I hope to hear from you.
+Thank you, and I hope to hear from you!
 
 Sincerely,
 
@@ -417,7 +417,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship."
   ),
   "Outdoor Recreation & Equipment": nicheTemplate(
-    "I grew up in Sun Valley, ID and am an advanced skier with hands-on experience in SolidWorks and CNC fabrication."
+    "I grew up in Sun Valley, ID and have spent my life in the outdoors, and I have hands-on experience with SolidWorks and CNC fabrication."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
     "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet."
@@ -1702,7 +1702,7 @@ export default function HomePage() {
                                                         // Niche-aware defaults (no 3D printing for ski/outdoor/woodworking)
                                                         const NICHE_DEFAULTS: Record<string, string> = {
                                                           "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
-                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and am an advanced skier with hands-on experience in SolidWorks and CNC fabrication.",
+                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors, and I have hands-on experience with SolidWorks and CNC fabrication.",
                                                           "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
                                                           "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last three years.",
                                                         };
@@ -1724,7 +1724,12 @@ export default function HomePage() {
                                                         if (nichePersonal) {
                                                           if (matches.length >= 2) {
                                                             // Real skill match: personal hook + matched skills
-                                                            skillSentence = nichePersonal + " " + skillSentence;
+                                                            // Avoid double "I have experience" by replacing second instance
+                                                            let combined = skillSentence;
+                                                            if (nichePersonal.includes("I have") && combined.startsWith("I have")) {
+                                                              combined = combined.replace(/^I have (hands-on )?experience /, "I also have experience ");
+                                                            }
+                                                            skillSentence = nichePersonal + " " + combined;
                                                           } else {
                                                             // No match: personal sentence stands alone — no generic skills
                                                             skillSentence = nichePersonal;
@@ -1741,9 +1746,9 @@ I'm writing because I'm interested in the work you're doing at ${displayName} an
 
 ${skillSentence}
 
-I have attached my résumé below. My projects and interests are included here: kohler.solokit.app.
+I have attached my resume below. My projects and interests are included here: kohler.solokit.app.
 
-Thank you for your time, and I hope to hear from you.
+Thank you, and I hope to hear from you!
 
 Kohler Wood
 208-720-4635
@@ -1777,9 +1782,9 @@ I'm writing because I'm interested in the work you're doing at ${displayName} an
 
 ${skillSentence}
 
-I've included my résumé and card, which links to my projects and interests. I would love to interview with your team.
+I've included my resume and card, which links to my projects and interests. I would love to interview with your team.
 
-Thank you for your time, and I hope to hear from you.
+Thank you, and I hope to hear from you!
 
 Sincerely,
 
@@ -2090,8 +2095,8 @@ akwood1@mines.edu`;
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my résumé and card, which links to my projects and interests. I would love to interview with your team.",
-                        "I've attached my résumé below. My projects and interests are included here: kohler.solokit.app. I would love to interview with your team."
+                        "I've included my resume and card, which links to my projects and interests. I would love to interview with your team.",
+                        "I've attached my resume below. My projects and interests are included here: kohler.solokit.app. I would love to interview with your team."
                       );
                       return preview.split("kohler.solokit.app").map((part, idx, arr) => (
                         <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
