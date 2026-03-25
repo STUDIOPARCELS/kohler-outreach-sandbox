@@ -1,9 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
-/* ── Google search fallback for a specific job ── */
 function googleSearchUrl(company: string, title: string): string {
-  const q = `"${company}" "${title}" job apply Colorado`;
+  const q = `"${company}" "${title}" job apply`;
   return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
 }
 
@@ -15,7 +14,6 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return NextResponse.json({ jobs: [], source: "no_key" });
 
-  // Pull the careers_url from the database as fallback
   const { data: companyRow } = await supabaseAdmin
     .from("companies")
     .select("careers_url")
@@ -32,25 +30,16 @@ export async function POST(req: NextRequest) {
         model: "gpt-4.1-mini",
         tools: [{ type: "web_search_preview" }],
         input: `Search for current engineering job openings at "${companyname}" in Colorado.
-
-Search these sources IN ORDER and return the ACTUAL URL from the search results for each job:
-1. Indeed: search "${companyname} engineer jobs Colorado site:indeed.com"
-2. Glassdoor: search "${companyname} engineer jobs Colorado site:glassdoor.com"  
-3. LinkedIn: search "${companyname} engineer jobs Colorado site:linkedin.com/jobs"
-4. Company careers page${careersUrl ? `: ${careersUrl}` : ""}
+${careersUrl ? `Check their careers page: ${careersUrl}` : ""}
+Also search Indeed, LinkedIn, and Glassdoor for "${companyname} engineer jobs Colorado".
 
 INCLUDE: Any engineering role — mechanical, design, manufacturing, test, project, systems, field, process, quality, structural, reliability, environmental, electrical, civil, chemical, petroleum, or related. Include Engineer I, entry-level, early career, new grad, associate, junior, or 0-3 years experience.
 EXCLUDE: Engineer II, Engineer III, Senior, Lead, Principal, Staff, Manager, Director, VP, or 5+ years required.
 
-CRITICAL RULES FOR apply_url:
-- ONLY use URLs that appeared in your web search results
-- Each apply_url must link to the SPECIFIC JOB POSTING page, not a company homepage or general careers page
-- Good URLs look like: indeed.com/viewjob?jk=abc123, glassdoor.com/job-listing/..., linkedin.com/jobs/view/12345
-- BAD URLs: company homepages, general careers pages, search result pages
-- If you cannot find a direct link to a specific posting, use an empty string for apply_url
+Do NOT include any URLs. I will generate links separately.
 
 Return ONLY a JSON array (no markdown, no backticks):
-[{"title":"exact title","salary":"range or empty string","location":"city, state","summary":"1 sentence; required skills: [skill1, skill2]","apply_url":"direct URL to this specific job posting or empty string","source":"indeed.com or glassdoor.com etc"}]
+[{"title":"exact title","salary":"range or empty string","location":"city, state","summary":"1 sentence; required skills: [skill1, skill2]","source":"website where found"}]
 
 If no engineering jobs found, return [].
 ONLY the JSON array.`,
@@ -61,7 +50,6 @@ ONLY the JSON array.`,
     if (!res.ok) return NextResponse.json({ jobs: [], source: "api_error" });
 
     const data = await res.json();
-
     let text = "";
     if (data.output) {
       for (const item of data.output) {
@@ -82,21 +70,14 @@ ONLY the JSON array.`,
         jobs = parsed
           .filter((j: Record<string, unknown>) => j.title && !rejectPattern.test(j.title as string))
           .slice(0, 8)
-          .map((j: Record<string, unknown>) => {
-            let url = (j.apply_url as string) || "";
-            // If no specific job URL, fall back to Google search for this exact job
-            if (!url || !url.startsWith("http")) {
-              url = googleSearchUrl(companyname, j.title as string);
-            }
-            return {
-              title: (j.title as string) || "",
-              salary: (j.salary as string) || "",
-              location: (j.location as string) || "",
-              summary: (j.summary as string) || "",
-              apply_url: url,
-              source: (j.source as string) || "",
-            };
-          });
+          .map((j: Record<string, unknown>) => ({
+            title: (j.title as string) || "",
+            salary: (j.salary as string) || "",
+            location: (j.location as string) || "",
+            summary: (j.summary as string) || "",
+            apply_url: googleSearchUrl(companyname, (j.title as string) || "engineer"),
+            source: (j.source as string) || "",
+          }));
       }
     } catch { /* parse failed */ }
 

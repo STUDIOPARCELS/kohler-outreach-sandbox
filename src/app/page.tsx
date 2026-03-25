@@ -174,7 +174,7 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Automotive / Vehicles": "I have hands-on experience with SolidWorks modeling, GD&T, and CNC machining, and I've taken designs from concept through prototype and fabrication.",
   "Energy / Renewables / Power": "I have experience with FEA and CFD thermal simulation in SolidWorks Flow Simulation, and I've taken designs from concept through CNC fabrication.",
   "Manufacturing / Automation / Product Design": "I have experience operating CNC routers, mills, and 3D printers to take SolidWorks designs from concept through fabrication.",
-  "Metals / Material Science": "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through finished parts.",
+  "Metals / Material Science": "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through prototype.",
   "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and programmed Arduino-based controls.",
   "Construction / Civil / Heavy Industry": "I interned at a fabrication shop where I assisted with layout, fabrication, and installation of steel railings for residential projects.",
   "MEP / HVAC / Building Systems": "I have coursework and project experience in CFD and heat transfer simulation using SolidWorks Flow Simulation.",
@@ -429,7 +429,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have experience selecting food-safe materials and adhesives for fabrication projects and operating CNC equipment for production work."
   ),
   "Metals / Material Science": nicheTemplate(
-    "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through finished parts."
+    "I have hands-on experience with CNC machining, MIG welding, and metal fabrication, and I've taken SolidWorks designs from concept through prototype."
   ),
 };
 
