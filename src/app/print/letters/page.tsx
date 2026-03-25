@@ -56,10 +56,6 @@ function assembleLetter(
 
   // Standardize wording
   body = body.replace(/this passion/g, "my passion");
-  body = body.replace(
-    "If you are considering an entry-level BSME/EIT, I would love to interview with your team.",
-    "If you are open to an entry-level BSME/EIT with my skill set, I would love the opportunity to interview with your team."
-  );
 
   // Remove duplicate paragraphs
   const paras = body.split(/\n\n+/);
