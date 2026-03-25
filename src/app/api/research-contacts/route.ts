@@ -219,7 +219,7 @@ ONLY the JSON array.`,
       const lastName = nameParts[nameParts.length - 1];
       if (lastName.length <= 2 || /^[A-Z]\.?$/.test(lastName)) continue; // reject "B.", "M.", single initials
 
-      const title = p.current_title || "";
+      const title = String(p.current_title || "");
       // STRICT: reject contacts with no title — unknown role
       if (!title) continue;
       // STRICT: reject individual contributors — title must match a management pattern
@@ -227,10 +227,11 @@ ONLY the JSON array.`,
       // Reject non-engineering management (HR, sales, etc)
       if (rejectPatterns.some(pat => pat.test(title))) continue;
 
-      const teaser = p.teaser || {};
+      const teaser = (p.teaser || {}) as Record<string, unknown[]>;
 
       // Try teaser email first
-      let email = ((teaser.emails?.[0] ?? "") as string).includes("@") ? (teaser.emails?.[0] as string) : "";
+      const teaserEmails = (teaser.emails || []) as string[];
+      let email = teaserEmails[0] && teaserEmails[0].includes("@") ? teaserEmails[0] : "";
 
       // If no real email from teaser, do a person lookup to get work email
       if (!email) {
@@ -254,10 +255,10 @@ ONLY the JSON array.`,
       const contactRow = {
         companyname,
         contactname: name,
-        title: p.current_title || "",
+        title: String(p.current_title || ""),
         email,
-        linkedin: p.linkedin_url || "",
-        phone: (teaser.phones?.[0] ?? "") as string,
+        linkedin: String(p.linkedin_url || ""),
+        phone: String(((teaser.phones || []) as string[])[0] || ""),
         notes: `RocketReach ${new Date().toISOString().split("T")[0]}`,
         email_searched: true,
       };
