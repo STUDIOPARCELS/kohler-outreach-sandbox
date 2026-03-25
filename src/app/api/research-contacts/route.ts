@@ -95,7 +95,107 @@ export async function POST(req: NextRequest) {
     }
 
     if (finalProfiles.length === 0) {
-      return NextResponse.json({ contacts: [], message: "No results on RocketReach for this company." });
+      // ── FALLBACK: OpenAI web search for contacts via LinkedIn / company website ──
+      const openaiKey = process.env.OPENAI_API_KEY;
+      if (openaiKey) {
+        try {
+          const aiRes = await fetch("https://api.openai.com/v1/responses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+            body: JSON.stringify({
+              model: "gpt-4.1-mini",
+              tools: [{ type: "web_search_preview" }],
+              input: `Search LinkedIn and the company website for people who work at "${companyname}" in Colorado or nearby.
+
+I need engineering leadership contacts: Engineering Manager, Director of Engineering, VP Engineering, Chief Engineer, Owner, Founder, President, Plant Manager, Manufacturing Manager.
+
+Search: "${companyname} engineering manager site:linkedin.com" and "${companyname} director engineering site:linkedin.com" and "${companyname} team" or "${companyname} about us".
+
+Return ONLY a JSON array (no markdown, no backticks):
+[{"name":"First Last","title":"their job title"}]
+
+If you find the owner or founder, include them. Include up to 3 people max. Only include people you are confident currently work there.
+If you truly cannot find anyone, return [].
+ONLY the JSON array.`,
+              text: { format: { type: "text" } },
+            }),
+          });
+
+          if (aiRes.ok) {
+            const aiData = await aiRes.json();
+            let aiText = "";
+            if (aiData.output) {
+              for (const item of aiData.output) {
+                if (item.type === "message" && item.content) {
+                  for (const c of item.content) {
+                    if (c.type === "output_text") aiText += c.text;
+                  }
+                }
+              }
+            }
+
+            try {
+              const cleaned = aiText.replace(/```json\n?|\n?```/g, "").trim();
+              const aiContacts = JSON.parse(cleaned);
+              if (Array.isArray(aiContacts) && aiContacts.length > 0) {
+                const aiSaved = [];
+                for (const ac of aiContacts.slice(0, 3)) {
+                  const name = (ac.name || "").trim();
+                  const title = (ac.title || "").trim();
+                  if (!name || name.split(/\s+/).length < 2) continue;
+
+                  const { data: existing } = await supabaseAdmin
+                    .from("contacts")
+                    .select("id")
+                    .eq("companyname", companyname)
+                    .ilike("contactname", name)
+                    .limit(1);
+
+                  if (!existing || existing.length === 0) {
+                    const contactRow = {
+                      companyname,
+                      contactname: name,
+                      title,
+                      email: "",
+                      linkedin: "",
+                      notes: `Web search ${new Date().toISOString().split("T")[0]}`,
+                    };
+                    const { error } = await supabaseAdmin.from("contacts").insert(contactRow);
+                    if (!error) aiSaved.push(contactRow);
+                  }
+                }
+
+                if (aiSaved.length > 0) {
+                  // Create a draft letter for the first contact
+                  const { data: existingLetter } = await supabaseAdmin
+                    .from("reachout_company_inserts")
+                    .select("id")
+                    .eq("companyname", companyname)
+                    .limit(1);
+
+                  if (!existingLetter || existingLetter.length === 0) {
+                    await supabaseAdmin.from("reachout_company_inserts").insert({
+                      companyname,
+                      contactname: aiSaved[0].contactname,
+                      contact_title: aiSaved[0].title,
+                      contact_email: "",
+                      status: "draft",
+                    });
+                  }
+
+                  return NextResponse.json({
+                    contacts: aiSaved,
+                    message: `No RocketReach results. Found ${aiSaved.length} contacts via web search.`,
+                    source: "web_search",
+                  });
+                }
+              }
+            } catch { /* JSON parse failed */ }
+          }
+        } catch { /* OpenAI fallback failed */ }
+      }
+
+      return NextResponse.json({ contacts: [], message: "No results found on RocketReach or web search for this company." });
     }
 
     const saved = [];
