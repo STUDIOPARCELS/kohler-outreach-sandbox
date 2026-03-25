@@ -132,8 +132,8 @@ ONLY the JSON array.`,
               if (Array.isArray(aiContacts) && aiContacts.length > 0) {
                 const aiSaved = [];
                 for (const ac of aiContacts.slice(0, 3)) {
-                  const name = (ac.name || "").trim();
-                  const title = (ac.title || "").trim();
+                  const name = (String((ac as Record<string, unknown>).name || "")).trim();
+                  const title = (String((ac as Record<string, unknown>).title || "")).trim();
                   if (!name || name.split(/\s+/).length < 2) continue;
                   // Reject placeholder/fake names
                   if (/^(First|Last|John|Jane|Test|Example)\s+(Last|Doe|Name|User|Person)$/i.test(name)) continue;
