@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     // Fetch resume PDF
     if (selectedAttachments.includes("resume")) {
       try {
-        const pdfRes = await fetch(`${baseUrl}/KOHLER_WOOD_RESUME.pdf`);
+        const pdfRes = await fetch(`${baseUrl}/KOHLER_RESUME_2026.pdf`);
         if (pdfRes.ok) {
           const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
           attachments.push({
