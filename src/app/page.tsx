@@ -135,8 +135,8 @@ function assembleLetter(
 
   // Standardize wording across all templates (including database default)
   body = body.replace(
-    "I just received my EIT and would love to interview with your team when the timing is right.",
-    "I just received my EIT and would love to interview with your team when the timing is right."
+    "I just received my EIT and would love to interview with your team if the timing works.",
+    "I just received my EIT and would love to interview with your team if the timing works."
   );
 
   // Remove exclamation mark from closing
@@ -371,7 +371,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team when the timing is right.
+I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team if the timing works.
 
 Thank you and I hope to hear from you.
 
@@ -1760,7 +1760,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I have attached my resume below. My projects and study are included here: kohler.solokit.app. I just received my EIT and would love to interview with your team when the timing is right.
+I have attached my resume below. My projects and study are included here: kohler.solokit.app. I just received my EIT and would love to interview with your team if the timing works.
 
 Thank you and I hope to hear from you.
 
@@ -1796,7 +1796,7 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team when the timing is right.
+I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team if the timing works.
 
 Thank you and I hope to hear from you.
 
@@ -2111,8 +2111,8 @@ akwood1@mines.edu`;
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team when the timing is right.",
-                        "I've attached my resume below. My projects and study are included here: kohler.solokit.app. I just received my EIT and would love to interview with your team when the timing is right."
+                        "I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team if the timing works.",
+                        "I've attached my resume below. My projects and study are included here: kohler.solokit.app. I just received my EIT and would love to interview with your team if the timing works."
                       );
                       return preview.split("kohler.solokit.app").map((part, idx, arr) => (
                         <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
