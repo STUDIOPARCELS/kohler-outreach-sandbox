@@ -361,6 +361,7 @@ function nicheTemplate(nicheParagraph: string): string {
   return `{{TODAY_DATE}}
 
 
+
 Hiring Manager
 {{COMPANY}}
 {{COMPANY_ADDRESS}}
@@ -1783,6 +1784,7 @@ akwood1@mines.edu`;
                                                           const companyAddr = companyAddress || "";
                                                           const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
                                                           const letterBody = `${today}
+
 
 
 ${ct.contactname}
