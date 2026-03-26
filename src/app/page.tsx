@@ -1064,6 +1064,39 @@ export default function HomePage() {
     window.print();
   }
 
+  async function deleteLetter(letterId: string, companyname: string, contactname: string) {
+    if (!window.confirm(`Reset the letter record for ${contactname} at ${companyname}?\n\nThis removes the printed/sent/emailed status so you can start fresh.`)) return;
+    try {
+      const res = await fetch("/api/batch-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [letterId], status: "draft" }),
+      });
+      if (!res.ok) throw new Error("Failed to reset");
+      // Clear timestamps by updating directly
+      const r2 = await fetch("/api/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: letterId, printed_at: null, sent_at: null, emailed_at: null, status: "draft" }),
+      });
+      // Remove from local state
+      setLettersMap((prev) => {
+        const m = new Map(prev);
+        const letters = m.get(companyname) || [];
+        m.set(companyname, letters.filter(l => l.id !== letterId));
+        return m;
+      });
+      setContactLetters((prev) => {
+        const m = new Map(prev);
+        m.delete(contactname);
+        return m;
+      });
+      toast(`Letter record for ${contactname} reset`);
+    } catch (err) {
+      toast(`Failed to reset: ${err instanceof Error ? err.message : String(err)}`, "error");
+    }
+  }
+
   /* ── Toggle niche between preview (3) and fully expanded ── */
   /* When one box expands, all boxes in the same grid row expand too */
   function toggleNiche(niche: string) {
@@ -1963,6 +1996,15 @@ akwood1@mines.edu`;
                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                                     {new Date(ctLetter.emailed_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                                                   </span>
+                                                )}
+                                                {ctLetter && (ctLetter.printed_at || ctLetter.emailed_at) && (
+                                                  <button
+                                                    onClick={(e) => { e.stopPropagation(); deleteLetter(ctLetter.id, expandedCompany || "", ct.contactname); }}
+                                                    className="text-gray-300 hover:text-red-500 transition-colors ml-0.5"
+                                                    title="Reset letter record"
+                                                  >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                  </button>
                                                 )}
                                               </div>
                                               {ct.title && <div className="text-xs text-gray-500 truncate">{ct.title}</div>}
