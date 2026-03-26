@@ -360,6 +360,7 @@ const DEFAULT_COLORS = { ...NICHE_COLORS["Real Estate / Facilities"] };
 function nicheTemplate(nicheParagraph: string): string {
   return `{{TODAY_DATE}}
 
+
 Hiring Manager
 {{COMPANY}}
 {{COMPANY_ADDRESS}}
@@ -1783,7 +1784,9 @@ akwood1@mines.edu`;
                                                           const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
                                                           const letterBody = `${today}
 
+
 ${ct.contactname}
+${ct.title || ""}
 ${c.companyname}
 ${companyAddr}
 
