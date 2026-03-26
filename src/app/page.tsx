@@ -173,7 +173,7 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking.",
   "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
   "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
-  "Manufacturing / Automation / Product Design": "My capstone and coursework focused on electromechanical design, FEA, GD&T, and tolerance stack-up analysis.",
+  "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T at Mines, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
   "Metals / Material Science": "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components.",
   "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
   "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
@@ -409,7 +409,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype."
   ),
   "Manufacturing / Automation / Product Design": nicheTemplate(
-    "My capstone and coursework focused on electromechanical design, FEA, GD&T, and tolerance stack-up analysis."
+    "I studied electromechanical design, FEA, and GD&T at Mines, and my capstone involved tracking failure modes across design iterations from concept through prototype."
   ),
   "Acoustics / Audio / Musical Instruments": nicheTemplate(
     "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years."
@@ -1716,7 +1716,7 @@ export default function HomePage() {
                                                           "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking.",
                                                           "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
                                                           "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
-                                                          "Manufacturing / Automation / Product Design": "My capstone and coursework focused on electromechanical design, FEA, GD&T, and tolerance stack-up analysis.",
+                                                          "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T at Mines, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
                                                           "Metals / Material Science": "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components.",
                                                           "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
                                                           "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
