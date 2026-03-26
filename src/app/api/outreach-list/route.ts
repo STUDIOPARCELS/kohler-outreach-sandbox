@@ -1,9 +1,10 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   // Get all companies (Supabase defaults to 1000 rows, so paginate)
   let allCompanies: { companyname: string; tier: number; city: string; company_key: string; company_about: string; niche: string }[] = [];
   let from = 0;

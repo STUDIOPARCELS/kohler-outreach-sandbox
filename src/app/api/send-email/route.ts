@@ -1,3 +1,4 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
@@ -10,6 +11,7 @@ function getBaseUrl(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   try {
     const { to, companyname, contactname, subject, body, letterId, attachments: requestedAttachments, job_title, job_url, job_skills_matched } =
       await req.json();

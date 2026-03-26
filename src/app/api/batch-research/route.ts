@@ -1,5 +1,6 @@
+import { requireApiSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const RR_API_KEY = process.env.ROCKETREACH_API_KEY!;
 const RR_BASE = "https://api.rocketreach.co";
@@ -116,7 +117,8 @@ function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   // Get all companies
   const { data: allCompanies } = await supabaseAdmin
     .from("companies")

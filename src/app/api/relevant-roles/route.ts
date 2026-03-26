@@ -1,7 +1,9 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const companyname = req.nextUrl.searchParams.get("companyname");
 
   let query = supabaseAdmin.from("jobs").select("*");

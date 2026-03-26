@@ -1,7 +1,8 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from("reachout_template")
     .select("*")
@@ -13,6 +14,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const body = await req.json();
   const { subject_template, body_template } = body;
 

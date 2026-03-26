@@ -1,7 +1,9 @@
+import { requireApiSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   // Find contacts with emails that don't contain @
   const { data: contacts } = await supabaseAdmin
     .from("contacts")

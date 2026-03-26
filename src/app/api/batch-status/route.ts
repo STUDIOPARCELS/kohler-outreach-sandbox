@@ -1,7 +1,9 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const { ids, status } = await req.json();
   if (!ids || !Array.isArray(ids) || !status)
     return NextResponse.json(

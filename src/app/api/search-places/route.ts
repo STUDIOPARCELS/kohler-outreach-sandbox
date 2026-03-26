@@ -1,8 +1,10 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const GOOGLE_PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || "";
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const { query, location = "Denver, Colorado" } = await req.json();
 
   if (!query || query.trim().length < 2) {

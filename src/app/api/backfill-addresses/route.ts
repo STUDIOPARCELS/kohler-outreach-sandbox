@@ -1,9 +1,11 @@
+import { requireApiSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 const GOOGLE_PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY || "";
 
 export async function POST(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   if (!GOOGLE_PLACES_KEY) {
     return NextResponse.json({
       error: "Google Places API key not configured. Add GOOGLE_PLACES_API_KEY to Vercel environment variables.",

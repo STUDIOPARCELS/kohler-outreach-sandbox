@@ -1,7 +1,9 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const companyname = req.nextUrl.searchParams.get("companyname");
   const contactname = req.nextUrl.searchParams.get("contactname");
   if (!companyname)
@@ -31,6 +33,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const body = await req.json();
   const { companyname, contactname, ...fields } = body;
   if (!companyname)

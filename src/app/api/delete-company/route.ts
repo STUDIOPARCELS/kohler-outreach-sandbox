@@ -1,11 +1,17 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(req: NextRequest) {
-  const { companyname } = await req.json();
+  const authError = requireAppOrigin(req); if (authError) return authError;
+  const { companyname, confirm } = await req.json();
 
   if (!companyname) {
     return NextResponse.json({ error: "companyname required" }, { status: 400 });
+  }
+
+  if (!confirm) {
+    return NextResponse.json({ error: "confirm: true required to delete" }, { status: 400 });
   }
 
   try {

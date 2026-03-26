@@ -1,3 +1,4 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const KOHLER_SKILLS = [
@@ -5,26 +6,34 @@ const KOHLER_SKILLS = [
   "FEA", "CFD (SolidWorks Flow Simulation)",
   "CNC machining", "MIG welding", "3D printing",
   "laser cutting", "waterjet", "plasma cutting",
-  "MATLAB", "Python", "C++", "Arduino", "FMEA", "Scrum"
+  "MATLAB", "Python", "C++", "FMEA", "Scrum"
 ];
 
-const DEFAULT_SENTENCE = "I have hands-on experience in mechanical design, prototyping, and fabrication, with skills in SolidWorks, CNC machining, and 3D printing.";
+const DEFAULT_SENTENCE = "I have hands-on experience in mechanical design, prototyping, and fabrication.";
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const { jobTitle, jobSummary, companyName } = await req.json();
   if (!jobTitle) return NextResponse.json({ error: "jobTitle required" }, { status: 400 });
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ sentence: DEFAULT_SENTENCE, matches: [], source: "default" });
 
   try {
-    // Step 1: AI identifies skill matches only
-    const matchRes = await fetch("https://api.openai.com/v1/responses", {
+    // Step 1: AI identifies skill matches
+    const matchRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
       body: JSON.stringify({
-        model: "gpt-5.4-2026-03-05",
-        input: `You are a skill matcher. Return ONLY a JSON array of matched skill pairs.
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 500,
+        messages: [{
+          role: "user",
+          content: `You are a skill matcher. Return ONLY a JSON array of matched skill pairs.
 
 JOB: "${jobTitle}" ${companyName ? `at ${companyName}` : ""}
 ${jobSummary ? `DESCRIPTION: ${jobSummary}` : ""}
@@ -42,8 +51,9 @@ Match rules:
 - Do NOT match vague terms like "safety", "maintenance", "operating equipment"
 
 Return ONLY JSON array: [{"job_skill":"from job","resume_skill":"from resume"}]
-If no matches: []`,
-        text: { format: { type: "text" } },
+If no matches: []
+ONLY the JSON array, no explanation.`
+        }],
       }),
     });
 
@@ -51,14 +61,8 @@ If no matches: []`,
     if (matchRes.ok) {
       const matchData = await matchRes.json();
       let matchText = "";
-      if (matchData.output) {
-        for (const item of matchData.output) {
-          if (item.type === "message" && item.content) {
-            for (const c of item.content) {
-              if (c.type === "output_text") matchText += c.text;
-            }
-          }
-        }
+      for (const block of (matchData.content || [])) {
+        if (block.type === "text") matchText += block.text;
       }
       try {
         const cleaned = matchText.replace(/```json\n?|\n?```/g, "").trim();
@@ -74,14 +78,21 @@ If no matches: []`,
       return NextResponse.json({ sentence: DEFAULT_SENTENCE, matches: [], source: "default" });
     }
 
-    // Step 2: Build skill list, then ask AI to write ONE natural sentence using ONLY these skills
+    // Step 2: Build skill list, ask AI to write ONE natural sentence
     const matchedSkills = Array.from(new Set(matches.map(m => m.resume_skill)));
-    const sentenceRes = await fetch("https://api.openai.com/v1/responses", {
+    const sentenceRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
       body: JSON.stringify({
-        model: "gpt-5.4-2026-03-05",
-        input: `Write ONE sentence for a cover letter. The applicant has these verified skills: ${matchedSkills.join(", ")}.
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 200,
+        messages: [{
+          role: "user",
+          content: `Write ONE sentence for a cover letter. The applicant has these verified skills: ${matchedSkills.join(", ")}.
 
 RULES:
 - Start with "I have experience with"
@@ -91,8 +102,8 @@ RULES:
 - NEVER mention any school, lab, facility, company, industry, or sector
 - NEVER say "capstone", "senior project", "coursework", "academic"
 - NEVER add skills beyond what is listed above
-- Output ONLY the sentence, nothing else`,
-        text: { format: { type: "text" } },
+- Output ONLY the sentence, nothing else`
+        }],
       }),
     });
 
@@ -100,14 +111,8 @@ RULES:
     if (sentenceRes.ok) {
       const sentData = await sentenceRes.json();
       let sentText = "";
-      if (sentData.output) {
-        for (const item of sentData.output) {
-          if (item.type === "message" && item.content) {
-            for (const c of item.content) {
-              if (c.type === "output_text") sentText += c.text;
-            }
-          }
-        }
+      for (const block of (sentData.content || [])) {
+        if (block.type === "text") sentText += block.text;
       }
       sentText = sentText.trim().replace(/^["']|["']$/g, "");
       if (sentText.toLowerCase().startsWith("i have")) {
@@ -115,7 +120,7 @@ RULES:
       }
     }
 
-    return NextResponse.json({ sentence, matches, source: "gpt54" });
+    return NextResponse.json({ sentence, matches, source: "claude-sonnet" });
   } catch {
     return NextResponse.json({ sentence: DEFAULT_SENTENCE, matches: [], source: "error" });
   }

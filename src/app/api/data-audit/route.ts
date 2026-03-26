@@ -1,7 +1,9 @@
+import { requireApiSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   // 1. Check temp_company_addresses
   const { data: tempAddrs, error: tempErr } = await supabaseAdmin
     .from("temp_company_addresses")
@@ -91,7 +93,8 @@ export async function GET() {
   });
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   // Merge temp_company_addresses into companies
   const { data: tempAddrs, error } = await supabaseAdmin
     .from("temp_company_addresses")

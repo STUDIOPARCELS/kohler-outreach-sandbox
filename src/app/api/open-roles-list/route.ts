@@ -1,7 +1,8 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   // Get all relevant roles
   const { data: roles, error: rolesErr } = await supabaseAdmin
     .from("relevant_roles")

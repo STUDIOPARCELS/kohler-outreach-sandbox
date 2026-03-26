@@ -1,5 +1,6 @@
+import { requireApiSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // Parse "1438 South Broadway, Denver, CO 80210" into parts
 function parseAddress(raw: string): {
@@ -33,7 +34,8 @@ function parseAddress(raw: string): {
   return null;
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   const results = {
     addresses_merged: 0,
     addresses_skipped: 0,

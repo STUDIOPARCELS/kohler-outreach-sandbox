@@ -1,6 +1,8 @@
+import { requireApiSecret } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   const { companies } = await req.json();
   if (!companies || !Array.isArray(companies) || companies.length === 0)
     return NextResponse.json({ descriptions: {} });

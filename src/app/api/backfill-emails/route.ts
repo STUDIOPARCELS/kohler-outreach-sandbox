@@ -1,3 +1,4 @@
+import { requireApiSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -85,6 +86,7 @@ async function lookupPerson(
 }
 
 export async function POST(req: NextRequest) {
+  const authError = requireApiSecret(req); if (authError) return authError;
   // Optional: limit batch size from client
   const body = await req.json().catch(() => ({}));
   const limit = Math.min(body.limit || BATCH_SIZE, 50);

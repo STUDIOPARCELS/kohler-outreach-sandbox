@@ -1,3 +1,4 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -93,6 +94,7 @@ async function researchContacts(companyname: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   try {
     const { niche, mode, company: manualCompany } = await req.json();
 

@@ -1,3 +1,4 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -5,6 +6,7 @@ const RR_API_KEY = process.env.ROCKETREACH_API_KEY!;
 const RR_BASE = "https://api.rocketreach.co";
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const { companyname } = await req.json();
   if (!companyname)
     return NextResponse.json({ error: "companyname required" }, { status: 400 });

@@ -1,7 +1,9 @@
+import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   try {
     const { imageData } = await req.json();
     if (!imageData) return NextResponse.json({ error: "No image data" }, { status: 400 });

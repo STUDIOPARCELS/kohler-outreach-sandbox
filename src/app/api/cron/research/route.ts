@@ -1,3 +1,4 @@
+import { requireCronSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -198,14 +199,7 @@ async function searchAndSave(companyname: string): Promise<{
 }
 
 export async function GET(req: NextRequest) {
-  // Verify cron secret (Vercel sends this automatically)
-  const authHeader = req.headers.get("authorization");
-  if (
-    process.env.CRON_SECRET &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = requireCronSecret(req); if (authError) return authError;
 
   // Get companies that have NO contacts yet
   const { data: allCompanies } = await supabaseAdmin
