@@ -100,10 +100,15 @@ export default function FollowupsPage() {
       <div className="relative rounded-2xl mb-6 overflow-hidden" style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 40%, #475569 100%)", boxShadow: "0 20px 40px -12px rgba(0,0,0,0.35), 0 8px 20px -8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
         <div className="relative px-5 py-6 sm:px-8 sm:py-8">
           <div className="flex items-center justify-between">
-            <div>
-              <Link href="/" className="text-slate-400 hover:text-white text-xs uppercase tracking-widest transition-colors">← Outreach Engine</Link>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight uppercase mt-1">Follow-ups</h1>
-              <p className="text-slate-400 text-xs sm:text-sm mt-0.5">7-day email follow-ups for mailed letters</p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Link href="/" className="flex flex-col items-center justify-center px-3 py-2.5 sm:px-4 sm:py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/15 transition-colors min-w-[70px] sm:min-w-[80px]">
+                <svg className="w-5 h-5 text-white mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                <div className="text-[9px] text-white/70 uppercase tracking-wider font-semibold">Engine</div>
+              </Link>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight uppercase">Follow-ups</h1>
+                <p className="text-slate-400 text-xs sm:text-sm mt-0.5">7-day email follow-ups for mailed letters</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-center px-4 py-3 bg-rose-500/20 rounded-xl border border-rose-400/30">
