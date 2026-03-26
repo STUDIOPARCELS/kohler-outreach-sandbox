@@ -1332,14 +1332,13 @@ export default function HomePage() {
                         )}
                         {/* Tooltip on hover */}
                         {count > 0 && (
-                          <div className={`hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 w-56 bg-gray-900 text-white rounded-lg p-2.5 text-xs text-left shadow-xl ${isBottomRows ? "bottom-full mb-1" : "top-full mt-1"}`}>
+                          <div className={`hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 w-64 bg-gray-900 text-white rounded-lg p-2.5 text-xs text-left shadow-xl max-h-72 overflow-y-auto ${isBottomRows ? "bottom-full mb-1" : "top-full mt-1"}`}>
                             <div className="font-bold mb-1">March {day} — {count} sent</div>
-                            {entries!.slice(0, 5).map((e, j) => (
-                              <div key={j} className="truncate text-gray-300">
+                            {entries!.map((e, j) => (
+                              <div key={j} className="truncate text-gray-300 py-0.5">
                                 {e.companyname}{e.contactname ? ` → ${e.contactname}` : ""}
                               </div>
                             ))}
-                            {count > 5 && <div className="text-gray-500 mt-0.5">+{count - 5} more</div>}
                           </div>
                         )}
                       </div>
