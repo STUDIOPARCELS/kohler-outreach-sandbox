@@ -489,6 +489,8 @@ export default function HomePage() {
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
   const gridRef = useRef<HTMLDivElement>(null);
   const orderedNichesRef = useRef<string[]>([]);
+  const [followupReady, setFollowupReady] = useState(0);
+  const [followupPending, setFollowupPending] = useState(0);
 
   /* ── Multi-letter helpers ── */
   const allLetters = Array.from(lettersMap.values()).flat();
@@ -543,6 +545,16 @@ export default function HomePage() {
         setLettersMap(map);
       }
       if (!compData.error) setCompanies(compData);
+
+      // Fetch follow-up counts
+      try {
+        const fuRes = await fetch("/api/followup-candidates");
+        const fuData = await fuRes.json();
+        if (!fuData.error) {
+          setFollowupReady((fuData.ready || []).length);
+          setFollowupPending((fuData.upcoming || []).length);
+        }
+      } catch { /* non-critical */ }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
     } finally {
@@ -1248,9 +1260,10 @@ export default function HomePage() {
                     );
                   })()}
                 </div>
-                <a href="/followups" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-rose-500/20 rounded-xl border border-rose-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] hover:bg-rose-500/30 transition-colors cursor-pointer">
-                  <div className="text-2xl font-bold text-white">0</div>
+                <a href="/followups" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-rose-500/20 rounded-xl border border-rose-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[90px] sm:min-w-[110px] hover:bg-rose-500/30 transition-colors cursor-pointer">
+                  <div className="text-2xl font-bold text-white">{followupReady}</div>
                   <div className="text-xs text-rose-300 uppercase tracking-wider font-semibold">Follow-ups</div>
+                  <div className="text-[10px] text-amber-300 font-semibold mt-0.5">{followupPending} pending</div>
                 </a>
               </div>
             </div>
