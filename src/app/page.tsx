@@ -122,6 +122,7 @@ function assembleLetter(
   const bodyTemplate = (niche && NICHE_BODY_TEMPLATES[niche]) || template.body_template;
 
   let body = bodyTemplate
+    .replace(/\{\{COMPANY_FULL\}\}/g, companyname)
     .replace(/\{\{COMPANY\}\}/g, displayName)
     .replace(/\{\{TODAY_DATE\}\}/g, today)
     .replace(/\{\{COMPANY_ADDRESS\}\}/g, companyAddress || "");
@@ -363,7 +364,7 @@ function nicheTemplate(nicheParagraph: string): string {
 
 
 Hiring Manager
-{{COMPANY}}
+{{COMPANY_FULL}}
 {{COMPANY_ADDRESS}}
 
 Hello Hiring Manager,
