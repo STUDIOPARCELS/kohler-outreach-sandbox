@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const { data, error } = await supabaseAdmin
     .from("candidate_profile")
     .select("*")

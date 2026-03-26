@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   // Get all companies (Supabase defaults to 1000 rows, so paginate)
   let allCompanies: { companyname: string; tier: number; city: string; company_key: string; company_about: string; niche: string }[] = [];
   let from = 0;

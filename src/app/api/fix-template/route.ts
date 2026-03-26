@@ -1,8 +1,9 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
   const { data } = await supabaseAdmin.from("reachout_template").select("*");
   if (!data || data.length === 0) return NextResponse.json({ error: "No template" });
 
