@@ -181,7 +181,7 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Water / Environmental / Geotech": "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis.",
   "Aerospace / Space": "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis.",
   "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
-  "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
+  "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
   "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
 };
 
@@ -421,7 +421,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
-    "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet."
+    "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet."
   ),
   "Medical / Biotech": nicheTemplate(
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability."
@@ -1724,7 +1724,7 @@ export default function HomePage() {
                                                           "Water / Environmental / Geotech": "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis.",
                                                           "Aerospace / Space": "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis.",
                                                           "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
-                                                          "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet.",
+                                                          "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
                                                           "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
                                                         };
                                                         let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication.";
