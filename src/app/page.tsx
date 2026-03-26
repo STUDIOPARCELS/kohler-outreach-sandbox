@@ -175,7 +175,7 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
   "Energy / Renewables / Power": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
   "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
-  "Metals / Material Science": "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components.",
+  "Metals / Material Science": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
   "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
   "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
   "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
@@ -432,7 +432,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work."
   ),
   "Metals / Material Science": nicheTemplate(
-    "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components."
+    "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype."
   ),
 };
 
@@ -1752,7 +1752,7 @@ export default function HomePage() {
                                                           "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
                                                           "Energy / Renewables / Power": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
                                                           "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
-                                                          "Metals / Material Science": "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components.",
+                                                          "Metals / Material Science": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
                                                           "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
                                                           "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
                                                           "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
