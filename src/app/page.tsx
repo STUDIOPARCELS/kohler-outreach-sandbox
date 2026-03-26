@@ -170,7 +170,7 @@ function assembleLetter(
 const NICHE_PERSONAL: Record<string, string> = {
   "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
   "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
-  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing, hiking, and building things with my hands.",
+  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking.",
   "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
   "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
   "Manufacturing / Automation / Product Design": "I operate CNC routers, mills, and 3D printers, and my work at the Labriola Innovation Hub involves taking SolidWorks models through to finished fabrication.",
@@ -417,7 +417,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship."
   ),
   "Outdoor Recreation & Equipment": nicheTemplate(
-    "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing, hiking, and building things with my hands."
+    "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
     "I spent the last year designing and fabricating woodworking projects, including a Frank Lloyd Wright-style record cabinet."
@@ -1708,7 +1708,7 @@ export default function HomePage() {
                                                         const NICHE_DEFAULTS: Record<string, string> = {
                                                           "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
                                                           "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
-                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing, hiking, and building things with my hands.",
+                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking.",
                                                           "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
                                                           "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
                                                           "Manufacturing / Automation / Product Design": "I operate CNC routers, mills, and 3D printers, and my work at the Labriola Innovation Hub involves taking SolidWorks models through to finished fabrication.",
