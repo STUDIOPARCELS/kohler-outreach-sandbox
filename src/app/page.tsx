@@ -1212,21 +1212,17 @@ export default function HomePage() {
                     );
                   })()}
                 </div>
+                <a href="/followups" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-rose-500/20 rounded-xl border border-rose-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] hover:bg-rose-500/30 transition-colors cursor-pointer">
+                  <div className="text-2xl font-bold text-white">→</div>
+                  <div className="text-xs text-rose-300 uppercase tracking-wider font-semibold">Follow-ups</div>
+                </a>
               </div>
             </div>
           </div>
         </div>
 
         {/* ── Gray divider line ── */}
-        <div className="flex items-center justify-between mb-0">
-          <div className="border-b border-gray-300 flex-1 my-5" />
-          <a
-            href="/followups"
-            className="ml-4 px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors uppercase tracking-wide border border-slate-200"
-          >
-            Follow-ups →
-          </a>
-        </div>
+        <div className="border-b border-gray-300 my-5" />
 
         {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
