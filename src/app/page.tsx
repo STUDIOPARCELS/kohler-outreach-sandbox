@@ -1218,7 +1218,15 @@ export default function HomePage() {
         </div>
 
         {/* ── Gray divider line ── */}
-        <div className="border-b border-gray-300 my-5" />
+        <div className="flex items-center justify-between mb-0">
+          <div className="border-b border-gray-300 flex-1 my-5" />
+          <a
+            href="/followups"
+            className="ml-4 px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors uppercase tracking-wide border border-slate-200"
+          >
+            Follow-ups →
+          </a>
+        </div>
 
         {/* ── March 2026 Mailing Calendar ── */}
         {(() => {
