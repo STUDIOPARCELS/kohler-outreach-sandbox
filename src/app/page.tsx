@@ -367,7 +367,7 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood, EIT and BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
@@ -1756,7 +1756,7 @@ export default function HomePage() {
                                                           const firstName = ct.contactname.split(" ")[0];
                                                           const emailBody = `Hello ${firstName},
 
-I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood, EIT and BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
@@ -1792,7 +1792,7 @@ ${companyAddr}
 
 Hello ${ct.contactname.split(" ")[0]},
 
-I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate from Colorado School of Mines.
+I hope you're doing well. My name is Kohler Wood, EIT and BSME graduate from Colorado School of Mines.
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
