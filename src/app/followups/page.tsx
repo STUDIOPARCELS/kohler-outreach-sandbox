@@ -64,7 +64,7 @@ export default function FollowupsPage() {
       setReady(data.ready || []);
       setUpcoming(data.upcoming || []);
     } catch (err) {
-      toast.error("Failed to load follow-ups");
+      toast("Failed to load follow-ups", "error");
       console.error(err);
     } finally {
       setLoading(false);
@@ -107,12 +107,13 @@ export default function FollowupsPage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      toast.success(`Follow-up sent to ${row.contact_email}`);
+      toast(`Follow-up sent to ${row.contact_email}`);
       setEditingId(null);
       load();
     } catch (err) {
-      toast.error(
-        `Failed to send: ${err instanceof Error ? err.message : String(err)}`
+      toast(
+        `Failed to send: ${err instanceof Error ? err.message : String(err)}`,
+        "error"
       );
     } finally {
       setSending(null);

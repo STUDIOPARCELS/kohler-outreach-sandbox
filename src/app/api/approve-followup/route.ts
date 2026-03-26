@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
+export const dynamic = "force-dynamic";
+
 function getBaseUrl(req: NextRequest): string {
   const host = req.headers.get("host") || "kohler-outreach-sandbox.vercel.app";
   const proto = req.headers.get("x-forwarded-proto") || "https";
