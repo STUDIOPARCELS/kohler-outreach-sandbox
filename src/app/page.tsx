@@ -1291,10 +1291,10 @@ export default function HomePage() {
           const todayDay = today.getFullYear() === 2026 && today.getMonth() === 2 ? today.getDate() : -1;
 
           return (
-            <div className="mb-6 rounded-xl border border-gray-300 bg-white overflow-hidden"
+            <div className="mb-6 rounded-xl border border-gray-300 bg-white"
               style={{ boxShadow: "0 10px 30px -8px rgba(0,0,0,0.12), 0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)" }}
             >
-              <div className="px-5 py-3.5 border-b border-gray-300 bg-gradient-to-r from-gray-100 to-gray-50 flex items-center justify-between">
+              <div className="px-5 py-3.5 border-b border-gray-300 bg-gradient-to-r from-gray-100 to-gray-50 flex items-center justify-between rounded-t-xl">
                 <h2 className="text-sm font-bold text-gray-800">March 2026</h2>
                 <span className="text-xs font-semibold text-gray-500">{sentOrPrinted.length} letters sent</span>
               </div>
@@ -1312,6 +1312,7 @@ export default function HomePage() {
                     const entries = sentByDay.get(day);
                     const count = entries ? entries.length : 0;
                     const isToday = day === todayDay;
+                    const isBottomRows = Math.floor(i / 7) >= Math.ceil(cells.length / 7) - 2;
                     return (
                       <div
                         key={i}
@@ -1331,7 +1332,7 @@ export default function HomePage() {
                         )}
                         {/* Tooltip on hover */}
                         {count > 0 && (
-                          <div className="hidden group-hover:block absolute z-20 left-1/2 -translate-x-1/2 top-full mt-1 w-48 bg-gray-900 text-white rounded-lg p-2 text-xs text-left shadow-xl">
+                          <div className={`hidden group-hover:block absolute z-50 left-1/2 -translate-x-1/2 w-56 bg-gray-900 text-white rounded-lg p-2.5 text-xs text-left shadow-xl ${isBottomRows ? "bottom-full mb-1" : "top-full mt-1"}`}>
                             <div className="font-bold mb-1">March {day} — {count} sent</div>
                             {entries!.slice(0, 5).map((e, j) => (
                               <div key={j} className="truncate text-gray-300">
