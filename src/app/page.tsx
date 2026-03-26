@@ -1213,7 +1213,7 @@ export default function HomePage() {
                   })()}
                 </div>
                 <a href="/followups" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-rose-500/20 rounded-xl border border-rose-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] hover:bg-rose-500/30 transition-colors cursor-pointer">
-                  <div className="text-2xl font-bold text-white">→</div>
+                  <div className="text-2xl font-bold text-white">0</div>
                   <div className="text-xs text-rose-300 uppercase tracking-wider font-semibold">Follow-ups</div>
                 </a>
               </div>
