@@ -135,8 +135,8 @@ function assembleLetter(
 
   // Standardize wording across all templates (including database default)
   body = body.replace(
-    "I would love to interview with your team.",
-    "I would love to interview with your team."
+    "I just received my EIT and would love to interview with your team when the timing is right.",
+    "I just received my EIT and would love to interview with your team when the timing is right."
   );
 
   // Remove exclamation mark from closing
@@ -370,9 +370,9 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my resume and card, which links to my work and study. I would love to interview with your team.
+I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team when the timing is right.
 
-Thank you, and I hope to hear from you!
+Thank you and I hope to hear from you.
 
 Sincerely,
 
@@ -1759,9 +1759,9 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I have attached my resume below. My work and study are included here: kohler.solokit.app. I would love to interview with your team.
+I have attached my resume below. My projects and study are included here: kohler.solokit.app. I just received my EIT and would love to interview with your team when the timing is right.
 
-Thank you, and I hope to hear from you!
+Thank you and I hope to hear from you.
 
 Kohler Wood
 208-720-4635
@@ -1793,9 +1793,9 @@ I hope you're doing well. My name is Kohler Wood, EIT and recent BSME graduate f
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I've included my resume and card, which links to my work and study. I would love to interview with your team.
+I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team when the timing is right.
 
-Thank you, and I hope to hear from you!
+Thank you and I hope to hear from you.
 
 Sincerely,
 
@@ -2108,8 +2108,8 @@ akwood1@mines.edu`;
                       const dearIdx = preview.indexOf("Hello ");
                       if (dearIdx > 0) preview = preview.substring(dearIdx);
                       preview = preview.replace(
-                        "I've included my resume and card, which links to my work and study. I would love to interview with your team.",
-                        "I've attached my resume below. My work and study are included here: kohler.solokit.app. I would love to interview with your team."
+                        "I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team when the timing is right.",
+                        "I've attached my resume below. My projects and study are included here: kohler.solokit.app. I just received my EIT and would love to interview with your team when the timing is right."
                       );
                       return preview.split("kohler.solokit.app").map((part, idx, arr) => (
                         <span key={idx}>{part}{idx < arr.length - 1 && <a href="https://kohler.solokit.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">kohler.solokit.app</a>}</span>
