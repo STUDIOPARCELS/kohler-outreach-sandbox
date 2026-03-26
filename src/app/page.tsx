@@ -174,7 +174,7 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
   "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
   "Manufacturing / Automation / Product Design": "I operate CNC routers, mills, and 3D printers, and my work at the Labriola Innovation Hub involves taking SolidWorks models through to finished fabrication.",
-  "Metals / Material Science": "My shop experience includes CNC machining, MIG welding, and metal fabrication.",
+  "Metals / Material Science": "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components.",
   "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
   "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
   "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
@@ -430,7 +430,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work."
   ),
   "Metals / Material Science": nicheTemplate(
-    "My shop experience includes CNC machining, MIG welding, and metal fabrication."
+    "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components."
   ),
 };
 
@@ -1717,7 +1717,7 @@ export default function HomePage() {
                                                           "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
                                                           "Energy / Renewables / Power": "My coursework at Mines includes FEA and CFD thermal simulation, and my capstone involved FMEA-driven design iteration from concept through prototype.",
                                                           "Manufacturing / Automation / Product Design": "I operate CNC routers, mills, and 3D printers, and my work at the Labriola Innovation Hub involves taking SolidWorks models through to finished fabrication.",
-                                                          "Metals / Material Science": "My shop experience includes CNC machining, MIG welding, and metal fabrication.",
+                                                          "Metals / Material Science": "My coursework covers materials science and FEA, and my hands-on experience spans CNC machining, SolidWorks with GD&T, and tolerance stack-up analysis for precision components.",
                                                           "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
                                                           "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
                                                           "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
