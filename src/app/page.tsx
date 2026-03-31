@@ -46,6 +46,7 @@ interface CompanyRow {
   email?: string;
   contact_count?: number;
   email_count?: number;
+  mailing_zip?: string;
 }
 
 /* ── Remove duplicate paragraphs from a letter body ── */
@@ -98,6 +99,50 @@ function cleanCompanyName(name: string): string {
   }
   
   return clean;
+}
+
+/* ── Zip code coordinates for distance filtering ── */
+const ZIP_COORDS: Record<string, [number, number]> = {
+  "06110": [41.7326, -72.7337], "22030": [38.8458, -77.3242], "22201": [38.8871, -77.0932],
+  "22902": [38.0266, -78.4804], "32202": [30.3299, -81.6517], "36606": [30.6729, -88.1009],
+  "48326": [42.6583, -83.2375], "62288": [38.0057, -89.6665], "75039": [32.8697, -96.9389],
+  "75201": [32.7904, -96.8044], "77002": [29.7594, -95.3594], "77506": [29.7009, -95.199],
+  "78014": [28.4398, -99.2328], "80002": [39.7945, -105.0984], "80011": [39.7378, -104.8152],
+  "80014": [39.6662, -104.835], "80017": [39.6948, -104.7881], "80020": [39.9245, -105.0609],
+  "80021": [39.8854, -105.1139], "80022": [39.8259, -104.9113], "80026": [39.998, -105.0963],
+  "80027": [39.9789, -105.1456], "80031": [39.8753, -105.0345], "80033": [39.774, -105.0962],
+  "80046": [39.7388, -104.4083], "80102": [39.7254, -104.4273], "80104": [39.3926, -104.8602],
+  "80110": [39.6463, -105.0092], "80111": [39.6123, -104.8799], "80112": [39.5805, -104.9011],
+  "80113": [39.6405, -104.9614], "80120": [39.5994, -105.0044], "80122": [39.5814, -104.9557],
+  "80124": [39.5506, -104.8972], "80125": [39.4845, -105.0561], "80127": [39.592, -105.1328],
+  "80129": [39.5397, -105.0109], "80132": [39.1007, -104.8542], "80202": [39.7491, -104.9946],
+  "80203": [39.7313, -104.9811], "80204": [39.734, -105.0259], "80205": [39.759, -104.9661],
+  "80207": [39.7584, -104.9177], "80210": [39.679, -104.9631], "80211": [39.7665, -105.0204],
+  "80212": [39.7683, -105.0493], "80215": [39.7435, -105.1009], "80216": [39.7835, -104.9669],
+  "80218": [39.7327, -104.9717], "80219": [39.6956, -105.0341], "80220": [39.7312, -104.9129],
+  "80221": [39.838, -104.9988], "80222": [39.671, -104.9279], "80223": [39.7002, -105.0028],
+  "80226": [39.7123, -105.0918], "80229": [39.8671, -104.9227], "80234": [39.9108, -105.0109],
+  "80235": [39.6472, -105.0795], "80237": [39.6431, -104.8987], "80238": [39.7388, -104.4083],
+  "80239": [39.7878, -104.8288], "80241": [39.9274, -104.9548], "80260": [39.8672, -105.0041],
+  "80301": [40.0497, -105.2143], "80302": [40.0172, -105.2851], "80401": [39.7305, -105.1915],
+  "80403": [39.8232, -105.2825], "80437": [39.522, -105.2239], "80465": [39.6125, -105.1746],
+  "80470": [39.4667, -105.3741], "80503": [40.1559, -105.1624], "80513": [40.2993, -105.1055],
+  "80514": [40.0836, -104.9297], "80524": [40.5986, -105.0581], "80525": [40.5384, -105.0547],
+  "80530": [40.0978, -104.9293], "80537": [40.3849, -105.0916], "80538": [40.4262, -105.09],
+  "80540": [40.2357, -105.3231], "80601": [39.943, -104.7866], "80640": [39.8983, -104.8718],
+  "80903": [38.8388, -104.8145], "80907": [38.876, -104.817], "80916": [38.8076, -104.7403],
+  "80920": [38.9497, -104.767], "80921": [39.0487, -104.814], "81001": [38.2879, -104.5848],
+  "81004": [38.2441, -104.6278], "81007": [38.387, -104.7792], "81201": [38.5259, -105.9978],
+  "81301": [37.2874, -107.8617], "81303": [37.1156, -107.8909], "81632": [39.6382, -106.6206],
+  "97210": [45.5303, -122.7033],
+};
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3958.8; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 /* ── Assemble a letter from template + data ── */
@@ -484,6 +529,8 @@ export default function HomePage() {
   const [contactSearch, setContactSearch] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [keywordSearch, setKeywordSearch] = useState("");
+  const [distanceZip, setDistanceZip] = useState("");
+  const [distanceRadius, setDistanceRadius] = useState("");
   const [tierFilter, setTierFilter] = useState("");
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
@@ -1141,6 +1188,18 @@ export default function HomePage() {
       if (!match) return false;
     }
     if (tierFilter && c.tier !== Number(tierFilter)) return false;
+    if (distanceZip.length === 5 && distanceRadius) {
+      const originCoords = ZIP_COORDS[distanceZip];
+      if (originCoords && c.mailing_zip) {
+        const companyCoords = ZIP_COORDS[c.mailing_zip];
+        if (companyCoords) {
+          const dist = haversineDistance(originCoords[0], originCoords[1], companyCoords[0], companyCoords[1]);
+          if (dist > Number(distanceRadius)) return false;
+        } else {
+          return false; // unknown zip, exclude from distance results
+        }
+      }
+    }
     return true;
   });
 
@@ -1370,7 +1429,7 @@ export default function HomePage() {
 
 
         {/* ── Search Filters ── */}
-        <div className="grid grid-cols-4 gap-2 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 mb-5">
           <input
             type="text" placeholder="Company" value={compSearch}
             onChange={(e) => setCompSearch(e.target.value)}
@@ -1391,6 +1450,23 @@ export default function HomePage() {
             onChange={(e) => setKeywordSearch(e.target.value)}
             className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white shadow-sm focus:ring-2 focus:ring-gray-500/20 focus:border-gray-400 transition-all"
           />
+          <input
+            type="text" placeholder="Zip code" value={distanceZip} maxLength={5}
+            onChange={(e) => setDistanceZip(e.target.value.replace(/\D/g, ""))}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white shadow-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+          />
+          <select
+            value={distanceRadius}
+            onChange={(e) => setDistanceRadius(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-white shadow-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+          >
+            <option value="">Miles</option>
+            <option value="10">10 mi</option>
+            <option value="25">25 mi</option>
+            <option value="50">50 mi</option>
+            <option value="100">100 mi</option>
+            <option value="250">250 mi</option>
+          </select>
         </div>
 
         {companiesLoading ? (

@@ -7,13 +7,13 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
   // Get all companies (Supabase defaults to 1000 rows, so paginate)
-  let allCompanies: { companyname: string; tier: number; city: string; company_key: string; company_about: string; niche: string }[] = [];
+  let allCompanies: { companyname: string; tier: number; city: string; company_key: string; company_about: string; niche: string; mailing_zip: string }[] = [];
   let from = 0;
   const pageSize = 1000;
   while (true) {
     const { data, error } = await supabaseAdmin
       .from("companies")
-      .select("companyname, tier, city, company_key, company_about, niche")
+      .select("companyname, tier, city, company_key, company_about, niche, mailing_zip")
       .order("tier", { ascending: true })
       .range(from, from + pageSize - 1);
     if (error)
