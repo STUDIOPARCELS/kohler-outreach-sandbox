@@ -257,17 +257,50 @@ export async function POST(req: NextRequest) {
 
     messagesSeen = messageIds.length;
 
+    // Pre-load all companies for fast in-memory matching
+    const { data: allCompanies } = await supabaseAdmin
+      .from("companies")
+      .select("id, companyname");
+    const companyList = (allCompanies || []).map((c) => ({
+      id: c.id,
+      name: c.companyname,
+      lower: c.companyname.toLowerCase(),
+    }));
+
+    // Pre-load already-processed message IDs
+    const { data: processed } = await supabaseAdmin
+      .from("job_positions")
+      .select("gmail_message_id");
+    const processedSet = new Set((processed || []).map((p) => p.gmail_message_id));
+
+    // In-memory company matcher
+    const matchCompany = (jobCompany: string): number | null => {
+      const clean = jobCompany
+        .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Manufacturing|Services|Industries)$/i, "")
+        .trim()
+        .toLowerCase();
+
+      // Exact match
+      const exact = companyList.find((c) => c.lower === clean || c.lower === jobCompany.toLowerCase());
+      if (exact) return exact.id;
+
+      // Existing name contains clean job name
+      const forward = companyList.find((c) => c.lower.includes(clean) && clean.length >= 4);
+      if (forward) return forward.id;
+
+      // Job name contains existing company name (reverse)
+      const reverse = companyList
+        .filter((c) => c.lower.length >= 4 && clean.includes(c.lower))
+        .sort((a, b) => b.lower.length - a.lower.length);
+      if (reverse.length > 0) return reverse[0].id;
+
+      return null;
+    }
+
     // Process each message
     for (const msgId of messageIds) {
       try {
-        // Skip if we already processed this message
-        const { data: existing } = await supabaseAdmin
-          .from("job_positions")
-          .select("id")
-          .eq("gmail_message_id", msgId)
-          .limit(1);
-
-        if (existing && existing.length > 0) continue;
+        if (processedSet.has(msgId)) continue;
 
         const msg = await gmail.users.messages.get({ userId: "me", id: msgId, format: "full" });
         const payload = msg.data.payload;
@@ -284,34 +317,8 @@ export async function POST(req: NextRequest) {
         const parsedJobs = parseZipRecruiterEmail(subject, html, msgId);
 
         for (const job of parsedJobs) {
-          // Try to match company in existing outreach companies (bidirectional fuzzy)
-          let companyId: number | null = null;
-          const cleanName = job.company_name
-            .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Manufacturing|Services|Industries)$/i, "")
-            .trim();
-
-          // Try exact-ish match first (existing contains cleaned job name, or job name contains existing)
-          const { data: matchedCompany } = await supabaseAdmin
-            .from("companies")
-            .select("id, companyname")
-            .or(`companyname.ilike.%${cleanName}%`)
-            .limit(5);
-
-          if (matchedCompany && matchedCompany.length > 0) {
-            // Pick the best match — prefer exact, then shortest (most specific)
-            const exact = matchedCompany.find(
-              (c) => c.companyname.toLowerCase() === job.company_name.toLowerCase() || c.companyname.toLowerCase() === cleanName.toLowerCase()
-            );
-            companyId = exact?.id || matchedCompany[0].id;
-          }
-
-          // Reverse check: does the job company name contain any existing company name?
-          if (!companyId && cleanName.length > 5) {
-            const { data: reverseMatch } = await supabaseAdmin.rpc("match_company_reverse", { search_name: cleanName }).limit(1);
-            if (reverseMatch && reverseMatch.length > 0) {
-              companyId = reverseMatch[0].id;
-            }
-          }
+          // Match company in memory
+          const companyId = matchCompany(job.company_name);
 
           // Upsert job position
           const { error: upsertErr } = await supabaseAdmin
