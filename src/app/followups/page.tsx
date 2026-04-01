@@ -101,7 +101,7 @@ export default function FollowupsPage() {
   const allItems = [...ready, ...upcoming];
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
       {/* Header */}
       <div className="relative rounded-2xl mb-6 overflow-hidden" style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 40%, #475569 100%)", boxShadow: "0 20px 40px -12px rgba(0,0,0,0.35), 0 8px 20px -8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
         <div className="relative px-5 py-6 sm:px-8 sm:py-8">
@@ -116,14 +116,14 @@ export default function FollowupsPage() {
                 <p className="text-slate-400 text-xs sm:text-sm mt-0.5">7-day email follow-ups for mailed letters</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-center px-4 py-3 bg-rose-500/20 rounded-xl border border-rose-400/30">
-                <div className="text-2xl font-bold text-white">{ready.length}</div>
-                <div className="text-[10px] text-rose-300 uppercase tracking-wider font-semibold">Ready</div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="text-center px-2.5 py-2 sm:px-4 sm:py-3 bg-rose-500/20 rounded-xl border border-rose-400/30">
+                <div className="text-xl sm:text-2xl font-bold text-white">{ready.length}</div>
+                <div className="text-[9px] sm:text-[10px] text-rose-300 uppercase tracking-wider font-semibold">Ready</div>
               </div>
-              <div className="text-center px-4 py-3 bg-amber-500/20 rounded-xl border border-amber-400/30">
-                <div className="text-2xl font-bold text-white">{upcoming.length}</div>
-                <div className="text-[10px] text-amber-300 uppercase tracking-wider font-semibold">Pending</div>
+              <div className="text-center px-2.5 py-2 sm:px-4 sm:py-3 bg-amber-500/20 rounded-xl border border-amber-400/30">
+                <div className="text-xl sm:text-2xl font-bold text-white">{upcoming.length}</div>
+                <div className="text-[9px] sm:text-[10px] text-amber-300 uppercase tracking-wider font-semibold">Pending</div>
               </div>
             </div>
           </div>
@@ -204,25 +204,25 @@ export default function FollowupsPage() {
 
                           {/* Tab content */}
                           {activeTab === "letter" && row.body_final && (
-                            <div className="px-5 py-5">
-                              <div className="bg-gray-50 rounded-xl border border-gray-200 px-6 py-5 font-serif" style={{ maxHeight: "500px", overflowY: "auto" }}>
+                            <div className="px-4 py-4 sm:px-5 sm:py-5">
+                              <div className="bg-gray-50 rounded-xl border border-gray-200 px-4 py-4 sm:px-6 sm:py-5 font-serif" style={{ maxHeight: "500px", overflowY: "auto" }}>
                                 <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">{row.body_final}</pre>
                               </div>
                             </div>
                           )}
 
                           {activeTab === "followup" && (
-                            <div className="px-5 py-5">
+                            <div className="px-4 py-4 sm:px-5 sm:py-5">
                               <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Subject</label>
                               <input type="text" value={editSubject} onChange={(e) => setEditSubject(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-rose-200" />
                               <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 mt-3">Body</label>
                               <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={12} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-rose-200 font-mono leading-relaxed" />
-                              <div className="flex items-center justify-between mt-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                   <input type="checkbox" checked={attachResume} onChange={(e) => setAttachResume(e.target.checked)} className="rounded border-slate-300 text-rose-600 focus:ring-rose-200" />
                                   <span className="text-xs text-slate-500">Attach resume</span>
                                 </label>
-                                <button onClick={() => handleSend(row)} disabled={sending === row.id} className="px-6 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all disabled:opacity-50 uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]">
+                                <button onClick={() => handleSend(row)} disabled={sending === row.id} className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all disabled:opacity-50 uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]">
                                   {sending === row.id ? "Sending…" : "Approve & Send"}
                                 </button>
                               </div>
@@ -243,7 +243,7 @@ export default function FollowupsPage() {
               <h2 className="text-[11px] font-bold text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-amber-400" />Upcoming
               </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 {upcoming.map((row) => {
                   const isExp = expandedId === row.id;
                   const days = daysAgo(row.sent_at!);
@@ -303,15 +303,15 @@ export default function FollowupsPage() {
 
                           {/* Tab content */}
                           {activeTab === "letter" && row.body_final && (
-                            <div className="px-5 py-5">
-                              <div className="bg-gray-50 rounded-xl border border-gray-200 px-6 py-5" style={{ maxHeight: "500px", overflowY: "auto" }}>
+                            <div className="px-4 py-4 sm:px-5 sm:py-5">
+                              <div className="bg-gray-50 rounded-xl border border-gray-200 px-4 py-4 sm:px-6 sm:py-5" style={{ maxHeight: "500px", overflowY: "auto" }}>
                                 <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">{row.body_final}</pre>
                               </div>
                             </div>
                           )}
 
                           {activeTab === "followup" && (
-                            <div className="px-5 py-5">
+                            <div className="px-4 py-4 sm:px-5 sm:py-5">
                               <div className="flex items-center gap-2 mb-3">
                                 <span className="w-2 h-2 rounded-full bg-amber-400" />
                                 <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">{daysLeft}d before auto-window — send early if ready</span>
@@ -320,12 +320,12 @@ export default function FollowupsPage() {
                               <input type="text" value={editSubject} onChange={(e) => setEditSubject(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200" />
                               <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 mt-3">Body</label>
                               <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={12} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200 font-mono leading-relaxed" />
-                              <div className="flex items-center justify-between mt-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                   <input type="checkbox" checked={attachResume} onChange={(e) => setAttachResume(e.target.checked)} className="rounded border-slate-300 text-amber-600 focus:ring-amber-200" />
                                   <span className="text-xs text-slate-500">Attach resume</span>
                                 </label>
-                                <button onClick={() => handleSend(row)} disabled={sending === row.id} className="px-6 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-all disabled:opacity-50 uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]">
+                                <button onClick={() => handleSend(row)} disabled={sending === row.id} className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-all disabled:opacity-50 uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]">
                                   {sending === row.id ? "Sending…" : "Send Now"}
                                 </button>
                               </div>
