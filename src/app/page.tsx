@@ -1939,13 +1939,27 @@ export default function HomePage() {
 
                                                         if (action === "email") {
                                                           const firstName = ct.contactname.split(" ")[0];
-                                                          const emailBody = `Hello ${firstName},
+                                                          const isGov = c.niche === "Government / Public Works / Infrastructure";
+                                                          const emailBody = isGov
+                                                            ? `Hello ${firstName},
 
-I hope you're doing well. My name is Kohler Wood, EIT and BSME graduate from Colorado School of Mines.
+My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
+
+I am writing because I am interested in working for ${displayName}. I just received my EIT and would love to interview with your team if the timing works.
+
+I have attached my resume below. My projects and study are at kohler.solokit.app. Thank you and I hope to hear from you.
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`
+                                                            : `Hello ${firstName},
+
+My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area.
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I have attached my resume below. My projects and study are included here: kohler.solokit.app. I just received my EIT and would love to interview with your team if the timing works.
+I have attached my resume below. My projects and study are at kohler.solokit.app. I just received my EIT and would love to interview with your team.
 
 Thank you and I hope to hear from you.
 
@@ -1967,7 +1981,9 @@ akwood1@mines.edu`;
                                                         } else {
                                                           const companyAddr = companyAddress || "";
                                                           const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-                                                          const letterBody = `${today}
+                                                          const isGovLetter = c.niche === "Government / Public Works / Infrastructure";
+                                                          const letterBody = isGovLetter
+                                                            ? `${today}
 
 
 
@@ -1978,11 +1994,37 @@ ${companyAddr}
 
 Hello ${ct.contactname.split(" ")[0]},
 
-I hope you're doing well. My name is Kohler Wood, EIT and BSME graduate from Colorado School of Mines.
+My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
+
+I am writing because I am interested in working for ${displayName}. I just received my EIT and would love to interview with your team if the timing works.
+
+I included my resume and a card that links to my projects and study. Thank you and I hope to hear from you.
+
+Sincerely,
+
+
+
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`
+                                                            : `${today}
+
+
+
+${ct.contactname}
+${ct.title || ""}
+${c.companyname}
+${companyAddr}
+
+Hello ${ct.contactname.split(" ")[0]},
+
+My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area.
 
 I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team if the timing works.
+I included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team.
 
 Thank you and I hope to hear from you.
 
