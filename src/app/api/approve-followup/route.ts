@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { letterId, to, subject, body, attachResume } = await req.json();
+    const { letterId, to, subject, body, attachResume, followupNumber } = await req.json();
 
     if (!letterId || !to || !body) {
       return NextResponse.json(
@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const isSecondFollowup = followupNumber === 2;
 
     const gmailUser = process.env.GMAIL_USER;
     const gmailPass = process.env.GMAIL_APP_PASSWORD;
@@ -122,12 +124,13 @@ export async function POST(req: NextRequest) {
     });
 
     // Update the letter record
+    const updateFields = isSecondFollowup
+      ? { followup2_at: new Date().toISOString(), status: "followup2_sent" }
+      : { emailed_at: new Date().toISOString(), status: "emailed" };
+
     await supabaseAdmin
       .from("reachout_company_inserts")
-      .update({
-        emailed_at: new Date().toISOString(),
-        status: "emailed",
-      })
+      .update(updateFields)
       .eq("id", letterId);
 
     // Log to tracking
@@ -146,7 +149,7 @@ export async function POST(req: NextRequest) {
           to,
           reply_to: replyTo,
           message_id: info.messageId,
-          type: "7_day_followup",
+          type: isSecondFollowup ? "14_day_followup" : "7_day_followup",
         }),
       });
     } catch {
