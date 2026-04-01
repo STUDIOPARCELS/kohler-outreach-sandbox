@@ -65,7 +65,7 @@ function stripTrackingParams(url: string): string {
   }
 }
 
-function parseZipRecruiterEmail(subject: string, html: string): ParsedJob[] {
+function parseZipRecruiterEmail(subject: string, html: string, messageId: string): ParsedJob[] {
   const jobs: ParsedJob[] = [];
   let title = subject;
   let company = "";
@@ -113,21 +113,22 @@ function parseZipRecruiterEmail(subject: string, html: string): ParsedJob[] {
     }
   }
 
-  // Extract all ZipRecruiter job URLs from HTML
+  // Extract all ZipRecruiter URLs from HTML (accept any ziprecruiter.com link)
   const urlRegex = /href=["'](https?:\/\/[^"']*ziprecruiter\.com\/[^"']*?)["']/gi;
   const urls: string[] = [];
   let urlM: RegExpExecArray | null;
   while ((urlM = urlRegex.exec(html)) !== null) {
     const url = urlM[1];
+    // Skip unsubscribe, privacy, terms, and logo/image links
     if (
-      url.includes("/job/") ||
-      url.includes("/jobs/") ||
-      url.includes("/click") ||
-      url.includes("/k/") ||
-      url.includes("apply")
-    ) {
-      urls.push(url);
-    }
+      url.includes("unsubscribe") ||
+      url.includes("privacy") ||
+      url.includes("terms") ||
+      url.includes(".png") ||
+      url.includes(".jpg") ||
+      url.includes("optout")
+    ) continue;
+    urls.push(url);
   }
 
   // Extract salary if present
@@ -150,7 +151,7 @@ function parseZipRecruiterEmail(subject: string, html: string): ParsedJob[] {
           location_text: "Denver metro area (80226)",
           job_url: blockUrl,
           salary_text: salary,
-          external_job_key: stripTrackingParams(blockUrl),
+          external_job_key: `${messageId}::${linkText}`.toLowerCase(),
         });
       }
     }
@@ -165,7 +166,7 @@ function parseZipRecruiterEmail(subject: string, html: string): ParsedJob[] {
       location_text: "Denver metro area (80226)",
       job_url: url,
       salary_text: salary,
-      external_job_key: stripTrackingParams(url),
+      external_job_key: `${messageId}::${company}::${title}`.toLowerCase(),
     });
   }
 
@@ -280,7 +281,7 @@ export async function POST(req: NextRequest) {
         if (!from.toLowerCase().includes("ziprecruiter")) continue;
 
         const html = getBody(payload);
-        const parsedJobs = parseZipRecruiterEmail(subject, html);
+        const parsedJobs = parseZipRecruiterEmail(subject, html, msgId);
 
         for (const job of parsedJobs) {
           // Try to match company in existing outreach companies
