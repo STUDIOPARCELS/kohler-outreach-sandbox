@@ -229,7 +229,7 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
   "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
   "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
-  "Government / Public Works / Infrastructure": "I have experience with SolidWorks modeling, GD&T, FEA, and taking designs from concept through prototype. I am interested in public infrastructure engineering and the opportunity to contribute to projects that serve Colorado communities.",
+  "Government / Public Works / Infrastructure": "I have hands-on experience with SolidWorks, FEA, GD&T, CNC machining, and taking designs from concept through fabrication.",
 };
 
 const NICHE_ORDER = [
@@ -489,9 +489,31 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Metals / Material Science": nicheTemplate(
     "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype."
   ),
-  "Government / Public Works / Infrastructure": nicheTemplate(
-    "I have experience with SolidWorks modeling, GD&T, FEA, and taking designs from concept through prototype. I am interested in public infrastructure engineering and the opportunity to contribute to projects that serve Colorado communities."
-  ),
+  "Government / Public Works / Infrastructure": `{{TODAY_DATE}}
+
+
+
+Hiring Manager
+{{COMPANY_FULL}}
+{{COMPANY_ADDRESS}}
+
+Hello Hiring Manager,
+
+My name is Kohler Wood. I am a BSME graduate from the Colorado School of Mines and I just received my EIT certification. I am committed to the Denver area and available to start immediately.
+
+I have hands-on experience with SolidWorks, FEA, GD&T, CNC machining, and taking designs from concept through fabrication.
+
+I included my resume and a card that links to my projects and study. I would love to interview with your team. Thank you and I hope to hear from you.
+
+Sincerely,
+
+
+
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`,
 };
 
 /* ── Main Page ── */

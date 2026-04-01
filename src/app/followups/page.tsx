@@ -29,21 +29,41 @@ function formatDate(dateStr: string): string {
 function generateFollowup1Body(row: FollowupRow): string {
   const firstName = row.contactname?.split(" ")[0] || "Hiring Manager";
   const company = row.companyname.replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?)$/i, "").trim();
+
+  // Government niche — shorter, references specific position, emphasizes availability
+  if (row.companyname.startsWith("CDOT")) {
+    return `Hello ${firstName},
+
+I hope you received my letter regarding engineering opportunities at ${company}. I am a BSME from the Colorado School of Mines with an EIT certification, committed to the Denver area and available now.
+
+I have included my resume, and my projects and study are at kohler.solokit.app. I would love to interview with your team. Thank you for your consideration, and I hope to hear from you.`;
+  }
+
   return `Hello ${firstName},
 
 I hope you received my letter expressing interest in ${company}. I am a BSME graduate from the Colorado School of Mines with an EIT certification. My background combines hands-on fabrication, CNC machining, and SolidWorks simulation — I build functional prototypes from concept through production.
 
-My portfolio is at kohler.solokit.app and I have attached my resume below. I would love to interview with your team. Thank you for your consideration, and I hope to hear from you.`;
+I have included my resume, and my projects and study are at kohler.solokit.app. I would love to interview with your team. Thank you for your consideration, and I hope to hear from you.`;
 }
 
 function generateFollowup2Body(row: FollowupRow): string {
   const firstName = row.contactname?.split(" ")[0] || "Hiring Manager";
   const company = row.companyname.replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?)$/i, "").trim();
+
+  // Government niche
+  if (row.companyname.startsWith("CDOT")) {
+    return `Hello ${firstName},
+
+I wanted to follow up one last time regarding engineering opportunities at ${company}. I remain very interested and am available to interview at your convenience.
+
+My projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.`;
+  }
+
   return `Hello ${firstName},
 
 I wanted to follow up one last time regarding engineering opportunities at ${company}. I remain very interested and would love the chance to interview with your team.
 
-My portfolio is at kohler.solokit.app. Thank you for your consideration, and I hope to hear from you.`;
+My projects and study are at kohler.solokit.app. Thank you for your consideration, and I hope to hear from you.`;
 }
 
 type Stage = "letter" | "followup1" | "followup2" | "done";
@@ -210,7 +230,7 @@ export default function FollowupsPage() {
                 </Link>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight uppercase">Follow-ups</h1>
-                  <p className="text-slate-400 text-xs mt-0.5">Three-and-out: Letter → Email 1 → Email 2</p>
+                  <p className="text-slate-400 text-xs mt-0.5">Email follow-ups for mailed letters</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
