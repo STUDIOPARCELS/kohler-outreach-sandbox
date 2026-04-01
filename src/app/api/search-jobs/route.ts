@@ -31,6 +31,29 @@ export async function POST(req: NextRequest) {
   if (!companyname)
     return NextResponse.json({ error: "companyname required" }, { status: 400 });
 
+  // FIRST: check job_listings for existing jobs linked to this company
+  const { data: dbJobs } = await supabaseAdmin
+    .from("job_listings")
+    .select("title, location, salary, job_url, apply_url, employment_type, source, received_at")
+    .eq("companyname", companyname)
+    .in("ingest_status", ["new", "open"])
+    .order("received_at", { ascending: false });
+
+  if (dbJobs && dbJobs.length > 0) {
+    return NextResponse.json({
+      jobs: dbJobs.map((j) => ({
+        title: j.title,
+        location: j.location || "Denver metro",
+        salary: j.salary || null,
+        url: j.job_url || j.apply_url || "",
+        work_type: j.employment_type || null,
+        source: j.source || "database",
+      })),
+      source: "database",
+    });
+  }
+
+  // FALLBACK: web search via OpenAI
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return NextResponse.json({ jobs: [], source: "no_key" });
 
