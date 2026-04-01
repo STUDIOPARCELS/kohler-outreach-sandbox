@@ -284,16 +284,33 @@ export async function POST(req: NextRequest) {
         const parsedJobs = parseZipRecruiterEmail(subject, html, msgId);
 
         for (const job of parsedJobs) {
-          // Try to match company in existing outreach companies
+          // Try to match company in existing outreach companies (bidirectional fuzzy)
           let companyId: number | null = null;
+          const cleanName = job.company_name
+            .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Manufacturing|Services|Industries)$/i, "")
+            .trim();
+
+          // Try exact-ish match first (existing contains cleaned job name, or job name contains existing)
           const { data: matchedCompany } = await supabaseAdmin
             .from("companies")
-            .select("id")
-            .ilike("companyname", `%${job.company_name}%`)
-            .limit(1);
+            .select("id, companyname")
+            .or(`companyname.ilike.%${cleanName}%`)
+            .limit(5);
 
           if (matchedCompany && matchedCompany.length > 0) {
-            companyId = matchedCompany[0].id;
+            // Pick the best match — prefer exact, then shortest (most specific)
+            const exact = matchedCompany.find(
+              (c) => c.companyname.toLowerCase() === job.company_name.toLowerCase() || c.companyname.toLowerCase() === cleanName.toLowerCase()
+            );
+            companyId = exact?.id || matchedCompany[0].id;
+          }
+
+          // Reverse check: does the job company name contain any existing company name?
+          if (!companyId && cleanName.length > 5) {
+            const { data: reverseMatch } = await supabaseAdmin.rpc("match_company_reverse", { search_name: cleanName }).limit(1);
+            if (reverseMatch && reverseMatch.length > 0) {
+              companyId = reverseMatch[0].id;
+            }
           }
 
           // Upsert job position
