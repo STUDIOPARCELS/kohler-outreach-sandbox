@@ -229,7 +229,7 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
   "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
   "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
-  "Government / Public Works / Infrastructure": "I have hands-on experience with SolidWorks, FEA, GD&T, CNC machining, and taking designs from concept through fabrication.",
+  "Government / Public Works / Infrastructure": "",
 };
 
 const NICHE_ORDER = [
@@ -506,7 +506,9 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area. I just received my EIT and would love to interview with your team.
+My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
+
+I am writing because I am interested in working for {{COMPANY}}. I just received my EIT and would love to interview with your team if the timing works.
 
 I included my resume and a card that links to my projects and study. Thank you and I hope to hear from you.
 

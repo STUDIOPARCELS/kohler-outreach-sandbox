@@ -32,9 +32,16 @@ function generateFollowup1Body(row: FollowupRow): string {
 
   return `Hello ${firstName},
 
-I hope you received my recent letter expressing interest in ${company}. I am a BSME from Colorado School of Mines and I am committed to the Denver area. I just received my EIT and would love to interview with your team.
+I hope you received my recent letter expressing interest in ${company}. I am a recent BSME from Colorado School of Mines and I am committed to the Denver area. I just received my EIT and would love to interview with your team.
 
-I have included my resume, and my projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.`;
+I have included my resume, and my projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.
+
+Sincerely,
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`;
 }
 
 function generateFollowup2Body(row: FollowupRow): string {
@@ -45,7 +52,14 @@ function generateFollowup2Body(row: FollowupRow): string {
 
 I wanted to follow up one last time regarding opportunities at ${company}. I remain very interested and am available to interview at your convenience.
 
-My projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.`;
+My projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.
+
+Sincerely,
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`;
 }
 
 type Stage = "letter" | "followup1" | "followup2" | "done";
