@@ -30,40 +30,22 @@ function generateFollowup1Body(row: FollowupRow): string {
   const firstName = row.contactname?.split(" ")[0] || "Hiring Manager";
   const company = row.companyname.replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?)$/i, "").trim();
 
-  // Government niche — shorter, references specific position, emphasizes availability
-  if (row.companyname.startsWith("CDOT")) {
-    return `Hello ${firstName},
-
-I hope you received my letter regarding engineering opportunities at ${company}. I am a BSME from the Colorado School of Mines with an EIT certification, committed to the Denver area and available now.
-
-I have included my resume, and my projects and study are at kohler.solokit.app. I would love to interview with your team. Thank you for your consideration, and I hope to hear from you.`;
-  }
-
   return `Hello ${firstName},
 
-I hope you received my letter expressing interest in ${company}. I am a BSME graduate from the Colorado School of Mines with an EIT certification. My background combines hands-on fabrication, CNC machining, and SolidWorks simulation — I build functional prototypes from concept through production.
+I hope you received my recent letter expressing interest in ${company}. I am a BSME from Colorado School of Mines and I am committed to the Denver area. I just received my EIT and would love to interview with your team.
 
-I have included my resume, and my projects and study are at kohler.solokit.app. I would love to interview with your team. Thank you for your consideration, and I hope to hear from you.`;
+I have included my resume, and my projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.`;
 }
 
 function generateFollowup2Body(row: FollowupRow): string {
   const firstName = row.contactname?.split(" ")[0] || "Hiring Manager";
   const company = row.companyname.replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?)$/i, "").trim();
 
-  // Government niche
-  if (row.companyname.startsWith("CDOT")) {
-    return `Hello ${firstName},
-
-I wanted to follow up one last time regarding engineering opportunities at ${company}. I remain very interested and am available to interview at your convenience.
-
-My projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.`;
-  }
-
   return `Hello ${firstName},
 
-I wanted to follow up one last time regarding engineering opportunities at ${company}. I remain very interested and would love the chance to interview with your team.
+I wanted to follow up one last time regarding opportunities at ${company}. I remain very interested and am available to interview at your convenience.
 
-My projects and study are at kohler.solokit.app. Thank you for your consideration, and I hope to hear from you.`;
+My projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.`;
 }
 
 type Stage = "letter" | "followup1" | "followup2" | "done";

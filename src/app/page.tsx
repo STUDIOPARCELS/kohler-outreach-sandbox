@@ -216,7 +216,7 @@ function assembleLetter(
 const NICHE_PERSONAL: Record<string, string> = {
   "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
   "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
-  "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking.",
+  "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
   "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
   "Energy / Renewables / Power": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
   "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
@@ -424,13 +424,11 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-I hope you're doing well. My name is Kohler Wood, EIT and BSME graduate from Colorado School of Mines.
+My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area.
 
 I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
 
-I've included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team if the timing works.
-
-Thank you and I hope to hear from you.
+I included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team. Thank you and I hope to hear from you.
 
 Sincerely,
 
@@ -475,7 +473,7 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
     "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship."
   ),
   "Outdoor Recreation & Equipment": nicheTemplate(
-    "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking."
+    "I have spent my life in the outdoors and would love to engineer the products I use every day."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
     "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet."
@@ -499,11 +497,9 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-My name is Kohler Wood. I am a BSME graduate from the Colorado School of Mines and I just received my EIT certification. I am committed to the Denver area and available to start immediately.
+My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area. I just received my EIT and would love to interview with your team.
 
-I have hands-on experience with SolidWorks, FEA, GD&T, CNC machining, and taking designs from concept through fabrication.
-
-I included my resume and a card that links to my projects and study. I would love to interview with your team. Thank you and I hope to hear from you.
+I included my resume and a card that links to my projects and study. Thank you and I hope to hear from you.
 
 Sincerely,
 
@@ -1872,7 +1868,7 @@ export default function HomePage() {
                                                         const NICHE_DEFAULTS: Record<string, string> = {
                                                           "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
                                                           "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
-                                                          "Outdoor Recreation & Equipment": "I grew up in Sun Valley, ID and have spent my life in the outdoors — skiing and hiking.",
+                                                          "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
                                                           "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
                                                           "Energy / Renewables / Power": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
                                                           "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
@@ -1885,6 +1881,7 @@ export default function HomePage() {
                                                           "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
                                                           "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
                                                           "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
+                                                          "Government / Public Works / Infrastructure": "",
                                                         };
                                                         let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication.";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
