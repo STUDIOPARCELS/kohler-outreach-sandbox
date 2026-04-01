@@ -578,6 +578,7 @@ export default function HomePage() {
   const orderedNichesRef = useRef<string[]>([]);
   const [followupReady, setFollowupReady] = useState(0);
   const [followupPending, setFollowupPending] = useState(0);
+  const [newJobsCount, setNewJobsCount] = useState(0);
 
   /* ── Multi-letter helpers ── */
   const allLetters = Array.from(lettersMap.values()).flat();
@@ -640,6 +641,16 @@ export default function HomePage() {
         if (!fuData.error) {
           setFollowupReady(fuData.counts?.ready || (fuData.ready || []).length);
           setFollowupPending(fuData.counts?.pending || (fuData.upcoming || []).length);
+        }
+      } catch { /* non-critical */ }
+
+      // Fetch new jobs count from ZipRecruiter ingest
+      try {
+        const jobsRes = await fetch("/api/open-roles-list");
+        const jobsData = await jobsRes.json();
+        if (Array.isArray(jobsData)) {
+          const totalRoles = jobsData.reduce((sum: number, c: { roles: number }) => sum + (c.roles || 0), 0);
+          setNewJobsCount(totalRoles);
         }
       } catch { /* non-critical */ }
     } catch (e: unknown) {
@@ -1364,6 +1375,13 @@ export default function HomePage() {
                   <div className="text-xs text-rose-300 uppercase tracking-wider font-semibold">Follow-ups</div>
                   <div className="text-[10px] text-amber-300 font-semibold mt-0.5">{followupPending} pending</div>
                 </a>
+                {newJobsCount > 0 && (
+                  <a href="/open-roles" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-violet-500/20 rounded-xl border border-violet-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[90px] sm:min-w-[110px] hover:bg-violet-500/30 transition-colors cursor-pointer animate-pulse">
+                    <div className="text-2xl font-bold text-white">{newJobsCount}</div>
+                    <div className="text-xs text-violet-300 uppercase tracking-wider font-semibold">New Jobs</div>
+                    <div className="text-[10px] text-violet-400 font-semibold mt-0.5">ZipRecruiter</div>
+                  </a>
+                )}
               </div>
             </div>
           </div>
