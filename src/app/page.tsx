@@ -508,7 +508,7 @@ Hello Hiring Manager,
 
 My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
 
-I am writing because I am interested in working for {{COMPANY}}. I just received my EIT and would love to interview with your team if the timing works.
+I am writing because I am interested in working for the Colorado Department of Transportation. I just received my EIT and would love to interview with your team if the timing works.
 
 I included my resume and a card that links to my projects and study. Thank you and I hope to hear from you.
 
@@ -1945,7 +1945,7 @@ export default function HomePage() {
 
 My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
 
-I am writing because I am interested in working for ${displayName}. I just received my EIT and would love to interview with your team if the timing works.
+I am writing because I am interested in working for the Colorado Department of Transportation. I just received my EIT and would love to interview with your team if the timing works.
 
 I have attached my resume below. My projects and study are at kohler.solokit.app. Thank you and I hope to hear from you.
 
@@ -1996,7 +1996,7 @@ Hello ${ct.contactname.split(" ")[0]},
 
 My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
 
-I am writing because I am interested in working for ${displayName}. I just received my EIT and would love to interview with your team if the timing works.
+I am writing because I am interested in working for the Colorado Department of Transportation. I just received my EIT and would love to interview with your team if the timing works.
 
 I included my resume and a card that links to my projects and study. Thank you and I hope to hear from you.
 
