@@ -4,38 +4,38 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
-  // Get all relevant roles
-  const { data: roles, error: rolesErr } = await supabaseAdmin
-    .from("relevant_roles")
-    .select("company_name");
 
-  if (rolesErr)
-    return NextResponse.json({ error: rolesErr.message }, { status: 500 });
+  // Query job_listings directly — single source of truth
+  const { data: jobs, error } = await supabaseAdmin
+    .from("job_listings")
+    .select("companyname, company_id, title, source, ingest_status")
+    .in("ingest_status", ["new", "open"]);
+
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Count roles per company
   const countMap = new Map<string, number>();
-  for (const r of roles || []) {
-    countMap.set(r.company_name, (countMap.get(r.company_name) || 0) + 1);
+  for (const j of jobs || []) {
+    countMap.set(j.companyname, (countMap.get(j.companyname) || 0) + 1);
   }
 
-  // Get company details for those with roles
   const companyNames = Array.from(countMap.keys());
   if (companyNames.length === 0) return NextResponse.json([]);
 
-  const { data: companies, error: compErr } = await supabaseAdmin
+  // Get company details
+  const { data: companies } = await supabaseAdmin
     .from("companies")
-    .select("companyname, tier, city")
+    .select("companyname, tier, city, niche")
     .in("companyname", companyNames)
     .order("tier", { ascending: true });
-
-  if (compErr)
-    return NextResponse.json({ error: compErr.message }, { status: 500 });
 
   const rows = (companies || []).map((co) => ({
     companyname: co.companyname,
     tier: co.tier,
     city: co.city,
-    job_count: countMap.get(co.companyname) || 0,
+    niche: co.niche,
+    roles: countMap.get(co.companyname) || 0,
   }));
 
   return NextResponse.json(rows);

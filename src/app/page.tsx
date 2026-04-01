@@ -581,6 +581,7 @@ export default function HomePage() {
   const [followupReady, setFollowupReady] = useState(0);
   const [followupPending, setFollowupPending] = useState(0);
   const [newJobsCount, setNewJobsCount] = useState(0);
+  const [companyJobCounts, setCompanyJobCounts] = useState<Map<string, number>>(new Map());
 
   /* ── Multi-letter helpers ── */
   const allLetters = Array.from(lettersMap.values()).flat();
@@ -653,6 +654,11 @@ export default function HomePage() {
         if (Array.isArray(jobsData)) {
           const totalRoles = jobsData.reduce((sum: number, c: { roles: number }) => sum + (c.roles || 0), 0);
           setNewJobsCount(totalRoles);
+          const jcMap = new Map<string, number>();
+          for (const c of jobsData) {
+            if (c.companyname && c.roles > 0) jcMap.set(c.companyname, c.roles);
+          }
+          setCompanyJobCounts(jcMap);
         }
       } catch { /* non-critical */ }
     } catch (e: unknown) {
@@ -1692,6 +1698,11 @@ export default function HomePage() {
                                     {c.city}
                                   </span>
                                 </div>
+                                {(companyJobCounts.get(c.companyname) || 0) > 0 && (
+                                  <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-bold bg-violet-100 text-violet-700 rounded-full">
+                                    {companyJobCounts.get(c.companyname)} {companyJobCounts.get(c.companyname) === 1 ? 'job' : 'jobs'}
+                                  </span>
+                                )}
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 {/* Printed letter icon + month/year */}
