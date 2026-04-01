@@ -265,9 +265,9 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
     descText: "text-slate-700",
   },
   "Government / Public Works / Infrastructure": {
-    bg: "from-amber-50 to-yellow-50",
-    headerBg: "from-amber-800 via-yellow-900 to-amber-900",
-    border: "border-amber-300/50",
+    bg: "from-slate-50 to-gray-50",
+    headerBg: "from-amber-700 via-yellow-800 to-amber-900",
+    border: "border-amber-300/40",
     accent: "text-amber-900",
     descBg: "from-amber-50/80 to-yellow-50/60 border-amber-200/50",
     descText: "text-amber-900",
