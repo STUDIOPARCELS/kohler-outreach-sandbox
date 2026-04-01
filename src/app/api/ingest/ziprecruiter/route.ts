@@ -61,6 +61,24 @@ function buildExternalJobKey(url: string, company: string, title: string, locati
   return createHash("sha256").update(input).digest("hex").slice(0, 24);
 }
 
+/* ── Staffing agency blocklist — skip these, they're middlemen not outreach targets ── */
+const STAFFING_BLOCKLIST = new Set([
+  "cybercoders", "jobot", "insight global", "belcan", "rolinc staffing",
+  "executive recruiting", "executive recruiting group", "extensishr",
+  "first solutions", "first solutions group", "liberty personnel",
+  "liberty personnel services", "matchstick", "point solutions",
+  "point solutions group", "epc staff", "epc staff acquisition",
+  "robert half", "randstad", "adecco", "manpower", "kelly services",
+  "aerotek", "hays", "spherion", "modis", "teksystems", "apex systems",
+]);
+
+function isStaffingAgency(company: string): boolean {
+  const clean = normalizeCompanyName(company).toLowerCase();
+  return STAFFING_BLOCKLIST.has(clean) || 
+    STAFFING_BLOCKLIST.has(company.toLowerCase()) ||
+    clean.includes("staffing") || clean.includes("recruiting") || clean.includes("personnel");
+}
+
 /* ── Email parser ── */
 interface ParsedJob {
   title: string;
@@ -261,6 +279,9 @@ export async function POST(req: NextRequest) {
         const parsedJobs = parseZipRecruiterEmail(subject, html, msgId);
 
         for (const job of parsedJobs) {
+          // Skip staffing agencies
+          if (isStaffingAgency(job.companyname)) continue;
+
           // Match or create company
           let matched = matchCompanyInMemory(job.companyname, companyList);
           let companyId: number | null = matched?.id || null;
