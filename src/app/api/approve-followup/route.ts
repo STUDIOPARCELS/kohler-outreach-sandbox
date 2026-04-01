@@ -42,10 +42,14 @@ export async function POST(req: NextRequest) {
     // Handwritten signature image
     const signatureImg = `<img src="https://kohler-outreach.vercel.app/KOHLER_SIGNATURE.png" alt="Kohler Wood" width="80" style="display:block; margin:4px 0;" />`;
 
+    // Strip signature block from body if present (it's in the editable textarea for preview)
+    // The HTML version uses the styled signature instead
+    const bodyWithoutSig = body.replace(/\n\nSincerely,[\s\S]*$/, "");
+
     // Convert plain text body to HTML
     const htmlBody = `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 650px;">
-        ${body
+        ${bodyWithoutSig
           .split("\n\n")
           .map(
             (p: string) =>

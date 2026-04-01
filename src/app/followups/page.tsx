@@ -30,13 +30,19 @@ function generateFollowupBody(row: FollowupRow): string {
   const company = row.companyname.replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?)$/i, "").trim();
   return `Hello ${firstName},
 
-I recently sent a letter expressing my interest in joining ${company} as a mechanical engineer. I wanted to follow up and reiterate my enthusiasm for the opportunity.
+I hope you received my letter expressing interest in ${company}. I am a BSME graduate from the Colorado School of Mines with an EIT certification. My background combines hands-on fabrication, CNC machining, and SolidWorks simulation — I build functional prototypes from concept through production.
 
-I am a BSME graduate from the Colorado School of Mines with an EIT certification. My background combines hands-on fabrication, CNC machining, and SolidWorks simulation — I build functional prototypes from concept through production.
+My portfolio is at kohler.solokit.app and I have attached my resume below. I would love to interview with your team.
 
-My portfolio is at kohler.solokit.app and I have attached my resume below. I would welcome the chance to discuss how I can contribute to your team.
+Thank you for your consideration, and I hope to hear from you.
 
-Thank you for your time and consideration.`;
+Sincerely,
+
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`;
 }
 
 export default function FollowupsPage() {
