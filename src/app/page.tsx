@@ -229,10 +229,12 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
   "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
   "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
+  "Government / Public Works / Infrastructure": "I have experience with SolidWorks modeling, GD&T, FEA, and taking designs from concept through prototype. I am interested in public infrastructure engineering and the opportunity to contribute to projects that serve Colorado communities.",
 };
 
 const NICHE_ORDER = [
   "TEST",
+  "Government / Public Works / Infrastructure",
   "Skiing",
   "Acoustics / Audio / Musical Instruments",
   "Outdoor Recreation & Equipment",
@@ -260,6 +262,14 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
     accent: "text-slate-700",
     descBg: "from-slate-50/80 to-slate-100/60 border-slate-200/50",
     descText: "text-slate-700",
+  },
+  "Government / Public Works / Infrastructure": {
+    bg: "from-indigo-50 to-slate-50",
+    headerBg: "from-indigo-900 via-indigo-800 to-slate-900",
+    border: "border-indigo-300/50",
+    accent: "text-indigo-900",
+    descBg: "from-indigo-50/80 to-blue-50/60 border-indigo-200/50",
+    descText: "text-indigo-900",
   },
   "Acoustics / Audio / Musical Instruments": {
     bg: "from-slate-50 to-gray-50",
@@ -478,6 +488,9 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
   ),
   "Metals / Material Science": nicheTemplate(
     "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype."
+  ),
+  "Government / Public Works / Infrastructure": nicheTemplate(
+    "I have experience with SolidWorks modeling, GD&T, FEA, and taking designs from concept through prototype. I am interested in public infrastructure engineering and the opportunity to contribute to projects that serve Colorado communities."
   ),
 };
 
