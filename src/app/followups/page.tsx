@@ -274,22 +274,62 @@ export default function FollowupsPage() {
                               <span className="text-xs font-semibold text-slate-700">{row.contactname}</span>
                             </div>
                             {row.contact_title && (
-                              <span className="text-xs text-slate-500">{row.contact_title}</span>
+                              <div className="flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                <span className="text-xs text-slate-500">{row.contact_title}</span>
+                              </div>
                             )}
                             {row.contact_email && (
-                              <span className="text-xs text-sky-600">{row.contact_email}</span>
+                              <div className="flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                <span className="text-xs text-sky-600">{row.contact_email}</span>
+                              </div>
                             )}
-                            <span className="text-xs text-slate-500">Mailed {formatDate(row.sent_at!)}</span>
+                            <div className="flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                              <span className="text-xs text-slate-500">Letter mailed {formatDate(row.sent_at!)}</span>
+                            </div>
                           </div>
 
-                          {/* Original letter */}
-                          {row.body_final && (
+                          {/* Tabs */}
+                          <div className="flex border-b border-slate-100">
+                            <button onClick={() => setActiveTab("letter")} className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === "letter" ? "text-slate-800 border-b-2 border-slate-800" : "text-slate-400 hover:text-slate-600"}`}>
+                              Original Letter
+                            </button>
+                            <button onClick={() => setActiveTab("followup")} className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === "followup" ? "text-amber-600 border-b-2 border-amber-600" : "text-slate-400 hover:text-slate-600"}`}>
+                              Follow-up Email
+                            </button>
+                          </div>
+
+                          {/* Tab content */}
+                          {activeTab === "letter" && row.body_final && (
                             <div className="px-5 py-5">
-                              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Original Letter</h4>
                               <div className="bg-gray-50 rounded-xl border border-gray-200 px-6 py-5" style={{ maxHeight: "500px", overflowY: "auto" }}>
                                 <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">{row.body_final}</pre>
                               </div>
-                              <p className="text-xs text-amber-600 mt-3 font-medium">Follow-up email will be available in {daysLeft} day{daysLeft !== 1 ? "s" : ""}</p>
+                            </div>
+                          )}
+
+                          {activeTab === "followup" && (
+                            <div className="px-5 py-5">
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">{daysLeft}d before auto-window — send early if ready</span>
+                              </div>
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Subject</label>
+                              <input type="text" value={editSubject} onChange={(e) => setEditSubject(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200" />
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 mt-3">Body</label>
+                              <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={12} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200 font-mono leading-relaxed" />
+                              <div className="flex items-center justify-between mt-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input type="checkbox" checked={attachResume} onChange={(e) => setAttachResume(e.target.checked)} className="rounded border-slate-300 text-amber-600 focus:ring-amber-200" />
+                                  <span className="text-xs text-slate-500">Attach resume</span>
+                                </label>
+                                <button onClick={() => handleSend(row)} disabled={sending === row.id} className="px-6 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-all disabled:opacity-50 uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]">
+                                  {sending === row.id ? "Sending…" : "Send Now"}
+                                </button>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-2">Includes HTML signature · Reply-to: akwood1@mines.edu · Sent from Gmail</p>
                             </div>
                           )}
                         </div>

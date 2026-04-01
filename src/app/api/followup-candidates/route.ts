@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const { data: upcoming, error: upErr } = await supabaseAdmin
       .from("reachout_company_inserts")
       .select(
-        "id, companyname, contactname, contact_title, contact_email, status, sent_at, emailed_at"
+        "id, companyname, contactname, contact_title, contact_email, body_final, subject_final, status, sent_at, emailed_at"
       )
       .not("contact_email", "is", null)
       .not("sent_at", "is", null)
