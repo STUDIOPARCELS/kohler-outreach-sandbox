@@ -69,6 +69,7 @@ function getBucket(row: FollowupRow): "pending" | "ready1" | "ready2" | "done" {
 export default function FollowupsPage() {
   const toast = useToast();
   const [items, setItems] = useState<FollowupRow[]>([]);
+  const [needsEmailItems, setNeedsEmailItems] = useState<FollowupRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
   const [modalRow, setModalRow] = useState<FollowupRow | null>(null);
@@ -77,6 +78,8 @@ export default function FollowupsPage() {
   const [editBody, setEditBody] = useState("");
   const [attachResume, setAttachResume] = useState(true);
   const [dark, setDark] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [searching, setSearching] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -84,6 +87,7 @@ export default function FollowupsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setItems(data.all || []);
+      setNeedsEmailItems(data.needsEmail || []);
     } catch (err) {
       toast("Failed to load follow-ups", "error");
       console.error(err);
@@ -137,6 +141,48 @@ export default function FollowupsPage() {
   const ready1 = items.filter((r) => getBucket(r) === "ready1");
   const ready2 = items.filter((r) => getBucket(r) === "ready2");
   const done = items.filter((r) => getBucket(r) === "done");
+
+  async function handleSearchEmail() {
+    if (!modalRow) return;
+    setSearching(true);
+    try {
+      const res = await fetch("/api/find-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId: null, contactname: modalRow.contactname, companyname: modalRow.companyname }),
+      });
+      const data = await res.json();
+      if (data.email) {
+        setEmailInput(data.email);
+        toast(`Found: ${data.email}`);
+      } else {
+        toast("No email found via RocketReach", "error");
+      }
+    } catch {
+      toast("Search failed", "error");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function handleSaveEmail() {
+    if (!modalRow || !emailInput.trim()) return;
+    try {
+      const res = await fetch("/api/update-followup-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ letterId: modalRow.id, email: emailInput.trim() }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast(`Email saved for ${modalRow.contactname}`);
+      setModalRow(null);
+      setEmailInput("");
+      load();
+    } catch (err) {
+      toast(`Failed: ${err instanceof Error ? err.message : String(err)}`, "error");
+    }
+  }
 
   const bg = dark ? "bg-gray-950" : "bg-gray-50";
   const cardBg = dark ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200";
@@ -192,6 +238,12 @@ export default function FollowupsPage() {
                   <div className="text-xl sm:text-2xl font-bold text-white">{done.length}</div>
                   <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Done</div>
                 </div>
+                {needsEmailItems.length > 0 && (
+                  <div className="text-center px-2.5 py-2 sm:px-4 sm:py-3 bg-orange-500/20 rounded-xl border border-orange-400/30">
+                    <div className="text-xl sm:text-2xl font-bold text-white">{needsEmailItems.length}</div>
+                    <div className="text-[9px] sm:text-[10px] text-orange-300 uppercase tracking-wider font-semibold">No Email</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -199,7 +251,7 @@ export default function FollowupsPage() {
 
         {loading ? (
           <div className={`text-center py-20 ${textMuted}`}>Loading…</div>
-        ) : items.length === 0 ? (
+        ) : items.length === 0 && needsEmailItems.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">📭</div>
             <p className={`text-lg font-medium ${textSecondary}`}>No follow-ups pending</p>
@@ -269,6 +321,20 @@ export default function FollowupsPage() {
                 </BentoGrid>
               </Section>
             )}
+
+            {/* NEEDS EMAIL — sent letters with no email address */}
+            {needsEmailItems.length > 0 && (
+              <Section label="NEEDS EMAIL" color="orange" count={needsEmailItems.length} dark={dark} sectionLabel={sectionLabel}>
+                <BentoGrid>
+                  {needsEmailItems.map((row) => (
+                    <BentoCard key={row.id} row={row} onClick={() => { openModal(row); setActiveTab("followup"); setEmailInput(""); }} dark={dark}
+                      cardBg={cardBg} cardHover={cardHover} textPrimary={textPrimary} textSecondary={textSecondary} textMuted={textMuted}
+                      badge={<span className="px-2 py-0.5 text-[9px] font-bold text-orange-700 bg-orange-100 rounded-full uppercase">Email?</span>}
+                    />
+                  ))}
+                </BentoGrid>
+              </Section>
+            )}
           </div>
         )}
       </div>
@@ -325,7 +391,41 @@ export default function FollowupsPage() {
 
             {activeTab === "followup" && (
               <div className="px-4 py-4 sm:px-5 sm:py-5">
-                {getStage(modalRow) === "done" ? (
+                {/* No email — show search/add form */}
+                {(!modalRow.contact_email || modalRow.contact_email.trim() === "") ? (
+                  <div>
+                    <div className={`flex items-center gap-2 mb-4 px-3 py-2 rounded-lg ${dark ? "bg-orange-900/30 border border-orange-700/50" : "bg-orange-50 border border-orange-200"}`}>
+                      <svg className="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                      <span className={`text-xs font-medium ${dark ? "text-orange-300" : "text-orange-700"}`}>No email on file for {modalRow.contactname}. Add one to enable follow-up emails.</span>
+                    </div>
+                    <label className={`block text-[10px] font-semibold uppercase tracking-wider mb-1 ${textMuted}`}>Email Address</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        placeholder={`email@${modalRow.companyname.toLowerCase().replace(/\s+/g, "").slice(0, 12)}.com`}
+                        className={`flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 ${inputBg}`}
+                      />
+                      <button
+                        onClick={handleSearchEmail}
+                        disabled={searching}
+                        className="px-4 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-all disabled:opacity-50 uppercase tracking-wide whitespace-nowrap"
+                      >
+                        {searching ? "Searching…" : "Search"}
+                      </button>
+                    </div>
+                    <p className={`text-[10px] mt-1.5 ${textMuted}`}>Type manually or click Search to look up via RocketReach</p>
+                    {emailInput.trim() && (
+                      <button
+                        onClick={handleSaveEmail}
+                        className="w-full mt-4 px-6 py-2.5 text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-xl transition-all uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]"
+                      >
+                        Save Email & Enable Follow-up
+                      </button>
+                    )}
+                  </div>
+                ) : getStage(modalRow) === "done" ? (
                   <div className="text-center py-8">
                     <div className="text-3xl mb-2">✅</div>
                     <p className={`font-medium ${textSecondary}`}>All follow-ups complete</p>
@@ -361,8 +461,8 @@ export default function FollowupsPage() {
 /* ─── Sub-components ─── */
 
 function Section({ label, color, count, dark, sectionLabel, children }: { label: string; color: string; count: number; dark: boolean; sectionLabel: string; children: React.ReactNode }) {
-  const dotColors: Record<string, string> = { emerald: "bg-emerald-500", rose: "bg-rose-500", amber: "bg-amber-400", slate: "bg-slate-400" };
-  const textColors: Record<string, string> = { emerald: "text-emerald-500", rose: "text-rose-500", amber: "text-amber-500", slate: "text-slate-400" };
+  const dotColors: Record<string, string> = { emerald: "bg-emerald-500", rose: "bg-rose-500", amber: "bg-amber-400", slate: "bg-slate-400", orange: "bg-orange-500" };
+  const textColors: Record<string, string> = { emerald: "text-emerald-500", rose: "text-rose-500", amber: "text-amber-500", slate: "text-slate-400", orange: "text-orange-500" };
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">

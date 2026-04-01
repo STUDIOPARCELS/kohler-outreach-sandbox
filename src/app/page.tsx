@@ -598,8 +598,8 @@ export default function HomePage() {
         const fuRes = await fetch("/api/followup-candidates");
         const fuData = await fuRes.json();
         if (!fuData.error) {
-          setFollowupReady((fuData.ready || []).length);
-          setFollowupPending((fuData.upcoming || []).length);
+          setFollowupReady(fuData.counts?.ready || (fuData.ready || []).length);
+          setFollowupPending(fuData.counts?.pending || (fuData.upcoming || []).length);
         }
       } catch { /* non-critical */ }
     } catch (e: unknown) {
