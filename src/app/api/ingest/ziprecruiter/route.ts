@@ -607,68 +607,78 @@ export async function POST(req: NextRequest) {
           const now = new Date().toISOString();
           const receivedAt = dateStr ? new Date(dateStr).toISOString() : now;
 
-          const { error: upsertErr } = await supabaseAdmin.from("job_listings").upsert({
-            companyname: matched?.name || canonicalName,
-            company_id: companyId,
-            title: job.title,
-            salary: job.salary || null,
-            location: job.location || null,
-            employment_type: job.employment_type || null,
-            source: job.source,
-            external_job_key: job.external_job_key,
-            gmail_message_id: msgId,
-            job_url: job.job_url,
-            received_at: receivedAt,
-            first_seen_at: receivedAt,
-            last_seen_at: now,
-            times_seen: 1,
-            raw_payload: {
-              parserVersion: 4,
-              source: job.source,
-              subject,
-              from,
-              messageId: msgId,
-              mime,
-              parsedJob: job,
-            },
-            ingest_status: "new",
-            parser_version: 4,
-          }, {
-            onConflict: "source,external_job_key",
-            ignoreDuplicates: false,
-          });
+          // Check if row exists for tracking updates
+          const { data: existing } = await supabaseAdmin.from("job_listings")
+            .select("id, times_seen, first_seen_at")
+            .eq("source", job.source)
+            .eq("external_job_key", job.external_job_key)
+            .maybeSingle();
 
-          // On conflict, update tracking fields
-          if (upsertErr && upsertErr.code === "23505") {
-            // Unique violation — update tracking
-            await supabaseAdmin.from("job_listings")
+          if (existing) {
+            // Update existing row — preserve first_seen_at, bump last_seen_at and times_seen
+            const { error: updateErr } = await supabaseAdmin.from("job_listings")
               .update({
                 last_seen_at: now,
-                times_seen: supabaseAdmin.rpc ? undefined : 1, // increment handled below
+                times_seen: (existing.times_seen || 1) + 1,
                 gmail_message_id: msgId,
+                salary: job.salary || undefined,
+                employment_type: job.employment_type || undefined,
               })
-              .eq("source", job.source)
-              .eq("external_job_key", job.external_job_key);
+              .eq("id", existing.id);
 
-            // Increment times_seen
-            await supabaseAdmin.rpc("increment_times_seen", {
-              p_source: job.source,
-              p_key: job.external_job_key,
-            }).catch(() => {
-              // RPC may not exist yet — silent fail
+            if (!updateErr) {
+              jobsExtracted++;
+              sourceStats[source]++;
+              if (isReplay) {
+                replayResults.push({
+                  parsed: job,
+                  companyMatch: matched?.name || canonicalName,
+                  companyId,
+                  action: "updated_existing",
+                });
+              }
+            }
+          } else {
+            // Insert new row
+            const { error: insertErr } = await supabaseAdmin.from("job_listings").insert({
+              companyname: matched?.name || canonicalName,
+              company_id: companyId,
+              title: job.title,
+              salary: job.salary || null,
+              location: job.location || null,
+              employment_type: job.employment_type || null,
+              source: job.source,
+              external_job_key: job.external_job_key,
+              gmail_message_id: msgId,
+              job_url: job.job_url,
+              received_at: receivedAt,
+              first_seen_at: receivedAt,
+              last_seen_at: now,
+              times_seen: 1,
+              raw_payload: {
+                parserVersion: 4,
+                source: job.source,
+                subject,
+                from,
+                messageId: msgId,
+                mime,
+                blockIndex: job.block_index,
+              },
+              ingest_status: "new",
+              parser_version: 4,
             });
-          }
 
-          if (!upsertErr) {
-            jobsExtracted++;
-            sourceStats[source]++;
-            if (isReplay) {
-              replayResults.push({
-                parsed: job,
-                companyMatch: matched?.name || canonicalName,
-                companyId,
-                action: matched ? "upserted_matched" : "upserted_created",
-              });
+            if (!insertErr) {
+              jobsExtracted++;
+              sourceStats[source]++;
+              if (isReplay) {
+                replayResults.push({
+                  parsed: job,
+                  companyMatch: matched?.name || canonicalName,
+                  companyId,
+                  action: matched ? "inserted_matched" : "inserted_created",
+                });
+              }
             }
           }
         }
