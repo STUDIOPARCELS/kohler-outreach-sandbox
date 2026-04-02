@@ -80,7 +80,7 @@ function getHeader(headers: gmail_v1.Schema$MessagePartHeader[] | undefined, nam
 /* ── Normalization ── */
 function normalizeCompanyName(name: string): string {
   return name
-    .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Manufacturing|Services|Industries|Group)$/i, "")
+    .replace(/[,\s]+(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Manufacturing|Services|Industries|Group)\.?\s*$/i, "")
     .trim();
 }
 
