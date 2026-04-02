@@ -210,6 +210,62 @@ function parseZipRecruiterEmail(subject: string, html: string, messageId: string
     }
   }
 
+  // ── Strategy 1.5: Phil email parser (single-job, bullet-list format) ──
+  // Phil emails: "Here's a NEW job at {Company}." with bullet list body
+  // Format: * CompanyName / * City, ST • WorkType / * $salary
+  if (jobs.length === 0 && body) {
+    const philCompanyMatch = body.match(/NEW job at ([^.]+)\./i);
+    if (philCompanyMatch) {
+      const philCompany = normalizeCompanyName(philCompanyMatch[1].trim());
+      const lines = body.split(/\r?\n/).map((l) => l.trim());
+      
+      let philTitle = "";
+      let philUrl = "";
+      let philLocation = "";
+      let philSalary = "";
+
+      for (let i = 0; i < lines.length; i++) {
+        // Find title: line before the first URL that isn't "Hi Lisa" or intro text
+        const urlLine = lines[i].match(/^(.+?)\s*<(https?:\/\/[^>]*ziprecruiter\.com[^>]*)>$/);
+        if (urlLine && !philTitle && !urlLine[1].includes("Hi Lisa") && urlLine[1].length > 3 && urlLine[1].length < 80) {
+          const candidate = urlLine[1].trim();
+          if (!/^(View|Quick|Apply|Get|Download|Phil|Privacy|Unsubscribe|View More)/i.test(candidate)) {
+            philTitle = candidate;
+            philUrl = urlLine[2];
+          }
+        }
+
+        // Find location from bullet list: "* City, ST • WorkType"
+        const locMatch = lines[i].match(/^\*\s*([A-Z][^•*\n]{2,40},\s*[A-Z]{2})\s*(?:[•·]\s*(?:In-person|Remote|Hybrid))?/);
+        if (locMatch) philLocation = locMatch[1].trim();
+
+        // Find salary
+        const salMatch = lines[i].match(/^\*?\s*\$[\d,.]+(?:\s*[-–]\s*\$[\d,.]+)?(?:\s*\/\s*(?:yr|hr))?/i);
+        if (salMatch) philSalary = salMatch[0].replace(/^\*\s*/, "").trim();
+      }
+
+      if (philTitle && philCompany) {
+        const key = philUrl
+          ? buildExternalJobKey(philUrl, philCompany, philTitle, philLocation)
+          : createHash("sha256").update(`phil|${philCompany}|${philTitle}|${messageId}`).digest("hex").slice(0, 24);
+
+        if (!seen.has(key)) {
+          seen.add(key);
+          jobs.push({
+            title: philTitle,
+            companyname: philCompany,
+            location: philLocation || "Denver metro area",
+            salary: philSalary,
+            job_url: philUrl ? canonicalizeUrl(philUrl) : "https://www.ziprecruiter.com",
+            employment_type: "",
+            external_job_key: key,
+            source: "ziprecruiter_email",
+          });
+        }
+      }
+    }
+  }
+
   // ── Strategy 2: Subject-based fallback for single-job emails ──
   // Only used if body parser found 0 jobs
   if (jobs.length === 0) {
