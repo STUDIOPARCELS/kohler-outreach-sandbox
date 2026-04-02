@@ -43,10 +43,13 @@ function getBody(payload: gmail_v1.Schema$MessagePart): { content: string; mime:
   return { content: "", mime: "none" };
 }
 
-/** Strip HTML tags, decode entities, normalize whitespace while preserving link text+URLs */
+/** Strip HTML to plain text, preserving link info */
 function htmlToText(html: string): string {
-  // Extract links as "text <URL>" before stripping tags
   let text = html
+    // Remove style and script blocks entirely
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    // Convert links to "text <URL>"
     .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, linkText) => {
       const clean = linkText.replace(/<[^>]+>/g, "").trim();
       return clean ? `${clean}  <${url}>` : `<${url}>`;
@@ -558,10 +561,13 @@ export async function POST(req: NextRequest) {
 
         // ── Replay diagnostics ──
         if (isReplay || dryRun) {
-          const zrUrlCount = (bodyText.match(/ziprecruiter\.com\/[ek]?km\//g) || []).length;
-          const segCount = (bodyText.match(/\s*<https?:\/\/www\.ziprecruiter\.com\/[ek]?km\//g) || []).length;
-          warnings.push(`[diag] msgId=${msgId} mime=${mime} rawLen=${rawBody.length} textLen=${bodyText.length} zrUrls=${zrUrlCount} segments=${segCount} parsed=${parsedJobs.length} source=${source} subject="${subject.slice(0,60)}"`);
-          warnings.push(`[body_sample] ${bodyText.slice(0, 500).replace(/\n/g, "\\n")}`);
+          const zrUrlsInText = (bodyText.match(/ziprecruiter\.com\/e?km\//g) || []).length;
+          const zrUrlsInRaw = (rawBody.match(/ziprecruiter\.com\/e?km\//g) || []).length;
+          const segCount = (bodyText.match(/\s*<https?:\/\/www\.ziprecruiter\.com\/e?km\//g) || []).length;
+          const anyZrInText = (bodyText.match(/ziprecruiter\.com/g) || []).length;
+          const anyZrInRaw = (rawBody.match(/ziprecruiter\.com/g) || []).length;
+          warnings.push(`[diag] msgId=${msgId} mime=${mime} rawLen=${rawBody.length} textLen=${bodyText.length} zrUrlsRaw=${zrUrlsInRaw} zrUrlsText=${zrUrlsInText} segments=${segCount} anyZrRaw=${anyZrInRaw} anyZrText=${anyZrInText} parsed=${parsedJobs.length} source=${source} subject="${subject.slice(0,60)}"`);
+          warnings.push(`[text_sample] ${bodyText.slice(0, 800).replace(/\n/g, "\\n")}`);
         }
 
         if (parsedJobs.length === 0 && source === "governmentjobs") {
