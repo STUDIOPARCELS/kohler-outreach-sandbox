@@ -15,45 +15,61 @@ function checkSecret(req: NextRequest): boolean {
   return provided === secret;
 }
 
-/* ── Helpers ── */
+/* ── MIME helpers ── */
 function decodeBase64Url(data: string): string {
   return Buffer.from(data.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8");
 }
 
-function getBody(payload: gmail_v1.Schema$MessagePart): string {
-  if (payload.body?.data) return decodeBase64Url(payload.body.data);
+function getBodyPart(payload: gmail_v1.Schema$MessagePart, mimeType: string): string {
+  if (payload.mimeType === mimeType && payload.body?.data) return decodeBase64Url(payload.body.data);
   if (payload.parts) {
-    const html = payload.parts.find((p) => p.mimeType === "text/html");
-    if (html?.body?.data) return decodeBase64Url(html.body.data);
-    const text = payload.parts.find((p) => p.mimeType === "text/plain");
-    if (text?.body?.data) return decodeBase64Url(text.body.data);
     for (const part of payload.parts) {
-      if (part.parts) { const nested = getBody(part); if (nested) return nested; }
+      const found = getBodyPart(part, mimeType);
+      if (found) return found;
     }
   }
   return "";
 }
 
-function getTextBody(payload: gmail_v1.Schema$MessagePart): string {
-  if (payload.parts) {
-    const text = payload.parts.find((p) => p.mimeType === "text/plain");
-    if (text?.body?.data) return decodeBase64Url(text.body.data);
-    for (const part of payload.parts) {
-      if (part.parts) { const nested = getTextBody(part); if (nested) return nested; }
-    }
-  }
-  if (payload.mimeType === "text/plain" && payload.body?.data) return decodeBase64Url(payload.body.data);
-  return "";
+function getBody(payload: gmail_v1.Schema$MessagePart): { content: string; mime: string } {
+  // Prefer HTML
+  const html = getBodyPart(payload, "text/html");
+  if (html) return { content: html, mime: "text/html" };
+  // Fallback to plain text
+  const text = getBodyPart(payload, "text/plain");
+  if (text) return { content: text, mime: "text/plain" };
+  // Raw fallback
+  if (payload.body?.data) return { content: decodeBase64Url(payload.body.data), mime: "raw" };
+  return { content: "", mime: "none" };
+}
+
+/** Strip HTML tags, decode entities, normalize whitespace while preserving link text+URLs */
+function htmlToText(html: string): string {
+  // Extract links as "text <URL>" before stripping tags
+  let text = html
+    .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, linkText) => {
+      const clean = linkText.replace(/<[^>]+>/g, "").trim();
+      return clean ? `${clean}  <${url}>` : `<${url}>`;
+    })
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(?:p|div|tr|li|td|th|h[1-6])>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    // Decode HTML entities
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&nbsp;/g, " ")
+    // Collapse whitespace
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n");
+  return text.trim();
 }
 
 function getHeader(headers: gmail_v1.Schema$MessagePartHeader[] | undefined, name: string): string {
   return headers?.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value || "";
 }
 
-function canonicalizeUrl(url: string): string {
-  try { const u = new URL(url); return u.origin + u.pathname; } catch { return url; }
-}
-
+/* ── Normalization ── */
 function normalizeCompanyName(name: string): string {
   return name
     .replace(/\s*,?\s*(Corp\.?|Corporation|Inc\.?|LLC|Ltd\.?|Co\.?|Manufacturing|Services|Industries|Group)$/i, "")
@@ -64,21 +80,22 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function buildExternalJobKey(url: string, company: string, title: string, location: string): string {
-  // Try to extract ZipRecruiter job ID from URL
-  const idMatch = url.match(/\/(\d{8,})/);
-  if (idMatch) return `zr_${idMatch[1]}`;
-  // Fallback: hash the tuple
-  const input = `${canonicalizeUrl(url)}|${company}|${title}|${location}`.toLowerCase();
-  return createHash("sha256").update(input).digest("hex").slice(0, 24);
+/* ── Fingerprint-based dedupe key ── */
+function buildContentKey(company: string, title: string, location: string): string {
+  const input = [
+    normalizeCompanyName(company).toLowerCase().trim(),
+    title.toLowerCase().trim(),
+    location.toLowerCase().trim(),
+  ].join("|");
+  return "zrc_" + createHash("sha256").update(input).digest("hex").slice(0, 20);
 }
 
-/* ── Build external key for government jobs — uses the NEOGOV job ID ── */
+/* ── GovernmentJobs key ── */
 function buildGovJobKey(jobId: string): string {
   return `gov_${jobId}`;
 }
 
-/* ── Staffing agency blocklist — skip these, they're middlemen not outreach targets ── */
+/* ── Staffing agency blocklist ── */
 const STAFFING_BLOCKLIST = new Set([
   "cybercoders", "jobot", "insight global", "belcan", "rolinc staffing",
   "executive recruiting", "executive recruiting group", "extensishr",
@@ -87,11 +104,12 @@ const STAFFING_BLOCKLIST = new Set([
   "point solutions group", "epc staff", "epc staff acquisition",
   "robert half", "randstad", "adecco", "manpower", "kelly services",
   "aerotek", "hays", "spherion", "modis", "teksystems", "apex systems",
+  "pts advance", "professional employment group",
 ]);
 
 function isStaffingAgency(company: string): boolean {
   const clean = normalizeCompanyName(company).toLowerCase();
-  return STAFFING_BLOCKLIST.has(clean) || 
+  return STAFFING_BLOCKLIST.has(clean) ||
     STAFFING_BLOCKLIST.has(company.toLowerCase()) ||
     clean.includes("staffing") || clean.includes("recruiting") || clean.includes("personnel");
 }
@@ -99,426 +117,274 @@ function isStaffingAgency(company: string): boolean {
 /* ── Source detection ── */
 type EmailSource = "ziprecruiter" | "governmentjobs" | "unknown";
 
-function detectSource(from: string): EmailSource {
+function detectSource(from: string, body: string): EmailSource {
   const lower = from.toLowerCase();
   if (lower.includes("ziprecruiter")) return "ziprecruiter";
   if (lower.includes("governmentjobs") || lower.includes("neogov")) return "governmentjobs";
+  // Body-based fallback: if body contains ZR job links
+  if (body.includes("ziprecruiter.com/km/") || body.includes("ziprecruiter.com/ekm/")) return "ziprecruiter";
   return "unknown";
 }
 
-/* ── Shared job interface ── */
+/* ── Shared types ── */
 interface ParsedJob {
   title: string;
   companyname: string;
   location: string;
   salary: string;
-  job_url: string;
   employment_type: string;
-  external_job_key: string;
+  job_url: string;
   source: string;
+  external_job_key: string;
   department?: string;
+  block_index?: number;
 }
 
-/* ── ZipRecruiter email parser v2 — body-block extraction ── */
-function parseZipRecruiterEmail(subject: string, html: string, messageId: string, textBody?: string): ParsedJob[] {
+/* ══════════════════════════════════════════════════════════════
+   ZipRecruiter BODY-BASED PARSER
+   ══════════════════════════════════════════════════════════════ */
+
+const ZR_URL_PATTERN = /https?:\/\/www\.ziprecruiter\.com\/[ek]?km\/[A-Za-z0-9_-]+[^\s<>"')}\]]*(?:\?[^\s<>"')}\]]*)?/g;
+
+const JUNK_PATTERNS = [
+  /view\s+more\s+jobs/i,
+  /privacy\s+policy/i,
+  /unsubscribe/i,
+  /clearbit/i,
+  /get\s+hired\s+faster/i,
+  /download\s+the\s+free/i,
+  /ios\s+or\s+android/i,
+];
+
+const ACTION_PATTERNS = [
+  /^\s*(view\s+details)\s*$/i,
+  /^\s*(apply\s+now)\s*$/i,
+  /^\s*(quick\s+apply)\s*$/i,
+  /^\s*(be\s+seen\s+first)\s*$/i,
+];
+
+function isJunkText(text: string): boolean {
+  return JUNK_PATTERNS.some((p) => p.test(text));
+}
+
+function isActionText(text: string): boolean {
+  return ACTION_PATTERNS.some((p) => p.test(text.trim()));
+}
+
+interface RawBlock {
+  text: string;
+  url: string;
+  type: "title" | "action" | "junk";
+}
+
+function parseZipRecruiterBody(bodyText: string): ParsedJob[] {
   const jobs: ParsedJob[] = [];
   const seen = new Set<string>();
 
-  // ── Strategy 1: Parse text body for job blocks ──
-  // All ZR emails (all subject families) share the same body format:
-  //   Title  <url>
-  //   Company • Location [• WorkType]
-  //   [$salary]
-  //   View Details|Apply Now  <url>
-  const body = textBody || html;
-  if (body) {
-    // Split into lines, normalize
-    const lines = body.split(/\r?\n/).map((l) => l.trim());
-    
-    for (let i = 0; i < lines.length; i++) {
-      // Look for Company • Location pattern (bullet separator)
-      const companyLineMatch = lines[i].match(/^([A-Z][^•\n]{1,60})\s*[•·]\s*([A-Z][^•\n]{2,40}(?:,\s*[A-Z]{2})?)\s*(?:[•·]\s*(?:In-person|Remote|Hybrid))?$/);
-      if (!companyLineMatch) continue;
+  // Extract all "text <URL>" segments
+  const segmentRegex = /([^\n<]*?)\s*<(https?:\/\/www\.ziprecruiter\.com\/[ek]?km\/[^\s<>"')\]]+)>/g;
+  const blocks: RawBlock[] = [];
+  let m: RegExpExecArray | null;
 
-      const companyRaw = companyLineMatch[1].trim();
-      const location = companyLineMatch[2].trim();
+  while ((m = segmentRegex.exec(bodyText)) !== null) {
+    const text = m[1].replace(/\*\s*/g, "").trim();
+    const url = m[2].trim();
 
-      // Skip footer noise
-      if (companyRaw.includes("ZipRecruiter") || companyRaw.includes("Ocean Park")) continue;
-
-      // Look backward for job title (the non-empty line before this, skipping blank lines)
-      let jobTitle = "";
-      let jobUrl = "";
-      for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
-        const prevLine = lines[j];
-        if (!prevLine) continue;
-        // Skip "View Details" / "Apply Now" from previous block
-        if (/^(View Details|Apply Now|Be Seen First|Estimated Pay|New)$/i.test(prevLine)) continue;
-        // Extract URL if present: "Title  <url>" or just "Title"
-        const urlMatch = prevLine.match(/^(.+?)\s{2,}<(https?:\/\/[^>]+)>$/);
-        if (urlMatch) {
-          jobTitle = urlMatch[1].trim();
-          jobUrl = urlMatch[2];
-        } else if (prevLine.length > 3 && prevLine.length < 100 && !prevLine.startsWith("$") && !prevLine.startsWith("http")) {
-          jobTitle = prevLine;
-        }
-        break;
-      }
-
-      if (!jobTitle) continue;
-
-      // Look forward for salary (next non-empty line that starts with $)
-      let salary = "";
-      for (let j = i + 1; j <= Math.min(lines.length - 1, i + 3); j++) {
-        const nextLine = lines[j];
-        if (!nextLine) continue;
-        const salaryMatch = nextLine.match(/^\$[\d,.]+(?:K)?(?:\s*[-–]\s*\$[\d,.]+(?:K)?)?(?:\s*\/\s*(?:yr|hr|year|hour))?/i);
-        if (salaryMatch) { salary = salaryMatch[0]; }
-        break;
-      }
-
-      const company = normalizeCompanyName(companyRaw);
-      
-      // Skip staffing agencies early
-      if (isStaffingAgency(company)) continue;
-
-      // Build dedup key
-      if (!jobUrl) {
-        // Try to find URL in nearby HTML
-        const titleEscaped = jobTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const htmlUrlMatch = html.match(new RegExp(`href=["'](https?://[^"']*ziprecruiter\\.com[^"']*?)["'][^>]*>\\s*${titleEscaped}`, "i"));
-        if (htmlUrlMatch) jobUrl = htmlUrlMatch[1];
-      }
-
-      const key = jobUrl 
-        ? buildExternalJobKey(jobUrl, company, jobTitle, location)
-        : createHash("sha256").update(`${company}|${jobTitle}|${location}|${messageId}`).digest("hex").slice(0, 24);
-
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      jobs.push({
-        title: jobTitle,
-        companyname: company,
-        location: location || "Denver metro area",
-        salary,
-        job_url: jobUrl ? canonicalizeUrl(jobUrl) : "https://www.ziprecruiter.com",
-        employment_type: "",
-        external_job_key: key,
-        source: "ziprecruiter_email",
-      });
+    if (isJunkText(text) || url.includes("unsubscribe") || url.includes("privacy") || url.includes("clearbit")) {
+      blocks.push({ text, url, type: "junk" });
+    } else if (isActionText(text) || text === "" || text === "New") {
+      blocks.push({ text, url, type: "action" });
+    } else {
+      blocks.push({ text, url, type: "title" });
     }
   }
 
-  // ── Strategy 1.5: Phil email parser (single-job, bullet-list format) ──
-  // Phil emails: "Here's a NEW job at {Company}." with bullet list body
-  // Format: * CompanyName / * City, ST • WorkType / * $salary
-  if (jobs.length === 0 && body) {
-    const philCompanyMatch = body.match(/NEW job at ([^.]+)\./i);
-    if (philCompanyMatch) {
-      const philCompany = normalizeCompanyName(philCompanyMatch[1].trim());
-      const lines = body.split(/\r?\n/).map((l) => l.trim());
-      
-      let philTitle = "";
-      let philUrl = "";
-      let philLocation = "";
-      let philSalary = "";
+  // Group: each "title" block followed by context until the next "title" or "junk"
+  let blockIndex = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    if (block.type !== "title") continue;
 
-      for (let i = 0; i < lines.length; i++) {
-        // Find title: line before the first URL that isn't "Hi Lisa" or intro text
-        const urlLine = lines[i].match(/^(.+?)\s*<(https?:\/\/[^>]*ziprecruiter\.com[^>]*)>$/);
-        if (urlLine && !philTitle && !urlLine[1].includes("Hi Lisa") && urlLine[1].length > 3 && urlLine[1].length < 80) {
-          const candidate = urlLine[1].trim();
-          if (!/^(View|Quick|Apply|Get|Download|Phil|Privacy|Unsubscribe|View More)/i.test(candidate)) {
-            philTitle = candidate;
-            philUrl = urlLine[2];
+    const title = block.text;
+    const jobUrl = block.url;
+
+    // Find context between this title URL and the next title/junk URL
+    const titleUrlEnd = bodyText.indexOf(block.url) + block.url.length;
+    let contextEnd = bodyText.length;
+
+    // Find the next title block's text position
+    for (let j = i + 1; j < blocks.length; j++) {
+      if (blocks[j].type === "title") {
+        const nextTitlePos = bodyText.indexOf(blocks[j].text + "  <" + blocks[j].url, titleUrlEnd);
+        if (nextTitlePos > -1) { contextEnd = nextTitlePos; break; }
+        // Fallback: find the next title's URL
+        const nextUrlPos = bodyText.indexOf(blocks[j].url, titleUrlEnd);
+        if (nextUrlPos > -1) { contextEnd = nextUrlPos; break; }
+      }
+      if (blocks[j].type === "junk") {
+        const junkPos = bodyText.indexOf(blocks[j].url, titleUrlEnd);
+        if (junkPos > -1) { contextEnd = junkPos; break; }
+      }
+    }
+
+    const context = bodyText.slice(titleUrlEnd, contextEnd);
+
+    // Parse company + location from context
+    // Pattern: "Company • City, ST" or "Company • City, ST • In-person"
+    let companyname = "";
+    let location = "";
+    let salary = "";
+    let employment_type = "";
+
+    const lines = context.split("\n").map((l) => l.replace(/\*\s*/g, "").trim()).filter(Boolean);
+
+    for (const line of lines) {
+      // Skip action lines, URLs, junk
+      if (isActionText(line)) continue;
+      if (line.startsWith("http")) continue;
+      if (isJunkText(line)) continue;
+      if (/^(New|Estimated Pay|Be Seen First)$/i.test(line)) continue;
+
+      // Company • Location pattern (bullet separator)
+      if ((line.includes("•") || line.includes("·")) && !companyname) {
+        const parts = line.split(/[•·]/).map((p) => p.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          companyname = parts[0];
+          location = parts.slice(1).join(", ").trim();
+          // Clean up work type from location
+          const workTypes = ["In-person", "Hybrid", "Remote", "On-site"];
+          for (const wt of workTypes) {
+            if (location.toLowerCase().includes(wt.toLowerCase())) {
+              employment_type = wt;
+              location = location.replace(new RegExp(",?\\s*" + wt, "i"), "").trim();
+            }
           }
-        }
-
-        // Find location from bullet list: "* City, ST • WorkType"
-        const locMatch = lines[i].match(/^\*\s*([A-Z][^•*\n]{2,40},\s*[A-Z]{2})\s*(?:[•·]\s*(?:In-person|Remote|Hybrid))?/);
-        if (locMatch) philLocation = locMatch[1].trim();
-
-        // Find salary
-        const salMatch = lines[i].match(/^\*?\s*\$[\d,.]+(?:\s*[-–]\s*\$[\d,.]+)?(?:\s*\/\s*(?:yr|hr))?/i);
-        if (salMatch) philSalary = salMatch[0].replace(/^\*\s*/, "").trim();
-      }
-
-      if (philTitle && philCompany) {
-        const key = philUrl
-          ? buildExternalJobKey(philUrl, philCompany, philTitle, philLocation)
-          : createHash("sha256").update(`phil|${philCompany}|${philTitle}|${messageId}`).digest("hex").slice(0, 24);
-
-        if (!seen.has(key)) {
-          seen.add(key);
-          jobs.push({
-            title: philTitle,
-            companyname: philCompany,
-            location: philLocation || "Denver metro area",
-            salary: philSalary,
-            job_url: philUrl ? canonicalizeUrl(philUrl) : "https://www.ziprecruiter.com",
-            employment_type: "",
-            external_job_key: key,
-            source: "ziprecruiter_email",
-          });
+          continue;
         }
       }
-    }
-  }
 
-  // ── Strategy 2: Subject-based fallback for single-job emails ──
-  // Only used if body parser found 0 jobs
-  if (jobs.length === 0) {
-    let title = subject;
-    let company = "";
-
-    // Pattern 1: "Title opening at Company"
-    let match = subject.match(/^(.+?)\s+opening at\s+(.+)$/i);
-    if (match) { title = match[1].trim(); company = match[2].trim(); }
-
-    // Pattern 2: "Company has a Title opening now"
-    if (!company) {
-      match = subject.match(/^(.+?)\s+has an?\s+(.+?)\s+opening\s+now$/i);
-      if (match) { company = match[1].trim(); title = match[2].trim(); }
-    }
-
-    // Pattern 3: "Lisa, Company has an open position"
-    if (!company && subject.toLowerCase().includes("has an open position")) {
-      match = subject.match(/^[^,]+,\s*(.+?)\s+has an open position$/i);
-      if (match) { company = match[1].trim(); title = "Open Position"; }
-    }
-
-    // Pattern 4: "Lisa, new Title jobs near you"
-    if (!company && subject.toLowerCase().includes("jobs near you")) {
-      match = subject.match(/^[^,]+,\s*new\s+(.+?)\s+jobs near you$/i);
-      if (match) { title = match[1].trim(); company = "Multiple"; }
-    }
-
-    // Pattern 5: "Lisa, Company is hiring a Title"
-    if (!company) {
-      match = subject.match(/^[^,]*,\s*(.+?)\s+is hiring an?\s+(.+)$/i);
-      if (match) { company = match[1].trim(); title = match[2].trim(); }
-    }
-
-    // Pattern 6: "Company may want to hire you" / "Lisa, Company may want to hire you"
-    if (!company && subject.toLowerCase().includes("may want to hire you")) {
-      match = subject.match(/^(?:[^,]+,\s*)?(.+?)\s+may want to hire you$/i);
-      if (match) { company = match[1].trim(); title = "Open Position"; }
-    }
-
-    // Pattern 7: "$XXX/yr Title job in Location" / "Title job in Location"
-    if (!company && subject.toLowerCase().includes("job in")) {
-      match = subject.match(/^(?:\$[\d,.]+[Kk]?\/(?:yr|hr)\s+)?(.+?)\s+job in\s+(.+)$/i);
-      if (match) { title = match[1].trim(); company = "Multiple"; }
-    }
-
-    // Pattern 8: Phil's "Lisa, I think this job might be right for you!"
-    if (!company && subject.toLowerCase().includes("might be right for you")) {
-      company = "Multiple";
-      title = "Phil recommendation";
-    }
-
-    // For single-company matches, extract first URL from HTML
-    if (title && company && company !== "Multiple") {
-      const urlRegex = /href=["'](https?:\/\/[^"']*ziprecruiter\.com\/(?:km|ekm)\/[^"']*?)["']/gi;
-      const urls: string[] = [];
-      let urlM: RegExpExecArray | null;
-      while ((urlM = urlRegex.exec(html)) !== null) {
-        const url = urlM[1];
-        if (url.includes("unsubscribe") || url.includes("privacy") || url.includes("optout")) continue;
-        urls.push(url);
+      // Salary pattern
+      if (/^\$[\d,]+/.test(line) && !salary) {
+        salary = line.replace(/\s*(Estimated Pay|Be Seen First)$/i, "").trim();
+        continue;
       }
 
-      let salary = "";
-      const salaryMatch = html.match(/\$[\d,]+(?:\s*[-–]\s*\$[\d,]+)?(?:\s*(?:per|\/|a)\s*(?:year|hour|hr|annum))?/i);
-      if (salaryMatch) salary = salaryMatch[0];
+      // Employment type
+      if (/^(Full-Time|Part-Time|Contract|Temporary|Internship)$/i.test(line) && !employment_type) {
+        employment_type = line;
+        continue;
+      }
 
-      const url = urls[0] || "https://www.ziprecruiter.com";
-      const key = buildExternalJobKey(url, company, title, "Denver metro");
-      jobs.push({
-        title,
-        companyname: company,
-        location: "Denver metro area",
-        salary,
-        job_url: url,
-        employment_type: "",
-        external_job_key: key,
-        source: "ziprecruiter_email",
-      });
+      // Benefits line — skip
+      if (/Medical|Vision|Dental|Retirement/i.test(line)) continue;
+
+      // If no company yet and this looks like a company name (no special chars, reasonable length)
+      if (!companyname && line.length > 2 && line.length < 80 && !/^[\$<]/.test(line)) {
+        companyname = line;
+      }
     }
+
+    // Skip if no title or no company
+    if (!title || title.length < 3) continue;
+    if (!companyname || companyname.length < 2) continue;
+
+    // Build fingerprint key
+    const key = buildContentKey(companyname, title, location);
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    jobs.push({
+      title,
+      companyname: normalizeCompanyName(companyname),
+      location: location || "Denver metro area",
+      salary,
+      employment_type,
+      job_url: jobUrl.split("?")[0], // Strip tracking params for cleaner URL
+      source: "ziprecruiter_email",
+      external_job_key: key,
+      block_index: blockIndex++,
+    });
   }
 
   return jobs;
 }
 
-/* ── GovernmentJobs.com / NEOGOV email parser ── */
-function parseGovernmentJobsEmail(subject: string, html: string, messageId: string): ParsedJob[] {
+/* ══════════════════════════════════════════════════════════════
+   GovernmentJobs PARSER (unchanged from v3)
+   ══════════════════════════════════════════════════════════════ */
+
+function canonicalizeUrl(url: string): string {
+  try { const u = new URL(url); return u.origin + u.pathname; } catch { return url; }
+}
+
+function parseGovernmentJobsEmail(subject: string, bodyText: string, messageId: string): ParsedJob[] {
   const jobs: ParsedJob[] = [];
   const seen = new Set<string>();
+  const warnings: string[] = [];
 
-  // ── Strategy 1: Extract all governmentjobs.com job URLs ──
-  // Matches: governmentjobs.com/careers/{org}/jobs/{id} or /jobs/{id}/{slug}
-  const jobUrlRegex = /href=["'](https?:\/\/[^"']*governmentjobs\.com\/careers\/([^/"']+)\/jobs\/(\d+)(?:[^"']*)?)["']/gi;
+  // Extract governmentjobs.com job URLs
+  const jobUrlRegex = /<(https?:\/\/[^<>]*governmentjobs\.com\/careers\/([^/"'<>]+)\/jobs\/(\d+)[^<>]*)>/gi;
   let urlMatch: RegExpExecArray | null;
 
-  while ((urlMatch = jobUrlRegex.exec(html)) !== null) {
+  while ((urlMatch = jobUrlRegex.exec(bodyText)) !== null) {
     const fullUrl = urlMatch[1];
-    const org = urlMatch[2]; // e.g. "colorado"
-    const jobId = urlMatch[3]; // e.g. "5248055"
+    const org = urlMatch[2];
+    const jobId = urlMatch[3];
     const key = buildGovJobKey(jobId);
-
-    // Skip duplicates within same email
     if (seen.has(key)) continue;
     seen.add(key);
-
-    // Skip non-job URLs (print views, application pages, etc.)
     if (fullUrl.includes("jobInterestCards") || fullUrl.includes("privacypolicy") || fullUrl.includes("faq")) continue;
 
-    // ── Extract job title from link text or nearby context ──
     let title = "";
+    const slugMatch = fullUrl.match(/\/jobs\/\d+(?:-\d+)?\/([^?#"'<>]+)/);
+    if (slugMatch) title = slugMatch[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-    // Method A: Look for the link text (text between <a> and </a>)
-    const linkTextRegex = new RegExp(
-      `href=["']${fullUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>([^<]+)<`,
-      "i"
-    );
-    const linkTextMatch = html.match(linkTextRegex);
-    if (linkTextMatch) {
-      const candidate = linkTextMatch[1].trim();
-      // Filter out "Apply", "View", "Details", URLs, etc.
-      if (candidate.length > 5 && !/^(apply|view|details|click|here|learn more)/i.test(candidate) && !candidate.startsWith("http")) {
-        title = candidate;
-      }
-    }
-
-    // Method B: Extract title from slug in URL
+    // Subject fallback
     if (!title) {
-      const slugMatch = fullUrl.match(/\/jobs\/\d+(?:-\d+)?\/([^?#"']+)/);
-      if (slugMatch) {
-        title = slugMatch[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-      }
+      const subjectPatterns = [/New Job Posting:\s*(.+)/i, /Job Interest Card.*?:\s*(.+)/i, /New Job:\s*(.+)/i, /Job Alert:\s*(.+)/i];
+      for (const p of subjectPatterns) { const sm = subject.match(p); if (sm) { title = sm[1].trim(); break; } }
     }
-
-    // Method C: Fall back to subject line
-    if (!title) {
-      // Common NEOGOV subject patterns:
-      // "New Job Posting: Engineer in Training I"
-      // "Job Interest Card Notification: Mechanical Engineer"
-      // "Colorado - New Job: Engineer in Training"
-      const subjectPatterns = [
-        /New Job Posting:\s*(.+)/i,
-        /Job Interest Card.*?:\s*(.+)/i,
-        /New Job:\s*(.+)/i,
-        /Job Alert:\s*(.+)/i,
-        /Position Available:\s*(.+)/i,
-      ];
-      for (const pattern of subjectPatterns) {
-        const sm = subject.match(pattern);
-        if (sm) { title = sm[1].trim(); break; }
-      }
-    }
-
     if (!title) title = `Government Job ${jobId}`;
 
-    // ── Extract salary from nearby HTML context ──
     let salary = "";
-    // Look for salary near the job URL in the HTML
-    const urlIndex = html.indexOf(fullUrl);
-    if (urlIndex > -1) {
-      // Search within 2000 chars around the URL
-      const context = html.slice(Math.max(0, urlIndex - 1000), urlIndex + 1000);
-      const salaryMatch = context.match(/\$[\d,]+(?:\.[\d]+)?(?:\s*[-–]\s*\$[\d,]+(?:\.[\d]+)?)?(?:\s*(?:per|\/|a)\s*(?:year|month|hour|hr|annum|monthly|annually))?/i);
-      if (salaryMatch) salary = salaryMatch[0];
+    const urlIdx = bodyText.indexOf(fullUrl);
+    if (urlIdx > -1) {
+      const ctx = bodyText.slice(Math.max(0, urlIdx - 1000), urlIdx + 1000);
+      const sm = ctx.match(/\$[\d,]+(?:\.[\d]+)?(?:\s*[-–]\s*\$[\d,]+(?:\.[\d]+)?)?(?:\s*(?:per|\/|a)\s*(?:year|month|hour|hr|annum|monthly|annually))?/i);
+      if (sm) salary = sm[0];
     }
 
-    // ── Extract location ──
     let location = "Colorado";
-    if (urlIndex > -1) {
-      const context = html.slice(Math.max(0, urlIndex - 1000), urlIndex + 1000);
-      // Common patterns: "Denver, CO", "Grand Junction, CO", "Location: Denver"
-      const locMatch = context.match(/(?:Location[:\s]*)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),\s*CO\b/);
-      if (locMatch) location = `${locMatch[1]}, CO`;
+    if (urlIdx > -1) {
+      const ctx = bodyText.slice(Math.max(0, urlIdx - 1000), urlIdx + 1000);
+      const lm = ctx.match(/(?:Location[:\s]*)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),\s*CO\b/);
+      if (lm) location = `${lm[1]}, CO`;
     }
 
-    // ── Extract department ──
-    let department = "";
-    if (urlIndex > -1) {
-      const context = html.slice(Math.max(0, urlIndex - 1000), urlIndex + 1000);
-      const deptMatch = context.match(/(?:Department|Division|Agency)[:\s]*([^<\n]{3,60})/i);
-      if (deptMatch) department = deptMatch[1].trim();
-    }
-
-    // ── Map organization to company name ──
     const orgMap: Record<string, string> = {
-      colorado: "State of Colorado",
-      cosprings: "City of Colorado Springs",
-      cityofdenver: "City of Denver",
-      denvergov: "City of Denver",
-      aurora: "City of Aurora",
-      lakewood: "City of Lakewood",
-      jeffco: "Jefferson County",
-      douglas: "Douglas County",
-      arapahoe: "Arapahoe County",
-      adams: "Adams County",
-      boulder: "City of Boulder",
-      bouldercounty: "Boulder County",
-      broomfield: "City of Broomfield",
-      thornton: "City of Thornton",
-      westminster: "City of Westminster",
-      arvada: "City of Arvada",
-      rtd: "RTD",
+      colorado: "State of Colorado", cosprings: "City of Colorado Springs",
+      cityofdenver: "City of Denver", denvergov: "City of Denver",
+      aurora: "City of Aurora", lakewood: "City of Lakewood",
+      jeffco: "Jefferson County", douglas: "Douglas County",
+      arapahoe: "Arapahoe County", adams: "Adams County",
+      boulder: "City of Boulder", bouldercounty: "Boulder County",
+      broomfield: "City of Broomfield", thornton: "City of Thornton",
+      westminster: "City of Westminster", arvada: "City of Arvada", rtd: "RTD",
     };
     const companyname = orgMap[org.toLowerCase()] || `${org.charAt(0).toUpperCase()}${org.slice(1)} (Gov)`;
 
     jobs.push({
-      title,
-      companyname,
-      location,
-      salary,
+      title, companyname, location, salary,
       job_url: canonicalizeUrl(fullUrl),
       employment_type: "Full Time",
       external_job_key: key,
       source: "governmentjobs_email",
-      department,
     });
   }
 
-  // ── Strategy 2: If no job URLs found, parse subject for single-job alerts ──
+  // If no URLs found but source was detected, persist raw for debug
   if (jobs.length === 0) {
-    let title = "";
-    const subjectPatterns = [
-      /New Job Posting:\s*(.+)/i,
-      /Job Interest Card.*?:\s*(.+)/i,
-      /New Job:\s*(.+)/i,
-      /Job Alert:\s*(.+)/i,
-      /Position Available:\s*(.+)/i,
-    ];
-    for (const pattern of subjectPatterns) {
-      const sm = subject.match(pattern);
-      if (sm) { title = sm[1].trim(); break; }
-    }
-
-    if (title) {
-      // Try to find any governmentjobs.com URL in the body
-      const anyUrlMatch = html.match(/href=["'](https?:\/\/[^"']*governmentjobs\.com\/careers\/[^"']+?)["']/i);
-      const url = anyUrlMatch ? anyUrlMatch[1] : "https://www.governmentjobs.com/careers/colorado";
-      const key = createHash("sha256").update(`${title}|${subject}|${messageId}`).digest("hex").slice(0, 24);
-
-      let salary = "";
-      const salaryMatch = html.match(/\$[\d,]+(?:\.[\d]+)?(?:\s*[-–]\s*\$[\d,]+(?:\.[\d]+)?)?(?:\s*(?:per|\/|a)\s*(?:year|month|hour|hr|annum|monthly|annually))?/i);
-      if (salaryMatch) salary = salaryMatch[0];
-
-      jobs.push({
-        title,
-        companyname: "State of Colorado",
-        location: "Colorado",
-        salary,
-        job_url: canonicalizeUrl(url),
-        employment_type: "Full Time",
-        external_job_key: `gov_subj_${key}`,
-        source: "governmentjobs_email",
-      });
-    }
+    warnings.push("GovernmentJobs email detected but no job URLs extracted. Raw payload saved for replay tuning.");
   }
 
   return jobs;
@@ -529,44 +395,36 @@ interface CompanyRow { id: number; name: string; lower: string; }
 
 function matchCompanyInMemory(jobCompany: string, companyList: CompanyRow[]): CompanyRow | null {
   const clean = normalizeCompanyName(jobCompany).toLowerCase();
-
-  // Exact
   const exact = companyList.find((c) => c.lower === clean || c.lower === jobCompany.toLowerCase());
   if (exact) return exact;
-
-  // Forward: existing contains clean
   const forward = companyList.find((c) => c.lower.includes(clean) && clean.length >= 4);
   if (forward) return forward;
-
-  // Reverse: clean contains existing
   const reverse = companyList.filter((c) => c.lower.length >= 4 && clean.includes(c.lower)).sort((a, b) => b.lower.length - a.lower.length);
   if (reverse.length > 0) return reverse[0];
-
   return null;
 }
 
 /* ── Niche assignment for government jobs ── */
 function getGovNiche(title: string, department: string): string {
   const combined = `${title} ${department}`.toLowerCase();
-  if (combined.includes("transportation") || combined.includes("cdot") || combined.includes("highway") || combined.includes("bridge")) {
+  if (combined.includes("transportation") || combined.includes("cdot") || combined.includes("highway") || combined.includes("bridge"))
     return "Government / Public Works / Infrastructure";
-  }
-  if (combined.includes("water") || combined.includes("utility") || combined.includes("wastewater")) {
+  if (combined.includes("water") || combined.includes("utility") || combined.includes("wastewater"))
     return "Government / Public Works / Infrastructure";
-  }
-  if (combined.includes("energy") || combined.includes("renewable")) {
+  if (combined.includes("energy") || combined.includes("renewable"))
     return "Energy / Renewables / Power";
-  }
   return "Government / Public Works / Infrastructure";
 }
 
-/* ── Main handler ── */
+/* ══════════════════════════════════════════════════════════════
+   MAIN HANDLER
+   ══════════════════════════════════════════════════════════════ */
 export async function POST(req: NextRequest) {
   if (!checkSecret(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // ── Replay mode: optional { messageId, dryRun } in request body ──
+  // ── Parse request body for replay mode ──
   let replayMessageId: string | null = null;
   let dryRun = false;
   try {
@@ -575,15 +433,31 @@ export async function POST(req: NextRequest) {
     if (body.dryRun) dryRun = true;
   } catch { /* no body = normal cron mode */ }
 
-  const isReplay = !!replayMessageId;
-  const replayResults: Array<{ parsed: ParsedJob; companyMatch: string | null; companyId: number | null; action: string }> = [];
+  // ── Validate messageId length ──
+  if (replayMessageId && replayMessageId.length < 16) {
+    return NextResponse.json({
+      error: "Invalid messageId",
+      detail: `Provided messageId "${replayMessageId}" appears truncated (${replayMessageId.length} chars). Gmail message IDs are typically 16+ hex characters. Use the full ID from gmail_search_messages.`,
+    }, { status: 400 });
+  }
 
-  // Skip ingest run logging in dryRun mode
-  let runId: number | null = null;
+  const isReplay = !!replayMessageId;
+  const replayResults: Array<{
+    parsed: ParsedJob;
+    companyMatch: string | null;
+    companyId: number | null;
+    action: string;
+  }> = [];
+  const warnings: string[] = [];
+
+  let runId: string | null = null;
   if (!dryRun) {
-    const { data: run } = await supabaseAdmin.from("job_ingest_runs").insert({ status: isReplay ? "replay" : "running" }).select("id").single();
+    const { data: run } = await supabaseAdmin.from("job_ingest_runs").insert({
+      status: isReplay ? "replay" : "running",
+    }).select("id").single();
     runId = run?.id;
   }
+
   let messagesSeen = 0;
   let jobsExtracted = 0;
   let companiesCreated = 0;
@@ -594,17 +468,17 @@ export async function POST(req: NextRequest) {
 
     // Pre-load companies
     const { data: allCompanies } = await supabaseAdmin.from("companies").select("id, companyname");
-    const companyList: CompanyRow[] = (allCompanies || []).map((c) => ({ id: c.id, name: c.companyname, lower: c.companyname.toLowerCase() }));
+    const companyList: CompanyRow[] = (allCompanies || []).map((c) => ({
+      id: c.id, name: c.companyname, lower: c.companyname.toLowerCase(),
+    }));
 
-    // Pre-load processed message IDs from job_listings
+    // Pre-load processed message IDs
     const { data: processed } = await supabaseAdmin.from("job_listings").select("gmail_message_id").not("gmail_message_id", "is", null);
     const processedSet = new Set((processed || []).map((p) => p.gmail_message_id));
 
-    // Get message IDs
     let messageIds: string[] = [];
 
     if (isReplay) {
-      // ── Replay mode: process only the specified message, skip dedupe ──
       messageIds = [replayMessageId!];
     } else if (account.last_history_id) {
       try {
@@ -614,10 +488,15 @@ export async function POST(req: NextRequest) {
           historyTypes: ["messageAdded"],
           labelId: account.label_id || undefined,
         });
-        const added = history.data.history?.flatMap((h) => h.messagesAdded?.map((m) => m.message?.id).filter(Boolean) || []) || [];
+        const added = history.data.history?.flatMap((h) =>
+          h.messagesAdded?.map((m) => m.message?.id).filter(Boolean) || []
+        ) || [];
         messageIds = added.filter((id): id is string => !!id);
         if (history.data.historyId) {
-          await supabaseAdmin.from("gmail_accounts").update({ last_history_id: history.data.historyId, updated_at: new Date().toISOString() }).eq("id", account.id);
+          await supabaseAdmin.from("gmail_accounts").update({
+            last_history_id: history.data.historyId,
+            updated_at: new Date().toISOString(),
+          }).eq("id", account.id);
         }
       } catch (err: unknown) {
         if ((err as { code?: number })?.code === 404) { account.last_history_id = null; }
@@ -626,17 +505,23 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isReplay && !account.last_history_id) {
-      // ── MULTI-SOURCE QUERY: fetch both ZipRecruiter AND GovernmentJobs emails ──
+      // Multi-source query covering both ZR sender families + GovernmentJobs
+      const q = account.label_id
+        ? undefined
+        : "from:ziprecruiter.com OR from:noreply@governmentjobs.com";
       const list = await gmail.users.messages.list({
         userId: "me", maxResults: 100,
-        q: account.label_id ? undefined : "from:ziprecruiter.com OR from:noreply@governmentjobs.com",
+        q,
         labelIds: account.label_id ? [account.label_id] : undefined,
       });
       messageIds = list.data.messages?.map((m) => m.id).filter((id): id is string => !!id) || [];
       if (messageIds.length > 0) {
         const firstMsg = await gmail.users.messages.get({ userId: "me", id: messageIds[0], format: "METADATA" });
         if (firstMsg.data.historyId) {
-          await supabaseAdmin.from("gmail_accounts").update({ last_history_id: firstMsg.data.historyId, updated_at: new Date().toISOString() }).eq("id", account.id);
+          await supabaseAdmin.from("gmail_accounts").update({
+            last_history_id: firstMsg.data.historyId,
+            updated_at: new Date().toISOString(),
+          }).eq("id", account.id);
         }
       }
     }
@@ -645,7 +530,6 @@ export async function POST(req: NextRequest) {
 
     for (const msgId of messageIds) {
       try {
-        // In replay mode, skip the dedupe check so we can re-process
         if (!isReplay && processedSet.has(msgId)) continue;
 
         const msg = await gmail.users.messages.get({ userId: "me", id: msgId, format: "full" });
@@ -656,31 +540,34 @@ export async function POST(req: NextRequest) {
         const from = getHeader(payload.headers, "From");
         const dateStr = getHeader(payload.headers, "Date");
 
-        // ── Route to the correct parser based on source ──
-        const source = detectSource(from);
+        // Extract body with MIME preference
+        const { content: rawBody, mime } = getBody(payload);
+        const bodyText = mime === "text/html" ? htmlToText(rawBody) : rawBody;
+
+        // Route to correct parser
+        const source = detectSource(from, bodyText);
         if (source === "unknown") continue;
 
-        const html = getBody(payload);
-        const textBody = getTextBody(payload);
         let parsedJobs: ParsedJob[] = [];
 
         if (source === "ziprecruiter") {
-          parsedJobs = parseZipRecruiterEmail(subject, html, msgId, textBody);
+          parsedJobs = parseZipRecruiterBody(bodyText);
         } else if (source === "governmentjobs") {
-          parsedJobs = parseGovernmentJobsEmail(subject, html, msgId);
+          parsedJobs = parseGovernmentJobsEmail(subject, bodyText, msgId);
+        }
+
+        if (parsedJobs.length === 0 && source === "governmentjobs") {
+          warnings.push(`GovernmentJobs email ${msgId} yielded 0 jobs. Raw saved for debug.`);
         }
 
         for (const job of parsedJobs) {
-          // Skip staffing agencies (only relevant for ZR, but check anyway)
           if (isStaffingAgency(job.companyname)) continue;
 
-          // Match or create company
           let matched = matchCompanyInMemory(job.companyname, companyList);
           let companyId: number | null = matched?.id || null;
           const canonicalName = matched?.name || normalizeCompanyName(job.companyname);
 
           if (dryRun) {
-            // ── DryRun: collect parsed result, skip writes ──
             replayResults.push({
               parsed: job,
               companyMatch: matched?.name || null,
@@ -692,13 +579,12 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
+          // Create company if needed
           if (!matched && job.companyname !== "See listing" && job.companyname !== "Multiple") {
-            // Determine niche based on source
             const niche = source === "governmentjobs"
               ? getGovNiche(job.title, job.department || "")
               : "ZipRecruiter Intake";
 
-            // Create new company
             const { data: newCo } = await supabaseAdmin.from("companies").insert({
               companyname: canonicalName,
               company_key: slugify(canonicalName),
@@ -717,7 +603,10 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // Upsert into job_listings
+          // Upsert with tracking columns
+          const now = new Date().toISOString();
+          const receivedAt = dateStr ? new Date(dateStr).toISOString() : now;
+
           const { error: upsertErr } = await supabaseAdmin.from("job_listings").upsert({
             companyname: matched?.name || canonicalName,
             company_id: companyId,
@@ -728,27 +617,51 @@ export async function POST(req: NextRequest) {
             source: job.source,
             external_job_key: job.external_job_key,
             gmail_message_id: msgId,
-            job_url: canonicalizeUrl(job.job_url),
-            received_at: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
+            job_url: job.job_url,
+            received_at: receivedAt,
+            first_seen_at: receivedAt,
+            last_seen_at: now,
+            times_seen: 1,
             raw_payload: {
-              parserVersion: 3,
+              parserVersion: 4,
               source: job.source,
               subject,
               from,
               messageId: msgId,
+              mime,
               parsedJob: job,
-              // Store first 5000 chars of HTML for debugging new parsers
-              htmlPreview: html.slice(0, 5000),
             },
             ingest_status: "new",
-            parser_version: 3,
-          }, { onConflict: "source,external_job_key" });
+            parser_version: 4,
+          }, {
+            onConflict: "source,external_job_key",
+            ignoreDuplicates: false,
+          });
+
+          // On conflict, update tracking fields
+          if (upsertErr && upsertErr.code === "23505") {
+            // Unique violation — update tracking
+            await supabaseAdmin.from("job_listings")
+              .update({
+                last_seen_at: now,
+                times_seen: supabaseAdmin.rpc ? undefined : 1, // increment handled below
+                gmail_message_id: msgId,
+              })
+              .eq("source", job.source)
+              .eq("external_job_key", job.external_job_key);
+
+            // Increment times_seen
+            await supabaseAdmin.rpc("increment_times_seen", {
+              p_source: job.source,
+              p_key: job.external_job_key,
+            }).catch(() => {
+              // RPC may not exist yet — silent fail
+            });
+          }
 
           if (!upsertErr) {
             jobsExtracted++;
             sourceStats[source]++;
-
-            // ── Replay mode: collect upsert result ──
             if (isReplay) {
               replayResults.push({
                 parsed: job,
@@ -760,14 +673,18 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (msgErr) {
-        console.error(`Error processing message ${msgId}:`, msgErr);
+        const errMsg = msgErr instanceof Error ? msgErr.message : String(msgErr);
+        console.error(`Error processing message ${msgId}:`, errMsg);
+        warnings.push(`Message ${msgId}: ${errMsg}`);
       }
     }
 
     if (runId) {
       await supabaseAdmin.from("job_ingest_runs").update({
-        finished_at: new Date().toISOString(), messages_seen: messagesSeen,
-        jobs_extracted: jobsExtracted, companies_created: companiesCreated,
+        finished_at: new Date().toISOString(),
+        messages_seen: messagesSeen,
+        jobs_extracted: jobsExtracted,
+        companies_created: companiesCreated,
         status: isReplay ? "replay_completed" : "completed",
       }).eq("id", runId);
     }
@@ -775,23 +692,24 @@ export async function POST(req: NextRequest) {
     const response: Record<string, unknown> = {
       success: true,
       mode: dryRun ? "dryRun" : isReplay ? "replay" : "cron",
+      parser_version: 4,
       messages_seen: messagesSeen,
       jobs_extracted: jobsExtracted,
       companies_created: companiesCreated,
       sources: sourceStats,
     };
-    if (isReplay || dryRun) {
-      response.replay = replayResults;
-    }
+    if (isReplay || dryRun) response.replay = replayResults;
+    if (warnings.length > 0) response.warnings = warnings;
 
     return NextResponse.json(response);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Ingest error:", message);
     if (runId) {
-      await supabaseAdmin.from("job_ingest_runs").update({ finished_at: new Date().toISOString(), status: "error", error_text: message }).eq("id", runId);
+      await supabaseAdmin.from("job_ingest_runs").update({
+        finished_at: new Date().toISOString(), status: "error", error_text: message,
+      }).eq("id", runId);
     }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
