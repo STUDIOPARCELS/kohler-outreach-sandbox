@@ -297,12 +297,16 @@ function parseZipRecruiterBody(bodyText: string): ParsedJob[] {
     if (!companyname || companyname.length < 2) continue;
 
     // Filter intro/greeting text that leaked in as titles
+    const titleClean = title.trim();
     const introPatterns = [
-      /^here are today/i, /^hi\s+\w+/i, /^hello/i, /^hey/i,
-      /^-->$/, /^--$/, /^-+>?$/, /^new$/i, /^phil$/i,
+      /today's jobs/i, /recommended for you/i, /here's a new job/i,
+      /jumpstart on the competition/i, /get it in front of you/i,
+      /^hi\s+\w+/i, /^hello/i, /^hey\b/i,
+      /^-->/, /^--$/, /^-+>?$/, /^new$/i, /^phil$/i,
       /^your career/i, /^get hired/i, /^download/i,
+      /^view more jobs$/i,
     ];
-    if (introPatterns.some((p) => p.test(title.trim()))) continue;
+    if (introPatterns.some((p) => p.test(titleClean))) continue;
 
     // Clean company name: strip leading > or * or bullets
     companyname = companyname.replace(/^[>*•·\s]+/, "").trim();
@@ -596,7 +600,8 @@ export async function POST(req: NextRequest) {
 
           let matched = matchCompanyInMemory(job.companyname, companyList);
           let companyId: number | null = matched?.id || null;
-          const canonicalName = matched?.name || normalizeCompanyName(job.companyname);
+          // Parser already normalizes company names — don't re-normalize here
+          const canonicalName = matched?.name || job.companyname;
 
           if (dryRun) {
             replayResults.push({
