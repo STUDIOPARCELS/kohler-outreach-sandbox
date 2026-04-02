@@ -34,6 +34,18 @@ function getBody(payload: gmail_v1.Schema$MessagePart): string {
   return "";
 }
 
+function getTextBody(payload: gmail_v1.Schema$MessagePart): string {
+  if (payload.parts) {
+    const text = payload.parts.find((p) => p.mimeType === "text/plain");
+    if (text?.body?.data) return decodeBase64Url(text.body.data);
+    for (const part of payload.parts) {
+      if (part.parts) { const nested = getTextBody(part); if (nested) return nested; }
+    }
+  }
+  if (payload.mimeType === "text/plain" && payload.body?.data) return decodeBase64Url(payload.body.data);
+  return "";
+}
+
 function getHeader(headers: gmail_v1.Schema$MessagePartHeader[] | undefined, name: string): string {
   return headers?.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value || "";
 }
@@ -107,91 +119,176 @@ interface ParsedJob {
   department?: string;
 }
 
-/* ── ZipRecruiter email parser (unchanged) ── */
-function parseZipRecruiterEmail(subject: string, html: string, messageId: string): ParsedJob[] {
+/* ── ZipRecruiter email parser v2 — body-block extraction ── */
+function parseZipRecruiterEmail(subject: string, html: string, messageId: string, textBody?: string): ParsedJob[] {
   const jobs: ParsedJob[] = [];
-  let title = subject;
-  let company = "";
+  const seen = new Set<string>();
 
-  // Pattern 1: "Title opening at Company"
-  let match = subject.match(/^(.+?)\s+opening at\s+(.+)$/i);
-  if (match) { title = match[1].trim(); company = match[2].trim(); }
+  // ── Strategy 1: Parse text body for job blocks ──
+  // All ZR emails (all subject families) share the same body format:
+  //   Title  <url>
+  //   Company • Location [• WorkType]
+  //   [$salary]
+  //   View Details|Apply Now  <url>
+  const body = textBody || html;
+  if (body) {
+    // Split into lines, normalize
+    const lines = body.split(/\r?\n/).map((l) => l.trim());
+    
+    for (let i = 0; i < lines.length; i++) {
+      // Look for Company • Location pattern (bullet separator)
+      const companyLineMatch = lines[i].match(/^([A-Z][^•\n]{1,60})\s*[•·]\s*([A-Z][^•\n]{2,40}(?:,\s*[A-Z]{2})?)\s*(?:[•·]\s*(?:In-person|Remote|Hybrid))?$/);
+      if (!companyLineMatch) continue;
 
-  // Pattern 2: "Company has a Title opening now"
-  if (!company) {
-    match = subject.match(/^(.+?)\s+has an?\s+(.+?)\s+opening\s+now$/i);
-    if (match) { company = match[1].trim(); title = match[2].trim(); }
-  }
+      const companyRaw = companyLineMatch[1].trim();
+      const location = companyLineMatch[2].trim();
 
-  // Pattern 3: "Lisa, Company has an open position"
-  if (!company && subject.toLowerCase().includes("has an open position")) {
-    match = subject.match(/^[^,]+,\s*(.+?)\s+has an open position$/i);
-    if (match) { company = match[1].trim(); title = "Open Position"; }
-  }
+      // Skip footer noise
+      if (companyRaw.includes("ZipRecruiter") || companyRaw.includes("Ocean Park")) continue;
 
-  // Pattern 4: "Lisa, new Title jobs near you"
-  if (!company && subject.toLowerCase().includes("jobs near you")) {
-    match = subject.match(/^[^,]+,\s*new\s+(.+?)\s+jobs near you$/i);
-    if (match) { title = match[1].trim(); company = "Multiple"; }
-  }
-
-  // Pattern 5: "Lisa, Company is hiring a Title"
-  if (!company) {
-    match = subject.match(/^[^,]*,\s*(.+?)\s+is hiring an?\s+(.+)$/i);
-    if (match) { company = match[1].trim(); title = match[2].trim(); }
-  }
-
-  // Extract URLs
-  const urlRegex = /href=["'](https?:\/\/[^"']*ziprecruiter\.com\/[^"']*?)["']/gi;
-  const urls: string[] = [];
-  let urlM: RegExpExecArray | null;
-  while ((urlM = urlRegex.exec(html)) !== null) {
-    const url = urlM[1];
-    if (url.includes("unsubscribe") || url.includes("privacy") || url.includes("terms") || url.includes(".png") || url.includes(".jpg") || url.includes("optout")) continue;
-    urls.push(url);
-  }
-
-  // Extract salary
-  let salary = "";
-  const salaryMatch = html.match(/\$[\d,]+(?:\s*[-–]\s*\$[\d,]+)?(?:\s*(?:per|\/|a)\s*(?:year|hour|hr|annum))?/i);
-  if (salaryMatch) salary = salaryMatch[0];
-
-  // Build job row
-  if (title && company && company !== "Multiple") {
-    const url = urls[0] || "https://www.ziprecruiter.com";
-    const key = buildExternalJobKey(url, company, title, "Denver metro");
-    jobs.push({
-      title,
-      companyname: company,
-      location: "Denver metro area",
-      salary,
-      job_url: url,
-      employment_type: "",
-      external_job_key: key,
-      source: "ziprecruiter_email",
-    });
-  }
-
-  // Multi-job emails: extract individual links
-  if (company === "Multiple" && urls.length > 1) {
-    const blockRegex = /<a[^>]*href=["']([^"']*ziprecruiter\.com[^"']*?)["'][^>]*>([^<]*)</gi;
-    let blockM: RegExpExecArray | null;
-    while ((blockM = blockRegex.exec(html)) !== null) {
-      const blockUrl = blockM[1];
-      const linkText = blockM[2].trim();
-      if (linkText.length > 5) {
-        const key = buildExternalJobKey(blockUrl, linkText, linkText, "Denver metro");
-        jobs.push({
-          title: linkText,
-          companyname: "See listing",
-          location: "Denver metro area",
-          salary,
-          job_url: blockUrl,
-          employment_type: "",
-          external_job_key: key,
-          source: "ziprecruiter_email",
-        });
+      // Look backward for job title (the non-empty line before this, skipping blank lines)
+      let jobTitle = "";
+      let jobUrl = "";
+      for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
+        const prevLine = lines[j];
+        if (!prevLine) continue;
+        // Skip "View Details" / "Apply Now" from previous block
+        if (/^(View Details|Apply Now|Be Seen First|Estimated Pay|New)$/i.test(prevLine)) continue;
+        // Extract URL if present: "Title  <url>" or just "Title"
+        const urlMatch = prevLine.match(/^(.+?)\s{2,}<(https?:\/\/[^>]+)>$/);
+        if (urlMatch) {
+          jobTitle = urlMatch[1].trim();
+          jobUrl = urlMatch[2];
+        } else if (prevLine.length > 3 && prevLine.length < 100 && !prevLine.startsWith("$") && !prevLine.startsWith("http")) {
+          jobTitle = prevLine;
+        }
+        break;
       }
+
+      if (!jobTitle) continue;
+
+      // Look forward for salary (next non-empty line that starts with $)
+      let salary = "";
+      for (let j = i + 1; j <= Math.min(lines.length - 1, i + 3); j++) {
+        const nextLine = lines[j];
+        if (!nextLine) continue;
+        const salaryMatch = nextLine.match(/^\$[\d,.]+(?:K)?(?:\s*[-–]\s*\$[\d,.]+(?:K)?)?(?:\s*\/\s*(?:yr|hr|year|hour))?/i);
+        if (salaryMatch) { salary = salaryMatch[0]; }
+        break;
+      }
+
+      const company = normalizeCompanyName(companyRaw);
+      
+      // Skip staffing agencies early
+      if (isStaffingAgency(company)) continue;
+
+      // Build dedup key
+      if (!jobUrl) {
+        // Try to find URL in nearby HTML
+        const titleEscaped = jobTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const htmlUrlMatch = html.match(new RegExp(`href=["'](https?://[^"']*ziprecruiter\\.com[^"']*?)["'][^>]*>\\s*${titleEscaped}`, "i"));
+        if (htmlUrlMatch) jobUrl = htmlUrlMatch[1];
+      }
+
+      const key = jobUrl 
+        ? buildExternalJobKey(jobUrl, company, jobTitle, location)
+        : createHash("sha256").update(`${company}|${jobTitle}|${location}|${messageId}`).digest("hex").slice(0, 24);
+
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      jobs.push({
+        title: jobTitle,
+        companyname: company,
+        location: location || "Denver metro area",
+        salary,
+        job_url: jobUrl ? canonicalizeUrl(jobUrl) : "https://www.ziprecruiter.com",
+        employment_type: "",
+        external_job_key: key,
+        source: "ziprecruiter_email",
+      });
+    }
+  }
+
+  // ── Strategy 2: Subject-based fallback for single-job emails ──
+  // Only used if body parser found 0 jobs
+  if (jobs.length === 0) {
+    let title = subject;
+    let company = "";
+
+    // Pattern 1: "Title opening at Company"
+    let match = subject.match(/^(.+?)\s+opening at\s+(.+)$/i);
+    if (match) { title = match[1].trim(); company = match[2].trim(); }
+
+    // Pattern 2: "Company has a Title opening now"
+    if (!company) {
+      match = subject.match(/^(.+?)\s+has an?\s+(.+?)\s+opening\s+now$/i);
+      if (match) { company = match[1].trim(); title = match[2].trim(); }
+    }
+
+    // Pattern 3: "Lisa, Company has an open position"
+    if (!company && subject.toLowerCase().includes("has an open position")) {
+      match = subject.match(/^[^,]+,\s*(.+?)\s+has an open position$/i);
+      if (match) { company = match[1].trim(); title = "Open Position"; }
+    }
+
+    // Pattern 4: "Lisa, new Title jobs near you"
+    if (!company && subject.toLowerCase().includes("jobs near you")) {
+      match = subject.match(/^[^,]+,\s*new\s+(.+?)\s+jobs near you$/i);
+      if (match) { title = match[1].trim(); company = "Multiple"; }
+    }
+
+    // Pattern 5: "Lisa, Company is hiring a Title"
+    if (!company) {
+      match = subject.match(/^[^,]*,\s*(.+?)\s+is hiring an?\s+(.+)$/i);
+      if (match) { company = match[1].trim(); title = match[2].trim(); }
+    }
+
+    // Pattern 6: "Company may want to hire you" / "Lisa, Company may want to hire you"
+    if (!company && subject.toLowerCase().includes("may want to hire you")) {
+      match = subject.match(/^(?:[^,]+,\s*)?(.+?)\s+may want to hire you$/i);
+      if (match) { company = match[1].trim(); title = "Open Position"; }
+    }
+
+    // Pattern 7: "$XXX/yr Title job in Location" / "Title job in Location"
+    if (!company && subject.toLowerCase().includes("job in")) {
+      match = subject.match(/^(?:\$[\d,.]+[Kk]?\/(?:yr|hr)\s+)?(.+?)\s+job in\s+(.+)$/i);
+      if (match) { title = match[1].trim(); company = "Multiple"; }
+    }
+
+    // Pattern 8: Phil's "Lisa, I think this job might be right for you!"
+    if (!company && subject.toLowerCase().includes("might be right for you")) {
+      company = "Multiple";
+      title = "Phil recommendation";
+    }
+
+    // For single-company matches, extract first URL from HTML
+    if (title && company && company !== "Multiple") {
+      const urlRegex = /href=["'](https?:\/\/[^"']*ziprecruiter\.com\/(?:km|ekm)\/[^"']*?)["']/gi;
+      const urls: string[] = [];
+      let urlM: RegExpExecArray | null;
+      while ((urlM = urlRegex.exec(html)) !== null) {
+        const url = urlM[1];
+        if (url.includes("unsubscribe") || url.includes("privacy") || url.includes("optout")) continue;
+        urls.push(url);
+      }
+
+      let salary = "";
+      const salaryMatch = html.match(/\$[\d,]+(?:\s*[-–]\s*\$[\d,]+)?(?:\s*(?:per|\/|a)\s*(?:year|hour|hr|annum))?/i);
+      if (salaryMatch) salary = salaryMatch[0];
+
+      const url = urls[0] || "https://www.ziprecruiter.com";
+      const key = buildExternalJobKey(url, company, title, "Denver metro");
+      jobs.push({
+        title,
+        companyname: company,
+        location: "Denver metro area",
+        salary,
+        job_url: url,
+        employment_type: "",
+        external_job_key: key,
+        source: "ziprecruiter_email",
+      });
     }
   }
 
@@ -476,7 +573,7 @@ export async function POST(req: NextRequest) {
       // ── MULTI-SOURCE QUERY: fetch both ZipRecruiter AND GovernmentJobs emails ──
       const list = await gmail.users.messages.list({
         userId: "me", maxResults: 100,
-        q: account.label_id ? undefined : "from:alerts@ziprecruiter.com OR from:noreply@governmentjobs.com",
+        q: account.label_id ? undefined : "from:ziprecruiter.com OR from:noreply@governmentjobs.com",
         labelIds: account.label_id ? [account.label_id] : undefined,
       });
       messageIds = list.data.messages?.map((m) => m.id).filter((id): id is string => !!id) || [];
@@ -508,10 +605,11 @@ export async function POST(req: NextRequest) {
         if (source === "unknown") continue;
 
         const html = getBody(payload);
+        const textBody = getTextBody(payload);
         let parsedJobs: ParsedJob[] = [];
 
         if (source === "ziprecruiter") {
-          parsedJobs = parseZipRecruiterEmail(subject, html, msgId);
+          parsedJobs = parseZipRecruiterEmail(subject, html, msgId, textBody);
         } else if (source === "governmentjobs") {
           parsedJobs = parseGovernmentJobsEmail(subject, html, msgId);
         }
