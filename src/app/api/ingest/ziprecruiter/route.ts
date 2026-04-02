@@ -413,8 +413,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data: run } = await supabaseAdmin.from("job_ingest_runs").insert({ status: "running" }).select("id").single();
-  const runId = run?.id;
+  // ── Replay mode: optional { messageId, dryRun } in request body ──
+  let replayMessageId: string | null = null;
+  let dryRun = false;
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (body.messageId) replayMessageId = body.messageId;
+    if (body.dryRun) dryRun = true;
+  } catch { /* no body = normal cron mode */ }
+
+  const isReplay = !!replayMessageId;
+  const replayResults: Array<{ parsed: ParsedJob; companyMatch: string | null; companyId: number | null; action: string }> = [];
+
+  // Skip ingest run logging in dryRun mode
+  let runId: number | null = null;
+  if (!dryRun) {
+    const { data: run } = await supabaseAdmin.from("job_ingest_runs").insert({ status: isReplay ? "replay" : "running" }).select("id").single();
+    runId = run?.id;
+  }
   let messagesSeen = 0;
   let jobsExtracted = 0;
   let companiesCreated = 0;
@@ -434,7 +450,10 @@ export async function POST(req: NextRequest) {
     // Get message IDs
     let messageIds: string[] = [];
 
-    if (account.last_history_id) {
+    if (isReplay) {
+      // ── Replay mode: process only the specified message, skip dedupe ──
+      messageIds = [replayMessageId!];
+    } else if (account.last_history_id) {
       try {
         const history = await gmail.users.history.list({
           userId: "me",
@@ -453,7 +472,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!account.last_history_id) {
+    if (!isReplay && !account.last_history_id) {
       // ── MULTI-SOURCE QUERY: fetch both ZipRecruiter AND GovernmentJobs emails ──
       const list = await gmail.users.messages.list({
         userId: "me", maxResults: 100,
@@ -473,7 +492,8 @@ export async function POST(req: NextRequest) {
 
     for (const msgId of messageIds) {
       try {
-        if (processedSet.has(msgId)) continue;
+        // In replay mode, skip the dedupe check so we can re-process
+        if (!isReplay && processedSet.has(msgId)) continue;
 
         const msg = await gmail.users.messages.get({ userId: "me", id: msgId, format: "full" });
         const payload = msg.data.payload;
@@ -504,6 +524,19 @@ export async function POST(req: NextRequest) {
           let matched = matchCompanyInMemory(job.companyname, companyList);
           let companyId: number | null = matched?.id || null;
           const canonicalName = matched?.name || normalizeCompanyName(job.companyname);
+
+          if (dryRun) {
+            // ── DryRun: collect parsed result, skip writes ──
+            replayResults.push({
+              parsed: job,
+              companyMatch: matched?.name || null,
+              companyId,
+              action: matched ? "matched_existing" : "would_create",
+            });
+            jobsExtracted++;
+            sourceStats[source]++;
+            continue;
+          }
 
           if (!matched && job.companyname !== "See listing" && job.companyname !== "Multiple") {
             // Determine niche based on source
@@ -560,6 +593,16 @@ export async function POST(req: NextRequest) {
           if (!upsertErr) {
             jobsExtracted++;
             sourceStats[source]++;
+
+            // ── Replay mode: collect upsert result ──
+            if (isReplay) {
+              replayResults.push({
+                parsed: job,
+                companyMatch: matched?.name || canonicalName,
+                companyId,
+                action: matched ? "upserted_matched" : "upserted_created",
+              });
+            }
           }
         }
       } catch (msgErr) {
@@ -570,17 +613,24 @@ export async function POST(req: NextRequest) {
     if (runId) {
       await supabaseAdmin.from("job_ingest_runs").update({
         finished_at: new Date().toISOString(), messages_seen: messagesSeen,
-        jobs_extracted: jobsExtracted, companies_created: companiesCreated, status: "completed",
+        jobs_extracted: jobsExtracted, companies_created: companiesCreated,
+        status: isReplay ? "replay_completed" : "completed",
       }).eq("id", runId);
     }
 
-    return NextResponse.json({
+    const response: Record<string, unknown> = {
       success: true,
+      mode: dryRun ? "dryRun" : isReplay ? "replay" : "cron",
       messages_seen: messagesSeen,
       jobs_extracted: jobsExtracted,
       companies_created: companiesCreated,
       sources: sourceStats,
-    });
+    };
+    if (isReplay || dryRun) {
+      response.replay = replayResults;
+    }
+
+    return NextResponse.json(response);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Ingest error:", message);
@@ -590,3 +640,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
