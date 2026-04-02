@@ -293,7 +293,19 @@ function parseZipRecruiterBody(bodyText: string): ParsedJob[] {
     }
 
     // Skip if no title or no company
-    if (!title || title.length < 3) continue;
+    if (!title || title.length < 5) continue;
+    if (!companyname || companyname.length < 2) continue;
+
+    // Filter intro/greeting text that leaked in as titles
+    const introPatterns = [
+      /^here are today/i, /^hi\s+\w+/i, /^hello/i, /^hey/i,
+      /^-->$/, /^--$/, /^-+>?$/, /^new$/i, /^phil$/i,
+      /^your career/i, /^get hired/i, /^download/i,
+    ];
+    if (introPatterns.some((p) => p.test(title.trim()))) continue;
+
+    // Clean company name: strip leading > or * or bullets
+    companyname = companyname.replace(/^[>*•·\s]+/, "").trim();
     if (!companyname || companyname.length < 2) continue;
 
     // Build fingerprint key
