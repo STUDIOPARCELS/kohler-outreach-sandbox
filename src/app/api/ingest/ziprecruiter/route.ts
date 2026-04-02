@@ -556,6 +556,14 @@ export async function POST(req: NextRequest) {
           parsedJobs = parseGovernmentJobsEmail(subject, bodyText, msgId);
         }
 
+        // ── Replay diagnostics ──
+        if (isReplay || dryRun) {
+          const zrUrlCount = (bodyText.match(/ziprecruiter\.com\/[ek]?km\//g) || []).length;
+          const segCount = (bodyText.match(/\s*<https?:\/\/www\.ziprecruiter\.com\/[ek]?km\//g) || []).length;
+          warnings.push(`[diag] msgId=${msgId} mime=${mime} rawLen=${rawBody.length} textLen=${bodyText.length} zrUrls=${zrUrlCount} segments=${segCount} parsed=${parsedJobs.length} source=${source} subject="${subject.slice(0,60)}"`);
+          warnings.push(`[body_sample] ${bodyText.slice(0, 500).replace(/\n/g, "\\n")}`);
+        }
+
         if (parsedJobs.length === 0 && source === "governmentjobs") {
           warnings.push(`GovernmentJobs email ${msgId} yielded 0 jobs. Raw saved for debug.`);
         }
