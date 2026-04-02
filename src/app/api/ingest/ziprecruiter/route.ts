@@ -45,14 +45,16 @@ function getBody(payload: gmail_v1.Schema$MessagePart): { content: string; mime:
 
 /** Strip HTML to plain text, preserving link info */
 function htmlToText(html: string): string {
+  const URL_OPEN = "\u00AB"; // «
+  const URL_CLOSE = "\u00BB"; // »
   let text = html
     // Remove style and script blocks entirely
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    // Convert links to "text <URL>"
+    // Convert links to "text «URL»" (using non-HTML delimiters)
     .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, linkText) => {
       const clean = linkText.replace(/<[^>]+>/g, "").trim();
-      return clean ? `${clean}  <${url}>` : `<${url}>`;
+      return clean ? `${clean}  ${URL_OPEN}${url}${URL_CLOSE}` : `${URL_OPEN}${url}${URL_CLOSE}`;
     })
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(?:p|div|tr|li|td|th|h[1-6])>/gi, "\n")
@@ -62,6 +64,9 @@ function htmlToText(html: string): string {
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
     .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&nbsp;/g, " ")
+    // Restore URL delimiters to angle brackets
+    .replace(new RegExp(URL_OPEN, "g"), "<")
+    .replace(new RegExp(URL_CLOSE, "g"), ">")
     // Collapse whitespace
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n");
@@ -511,7 +516,7 @@ export async function POST(req: NextRequest) {
       // Multi-source query covering both ZR sender families + GovernmentJobs
       const q = account.label_id
         ? undefined
-        : "from:ziprecruiter.com OR from:noreply@governmentjobs.com";
+        : "from:(ziprecruiter.com OR governmentjobs.com)";
       const list = await gmail.users.messages.list({
         userId: "me", maxResults: 100,
         q,
