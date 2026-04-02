@@ -61,6 +61,11 @@ function buildExternalJobKey(url: string, company: string, title: string, locati
   return createHash("sha256").update(input).digest("hex").slice(0, 24);
 }
 
+/* ── Build external key for government jobs — uses the NEOGOV job ID ── */
+function buildGovJobKey(jobId: string): string {
+  return `gov_${jobId}`;
+}
+
 /* ── Staffing agency blocklist — skip these, they're middlemen not outreach targets ── */
 const STAFFING_BLOCKLIST = new Set([
   "cybercoders", "jobot", "insight global", "belcan", "rolinc staffing",
@@ -79,7 +84,17 @@ function isStaffingAgency(company: string): boolean {
     clean.includes("staffing") || clean.includes("recruiting") || clean.includes("personnel");
 }
 
-/* ── Email parser ── */
+/* ── Source detection ── */
+type EmailSource = "ziprecruiter" | "governmentjobs" | "unknown";
+
+function detectSource(from: string): EmailSource {
+  const lower = from.toLowerCase();
+  if (lower.includes("ziprecruiter")) return "ziprecruiter";
+  if (lower.includes("governmentjobs") || lower.includes("neogov")) return "governmentjobs";
+  return "unknown";
+}
+
+/* ── Shared job interface ── */
 interface ParsedJob {
   title: string;
   companyname: string;
@@ -88,8 +103,11 @@ interface ParsedJob {
   job_url: string;
   employment_type: string;
   external_job_key: string;
+  source: string;
+  department?: string;
 }
 
+/* ── ZipRecruiter email parser (unchanged) ── */
 function parseZipRecruiterEmail(subject: string, html: string, messageId: string): ParsedJob[] {
   const jobs: ParsedJob[] = [];
   let title = subject;
@@ -150,6 +168,7 @@ function parseZipRecruiterEmail(subject: string, html: string, messageId: string
       job_url: url,
       employment_type: "",
       external_job_key: key,
+      source: "ziprecruiter_email",
     });
   }
 
@@ -170,8 +189,182 @@ function parseZipRecruiterEmail(subject: string, html: string, messageId: string
           job_url: blockUrl,
           employment_type: "",
           external_job_key: key,
+          source: "ziprecruiter_email",
         });
       }
+    }
+  }
+
+  return jobs;
+}
+
+/* ── GovernmentJobs.com / NEOGOV email parser ── */
+function parseGovernmentJobsEmail(subject: string, html: string, messageId: string): ParsedJob[] {
+  const jobs: ParsedJob[] = [];
+  const seen = new Set<string>();
+
+  // ── Strategy 1: Extract all governmentjobs.com job URLs ──
+  // Matches: governmentjobs.com/careers/{org}/jobs/{id} or /jobs/{id}/{slug}
+  const jobUrlRegex = /href=["'](https?:\/\/[^"']*governmentjobs\.com\/careers\/([^/"']+)\/jobs\/(\d+)(?:[^"']*)?)["']/gi;
+  let urlMatch: RegExpExecArray | null;
+
+  while ((urlMatch = jobUrlRegex.exec(html)) !== null) {
+    const fullUrl = urlMatch[1];
+    const org = urlMatch[2]; // e.g. "colorado"
+    const jobId = urlMatch[3]; // e.g. "5248055"
+    const key = buildGovJobKey(jobId);
+
+    // Skip duplicates within same email
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    // Skip non-job URLs (print views, application pages, etc.)
+    if (fullUrl.includes("jobInterestCards") || fullUrl.includes("privacypolicy") || fullUrl.includes("faq")) continue;
+
+    // ── Extract job title from link text or nearby context ──
+    let title = "";
+
+    // Method A: Look for the link text (text between <a> and </a>)
+    const linkTextRegex = new RegExp(
+      `href=["']${fullUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>([^<]+)<`,
+      "i"
+    );
+    const linkTextMatch = html.match(linkTextRegex);
+    if (linkTextMatch) {
+      const candidate = linkTextMatch[1].trim();
+      // Filter out "Apply", "View", "Details", URLs, etc.
+      if (candidate.length > 5 && !/^(apply|view|details|click|here|learn more)/i.test(candidate) && !candidate.startsWith("http")) {
+        title = candidate;
+      }
+    }
+
+    // Method B: Extract title from slug in URL
+    if (!title) {
+      const slugMatch = fullUrl.match(/\/jobs\/\d+(?:-\d+)?\/([^?#"']+)/);
+      if (slugMatch) {
+        title = slugMatch[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+    }
+
+    // Method C: Fall back to subject line
+    if (!title) {
+      // Common NEOGOV subject patterns:
+      // "New Job Posting: Engineer in Training I"
+      // "Job Interest Card Notification: Mechanical Engineer"
+      // "Colorado - New Job: Engineer in Training"
+      const subjectPatterns = [
+        /New Job Posting:\s*(.+)/i,
+        /Job Interest Card.*?:\s*(.+)/i,
+        /New Job:\s*(.+)/i,
+        /Job Alert:\s*(.+)/i,
+        /Position Available:\s*(.+)/i,
+      ];
+      for (const pattern of subjectPatterns) {
+        const sm = subject.match(pattern);
+        if (sm) { title = sm[1].trim(); break; }
+      }
+    }
+
+    if (!title) title = `Government Job ${jobId}`;
+
+    // ── Extract salary from nearby HTML context ──
+    let salary = "";
+    // Look for salary near the job URL in the HTML
+    const urlIndex = html.indexOf(fullUrl);
+    if (urlIndex > -1) {
+      // Search within 2000 chars around the URL
+      const context = html.slice(Math.max(0, urlIndex - 1000), urlIndex + 1000);
+      const salaryMatch = context.match(/\$[\d,]+(?:\.[\d]+)?(?:\s*[-–]\s*\$[\d,]+(?:\.[\d]+)?)?(?:\s*(?:per|\/|a)\s*(?:year|month|hour|hr|annum|monthly|annually))?/i);
+      if (salaryMatch) salary = salaryMatch[0];
+    }
+
+    // ── Extract location ──
+    let location = "Colorado";
+    if (urlIndex > -1) {
+      const context = html.slice(Math.max(0, urlIndex - 1000), urlIndex + 1000);
+      // Common patterns: "Denver, CO", "Grand Junction, CO", "Location: Denver"
+      const locMatch = context.match(/(?:Location[:\s]*)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),\s*CO\b/);
+      if (locMatch) location = `${locMatch[1]}, CO`;
+    }
+
+    // ── Extract department ──
+    let department = "";
+    if (urlIndex > -1) {
+      const context = html.slice(Math.max(0, urlIndex - 1000), urlIndex + 1000);
+      const deptMatch = context.match(/(?:Department|Division|Agency)[:\s]*([^<\n]{3,60})/i);
+      if (deptMatch) department = deptMatch[1].trim();
+    }
+
+    // ── Map organization to company name ──
+    const orgMap: Record<string, string> = {
+      colorado: "State of Colorado",
+      cosprings: "City of Colorado Springs",
+      cityofdenver: "City of Denver",
+      denvergov: "City of Denver",
+      aurora: "City of Aurora",
+      lakewood: "City of Lakewood",
+      jeffco: "Jefferson County",
+      douglas: "Douglas County",
+      arapahoe: "Arapahoe County",
+      adams: "Adams County",
+      boulder: "City of Boulder",
+      bouldercounty: "Boulder County",
+      broomfield: "City of Broomfield",
+      thornton: "City of Thornton",
+      westminster: "City of Westminster",
+      arvada: "City of Arvada",
+      rtd: "RTD",
+    };
+    const companyname = orgMap[org.toLowerCase()] || `${org.charAt(0).toUpperCase()}${org.slice(1)} (Gov)`;
+
+    jobs.push({
+      title,
+      companyname,
+      location,
+      salary,
+      job_url: canonicalizeUrl(fullUrl),
+      employment_type: "Full Time",
+      external_job_key: key,
+      source: "governmentjobs_email",
+      department,
+    });
+  }
+
+  // ── Strategy 2: If no job URLs found, parse subject for single-job alerts ──
+  if (jobs.length === 0) {
+    let title = "";
+    const subjectPatterns = [
+      /New Job Posting:\s*(.+)/i,
+      /Job Interest Card.*?:\s*(.+)/i,
+      /New Job:\s*(.+)/i,
+      /Job Alert:\s*(.+)/i,
+      /Position Available:\s*(.+)/i,
+    ];
+    for (const pattern of subjectPatterns) {
+      const sm = subject.match(pattern);
+      if (sm) { title = sm[1].trim(); break; }
+    }
+
+    if (title) {
+      // Try to find any governmentjobs.com URL in the body
+      const anyUrlMatch = html.match(/href=["'](https?:\/\/[^"']*governmentjobs\.com\/careers\/[^"']+?)["']/i);
+      const url = anyUrlMatch ? anyUrlMatch[1] : "https://www.governmentjobs.com/careers/colorado";
+      const key = createHash("sha256").update(`${title}|${subject}|${messageId}`).digest("hex").slice(0, 24);
+
+      let salary = "";
+      const salaryMatch = html.match(/\$[\d,]+(?:\.[\d]+)?(?:\s*[-–]\s*\$[\d,]+(?:\.[\d]+)?)?(?:\s*(?:per|\/|a)\s*(?:year|month|hour|hr|annum|monthly|annually))?/i);
+      if (salaryMatch) salary = salaryMatch[0];
+
+      jobs.push({
+        title,
+        companyname: "State of Colorado",
+        location: "Colorado",
+        salary,
+        job_url: canonicalizeUrl(url),
+        employment_type: "Full Time",
+        external_job_key: `gov_subj_${key}`,
+        source: "governmentjobs_email",
+      });
     }
   }
 
@@ -199,6 +392,21 @@ function matchCompanyInMemory(jobCompany: string, companyList: CompanyRow[]): Co
   return null;
 }
 
+/* ── Niche assignment for government jobs ── */
+function getGovNiche(title: string, department: string): string {
+  const combined = `${title} ${department}`.toLowerCase();
+  if (combined.includes("transportation") || combined.includes("cdot") || combined.includes("highway") || combined.includes("bridge")) {
+    return "Government / Public Works / Infrastructure";
+  }
+  if (combined.includes("water") || combined.includes("utility") || combined.includes("wastewater")) {
+    return "Government / Public Works / Infrastructure";
+  }
+  if (combined.includes("energy") || combined.includes("renewable")) {
+    return "Energy / Renewables / Power";
+  }
+  return "Government / Public Works / Infrastructure";
+}
+
 /* ── Main handler ── */
 export async function POST(req: NextRequest) {
   if (!checkSecret(req)) {
@@ -210,6 +418,7 @@ export async function POST(req: NextRequest) {
   let messagesSeen = 0;
   let jobsExtracted = 0;
   let companiesCreated = 0;
+  const sourceStats: Record<string, number> = { ziprecruiter: 0, governmentjobs: 0 };
 
   try {
     const { gmail, account } = await getAuthedGmailClient();
@@ -245,9 +454,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!account.last_history_id) {
+      // ── MULTI-SOURCE QUERY: fetch both ZipRecruiter AND GovernmentJobs emails ──
       const list = await gmail.users.messages.list({
         userId: "me", maxResults: 100,
-        q: account.label_id ? undefined : "from:alerts@ziprecruiter.com",
+        q: account.label_id ? undefined : "from:alerts@ziprecruiter.com OR from:noreply@governmentjobs.com",
         labelIds: account.label_id ? [account.label_id] : undefined,
       });
       messageIds = list.data.messages?.map((m) => m.id).filter((id): id is string => !!id) || [];
@@ -273,13 +483,21 @@ export async function POST(req: NextRequest) {
         const from = getHeader(payload.headers, "From");
         const dateStr = getHeader(payload.headers, "Date");
 
-        if (!from.toLowerCase().includes("ziprecruiter")) continue;
+        // ── Route to the correct parser based on source ──
+        const source = detectSource(from);
+        if (source === "unknown") continue;
 
         const html = getBody(payload);
-        const parsedJobs = parseZipRecruiterEmail(subject, html, msgId);
+        let parsedJobs: ParsedJob[] = [];
+
+        if (source === "ziprecruiter") {
+          parsedJobs = parseZipRecruiterEmail(subject, html, msgId);
+        } else if (source === "governmentjobs") {
+          parsedJobs = parseGovernmentJobsEmail(subject, html, msgId);
+        }
 
         for (const job of parsedJobs) {
-          // Skip staffing agencies
+          // Skip staffing agencies (only relevant for ZR, but check anyway)
           if (isStaffingAgency(job.companyname)) continue;
 
           // Match or create company
@@ -288,14 +506,21 @@ export async function POST(req: NextRequest) {
           const canonicalName = matched?.name || normalizeCompanyName(job.companyname);
 
           if (!matched && job.companyname !== "See listing" && job.companyname !== "Multiple") {
+            // Determine niche based on source
+            const niche = source === "governmentjobs"
+              ? getGovNiche(job.title, job.department || "")
+              : "ZipRecruiter Intake";
+
             // Create new company
             const { data: newCo } = await supabaseAdmin.from("companies").insert({
               companyname: canonicalName,
               company_key: slugify(canonicalName),
               city: "Denver",
               tier: 4,
-              niche: "ZipRecruiter Intake",
-              company_about: `Added from ZipRecruiter ingest. Job: ${job.title}`,
+              niche,
+              company_about: source === "governmentjobs"
+                ? `Colorado state agency. Added from governmentjobs.com ingest. Job: ${job.title}`
+                : `Added from ZipRecruiter ingest. Job: ${job.title}`,
             }).select("id, companyname").single();
 
             if (newCo) {
@@ -313,17 +538,29 @@ export async function POST(req: NextRequest) {
             salary: job.salary || null,
             location: job.location || null,
             employment_type: job.employment_type || null,
-            source: "ziprecruiter_email",
+            source: job.source,
             external_job_key: job.external_job_key,
             gmail_message_id: msgId,
             job_url: canonicalizeUrl(job.job_url),
             received_at: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
-            raw_payload: { parserVersion: 2, subject, from, messageId: msgId, parsedJob: job },
+            raw_payload: {
+              parserVersion: 3,
+              source: job.source,
+              subject,
+              from,
+              messageId: msgId,
+              parsedJob: job,
+              // Store first 5000 chars of HTML for debugging new parsers
+              htmlPreview: html.slice(0, 5000),
+            },
             ingest_status: "new",
-            parser_version: 2,
+            parser_version: 3,
           }, { onConflict: "source,external_job_key" });
 
-          if (!upsertErr) jobsExtracted++;
+          if (!upsertErr) {
+            jobsExtracted++;
+            sourceStats[source]++;
+          }
         }
       } catch (msgErr) {
         console.error(`Error processing message ${msgId}:`, msgErr);
@@ -337,7 +574,13 @@ export async function POST(req: NextRequest) {
       }).eq("id", runId);
     }
 
-    return NextResponse.json({ success: true, messages_seen: messagesSeen, jobs_extracted: jobsExtracted, companies_created: companiesCreated });
+    return NextResponse.json({
+      success: true,
+      messages_seen: messagesSeen,
+      jobs_extracted: jobsExtracted,
+      companies_created: companiesCreated,
+      sources: sourceStats,
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Ingest error:", message);
