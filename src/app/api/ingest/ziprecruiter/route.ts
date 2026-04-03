@@ -414,6 +414,76 @@ function parseGovernmentJobsEmail(subject: string, bodyText: string, messageId: 
   return jobs;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   RELEVANCE GATE — score jobs for Kohler's ME/EIT profile
+   ══════════════════════════════════════════════════════════════ */
+
+interface RelevanceResult {
+  is_relevant: boolean;
+  match_score: number;
+  relevance_reason: string;
+}
+
+const TITLE_BOOST: Array<[RegExp, number, string]> = [
+  [/\bmechanical\s+engineer\s*(?:i|1)?\b/i, 30, "mechanical engineer (entry)"],
+  [/\bmechanical\s+design\s+engineer\b/i, 28, "mechanical design engineer"],
+  [/\bengineer\s+in\s+training\b/i, 35, "engineer in training"],
+  [/\beit\b/i, 35, "EIT"],
+  [/\bmanufacturing\s+engineer\b/i, 20, "manufacturing engineer"],
+  [/\bdesign\s+engineer\b/i, 22, "design engineer"],
+  [/\bproduct\s+development\s+engineer\b/i, 22, "product development engineer"],
+  [/\bmechanical\s+engineer\b/i, 25, "mechanical engineer"],
+  [/\bengineer\b/i, 10, "engineer (general)"],
+];
+
+const TITLE_PENALTY: Array<[RegExp, number, string]> = [
+  [/\b(?:senior|sr\.?)\b/i, -15, "senior-level"],
+  [/\b(?:lead|principal|staff)\b/i, -20, "lead/principal/staff"],
+  [/\b(?:manager|director|vp|chief)\b/i, -25, "management"],
+  [/\b(?:pe|p\.e\.)\b(?!\s*i)/i, -10, "PE required"],
+  [/\b(?:iii|iv|v|3|4|5)\b/i, -12, "level III+"],
+];
+
+function scoreRelevance(title: string, location: string): RelevanceResult {
+  const reasons: string[] = [];
+  let score = 0;
+
+  // Title scoring
+  for (const [pattern, points, label] of TITLE_BOOST) {
+    if (pattern.test(title)) {
+      score += points;
+      reasons.push(`+${points} ${label}`);
+      break; // Take highest match only
+    }
+  }
+
+  for (const [pattern, points, label] of TITLE_PENALTY) {
+    if (pattern.test(title)) {
+      score += points;
+      reasons.push(`${points} ${label}`);
+    }
+  }
+
+  // Location scoring
+  const loc = location.toLowerCase();
+  if (loc.includes(", co") || loc.includes("colorado") || loc.includes("denver") || loc.includes("boulder") || loc.includes("arvada") || loc.includes("littleton") || loc.includes("englewood") || loc.includes("centennial") || loc.includes("broomfield") || loc.includes("lakewood") || loc.includes("aurora") || loc.includes("westminster") || loc.includes("longmont")) {
+    score += 15;
+    reasons.push("+15 Colorado");
+  } else if (loc.includes("remote")) {
+    score += 5;
+    reasons.push("+5 remote");
+  } else if (loc && !loc.includes("nationwide")) {
+    score -= 10;
+    reasons.push("-10 out-of-state");
+  }
+
+  const is_relevant = score >= 15;
+  return {
+    is_relevant,
+    match_score: score,
+    relevance_reason: reasons.join("; ") || "no matching signals",
+  };
+}
 /* ── Company matching ── */
 interface CompanyRow { id: number; name: string; lower: string; }
 
@@ -471,6 +541,7 @@ export async function POST(req: NextRequest) {
     companyMatch: string | null;
     companyId: number | null;
     action: string;
+    relevance?: RelevanceResult;
   }> = [];
   const warnings: string[] = [];
 
@@ -598,6 +669,9 @@ export async function POST(req: NextRequest) {
         for (const job of parsedJobs) {
           if (isStaffingAgency(job.companyname)) continue;
 
+          // Score relevance for Kohler's ME/EIT profile
+          const relevance = scoreRelevance(job.title, job.location || "");
+
           let matched = matchCompanyInMemory(job.companyname, companyList);
           let companyId: number | null = matched?.id || null;
           // Parser already normalizes company names — don't re-normalize here
@@ -609,6 +683,7 @@ export async function POST(req: NextRequest) {
               companyMatch: matched?.name || null,
               companyId,
               action: matched ? "matched_existing" : "would_create",
+              relevance,
             });
             jobsExtracted++;
             sourceStats[source]++;
@@ -691,8 +766,11 @@ export async function POST(req: NextRequest) {
               first_seen_at: receivedAt,
               last_seen_at: now,
               times_seen: 1,
+              is_relevant: relevance.is_relevant,
+              match_score: relevance.match_score,
+              relevance_reason: relevance.relevance_reason,
               raw_payload: {
-                parserVersion: 4,
+                parserVersion: 5,
                 source: job.source,
                 subject,
                 from,
@@ -701,7 +779,7 @@ export async function POST(req: NextRequest) {
                 blockIndex: job.block_index,
               },
               ingest_status: "new",
-              parser_version: 4,
+              parser_version: 5,
             });
 
             if (!insertErr) {
@@ -713,6 +791,7 @@ export async function POST(req: NextRequest) {
                   companyMatch: matched?.name || canonicalName,
                   companyId,
                   action: matched ? "inserted_matched" : "inserted_created",
+                  relevance,
                 });
               }
             }
@@ -738,8 +817,7 @@ export async function POST(req: NextRequest) {
     const response: Record<string, unknown> = {
       success: true,
       mode: dryRun ? "dryRun" : isReplay ? "replay" : "cron",
-      parser_version: 4,
-      messages_seen: messagesSeen,
+      parser_version: 5,      messages_seen: messagesSeen,
       jobs_extracted: jobsExtracted,
       companies_created: companiesCreated,
       sources: sourceStats,
