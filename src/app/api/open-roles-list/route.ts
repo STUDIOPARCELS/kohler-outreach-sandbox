@@ -5,11 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
 
-  // Query job_listings directly — single source of truth
+  // Query job_listings — only relevant roles for outreach
   const { data: jobs, error } = await supabaseAdmin
     .from("job_listings")
-    .select("companyname, company_id, title, source, ingest_status")
-    .in("ingest_status", ["new", "open"]);
+    .select("companyname, company_id, title, source, ingest_status, is_relevant")
+    .in("ingest_status", ["new", "open"])
+    .eq("is_relevant", true);
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
