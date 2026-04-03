@@ -581,7 +581,6 @@ export async function POST(req: NextRequest) {
           userId: "me",
           startHistoryId: account.last_history_id,
           historyTypes: ["messageAdded"],
-          labelId: account.label_id || undefined,
         });
         const added = history.data.history?.flatMap((h) =>
           h.messagesAdded?.map((m) => m.message?.id).filter(Boolean) || []
@@ -600,14 +599,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isReplay && !account.last_history_id) {
-      // Multi-source query covering both ZR sender families + GovernmentJobs
-      const q = account.label_id
-        ? undefined
-        : "from:(ziprecruiter.com OR governmentjobs.com)";
+      // Sender-domain query is ALWAYS primary — label is optional accelerator
+      const q = "from:(ziprecruiter.com OR governmentjobs.com)";
       const list = await gmail.users.messages.list({
         userId: "me", maxResults: 100,
         q,
-        labelIds: account.label_id ? [account.label_id] : undefined,
       });
       messageIds = list.data.messages?.map((m) => m.id).filter((id): id is string => !!id) || [];
       if (messageIds.length > 0) {
