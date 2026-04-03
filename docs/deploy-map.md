@@ -1,108 +1,84 @@
-# Kohler Outreach Engine — Deploy Map
+# Kohler Outreach Engine — Ingest Operations
 
-> Single source of truth for project IDs, repos, domains, crons, and env vars.
+## Scheduler
 
-## Repositories
+- **Engine:** Supabase pg_cron (runs inside Postgres, not Vercel cron)
+- **Schedule:** `0 14 * * *` UTC = 8:00 AM MDT / 7:00 AM MST
+- **Target:** `https://kohler-outreach.vercel.app/api/ingest/ziprecruiter`
+- **Auth:** `x-import-secret` header (value in Supabase `cron.job.command`)
+- **DST drift:** 1 hour (7 AM vs 8 AM) — accepted as operationally insignificant
+- **Vercel cron (`vercel.json`):** declares only `/api/cron/research` — ingest is pg_cron only
 
-| Repo | Purpose | Branch |
-|------|---------|--------|
-| `STUDIOPARCELS/kohler-outreach` | Production | `main` |
-| `STUDIOPARCELS/kohler-outreach-sandbox` | Sandbox (deploy here first) | `main` |
+To inspect:
+```sql
+SELECT jobid, schedule, active, substring(command from '''(https://[^'']+)''') as target
+FROM cron.job WHERE jobid = 1;
 
-## Vercel Projects
-
-| Project | ID | Domain |
-|---------|----|--------|
-| Production | `prj_cCuqH80JpIo67ooHZAVx4zL0auyf` | kohler-outreach.vercel.app |
-| Sandbox | `prj_0jkVUegt9SPsGCrxOub8ANPV4TQj` | kohler-outreach-sandbox.vercel.app |
-| Team | `team_gdYLn40FUPUZaHBC5Km35eIT` | — |
-
-## Supabase
-
-| Field | Value |
-|-------|-------|
-| Project ID | `acwgirrldntjpzrhqmdh` |
-| URL | `https://acwgirrldntjpzrhqmdh.supabase.co` |
-| Source of truth for jobs | `job_listings` table |
-| Unique constraint | `(source, external_job_key)` |
-| Job view | `relevant_roles` SQL VIEW over `job_listings` |
-
-## Cron Endpoints
-
-| Endpoint | Schedule | Trigger |
-|----------|----------|---------|
-| `/api/ingest/ziprecruiter` | `0 14 * * *` (8am MT) | pg_cron + pg_net HTTP POST |
-| `/api/cron/research` | `0 8 * * *` | Vercel cron (vercel.json) |
-
-### Ingest route modes
-
-```
-# Normal cron (daily)
-POST /api/ingest/ziprecruiter
-Header: x-cron-secret: <INGEST_SECRET>
-
-# Replay a specific Gmail message (re-processes, skips dedupe)
-POST /api/ingest/ziprecruiter
-Header: x-cron-secret: <INGEST_SECRET>
-Body: { "messageId": "<gmail_message_id>" }
-
-# Dry run (parse only, no DB writes)
-POST /api/ingest/ziprecruiter
-Header: x-cron-secret: <INGEST_SECRET>
-Body: { "messageId": "<gmail_message_id>", "dryRun": true }
+SELECT status, start_time, end_time FROM cron.job_run_details
+WHERE jobid = 1 ORDER BY start_time DESC LIMIT 5;
 ```
 
-## Environment Variables (both projects)
+## Gmail Message Selection
 
-| Variable | Purpose |
-|----------|---------|
-| `SUPABASE_URL` | Supabase API URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase admin access |
-| `KOHLER_SUPABASE_URL` | Alias |
-| `KOHLER_SUPABASE_KEY` | Alias |
-| `GOOGLE_CLIENT_ID` | Gmail OAuth |
-| `GOOGLE_CLIENT_SECRET` | Gmail OAuth |
-| `GOOGLE_REDIRECT_URI` | Gmail OAuth callback (per project) |
-| `INGEST_SECRET` | Cron auth |
-| `IMPORT_SECRET` | Cron auth (alias) |
-| `CRON_SECRET` | Vercel cron auth |
-| `API_SECRET` | General API auth |
-| `ROCKETREACH_API_KEY` | Contact lookup |
-| `OPENAI_API_KEY` | Job search fallback |
-| `ANTHROPIC_API_KEY` | AI features |
-| `GOOGLE_PLACES_API_KEY` | Address lookup |
-| `GMAIL_USER` | Email sending |
-| `GMAIL_APP_PASSWORD` | Email sending |
-| `REPLY_TO_EMAIL` | Email reply-to |
+The ingest route uses **sender-domain matching exclusively**.
 
-## Git Config
+```
+from:(ziprecruiter.com OR governmentjobs.com)
+```
 
-| Field | Value |
-|-------|-------|
-| Email | `317lrw@gmail.com` |
-| Name | `Lisa Wood` |
-| PAT | `<GITHUB_PAT>` |
+This covers:
+- `alerts@ziprecruiter.com` (daily multi-job emails)
+- `phil@ziprecruiter.com` (single-job recommendations)
+- `noreply@governmentjobs.com` (job interest card alerts — staged)
 
-> Vercel rejects commits from other emails.
+The `job-ingest` Gmail label exists as inbox organization only.
+The `label_id` field in `gmail_accounts` is stored but **not used for message selection**.
+The pipeline works regardless of whether the label has messages.
 
-## Ingest Sources
+History sync uses `users.history.list(startHistoryId=...)`.
+If Gmail returns 404 (expired cursor), `last_history_id` is set to null, triggering a full-sync.
 
-| Source value | Parser | From address |
-|-------------|--------|-------------|
-| `ziprecruiter_email` | `parseZipRecruiterEmail()` | `alerts@ziprecruiter.com` |
-| `governmentjobs_email` | `parseGovernmentJobsEmail()` | `noreply@governmentjobs.com` |
-| `governmentjobs` | Manual entry | — |
-| `dice.com` | Manual entry | — |
-| `blueorigin.com` | Manual entry | — |
-| `ball.com` | Manual entry | — |
+## Replay Procedure
 
-## Workflow Rule
+To replay a specific email through the parser:
 
-**Sandbox first. Always.**
+```bash
+# DryRun (parse only, no writes)
+curl -X POST https://kohler-outreach.vercel.app/api/ingest/ziprecruiter \
+  -H "x-cron-secret: <secret>" \
+  -H "Content-Type: application/json" \
+  -d '{"messageId": "<FULL_GMAIL_MESSAGE_ID>", "dryRun": true}'
 
-1. Push to `kohler-outreach-sandbox`
-2. Deploy to `prj_0jkVUegt9SPsGCrxOub8ANPV4TQj`
-3. Verify on kohler-outreach-sandbox.vercel.app
-4. Lisa approves
-5. Push to `kohler-outreach` (production)
-6. Deploy to `prj_cCuqH80JpIo67ooHZAVx4zL0auyf`
+# Wet replay (parse + write to DB)
+curl -X POST https://kohler-outreach.vercel.app/api/ingest/ziprecruiter \
+  -H "x-cron-secret: <secret>" \
+  -H "Content-Type: application/json" \
+  -d '{"messageId": "<FULL_GMAIL_MESSAGE_ID>"}'
+```
+
+Rules:
+- Message IDs must be **exact full Gmail IDs** (e.g. `19d45105ea4cc248`)
+- Truncated IDs return 400
+- DryRun returns parsed jobs with relevance scores without writing
+- Wet replay uses dedupe key (`external_job_key`) — safe to re-run
+
+## Source Accounting
+
+| Source | Type | Status |
+|---|---|---|
+| `ziprecruiter_email` | Automated (v5 body parser) | **Operational** |
+| `governmentjobs_email` | Automated (parser staged) | **Capture-ready** |
+| `manual_seed` | Hand-entered rows | 5 CDOT departments |
+| `dice.com` | Manual import | 15 rows |
+| `blueorigin.com` | Manual import | 5 rows |
+| `usajobs` | Manual entry | 1 FAA listing |
+| `ball.com` | Manual import | 1 row |
+
+## Relevance Gate
+
+Parser v5 scores every parsed job for Kohler's ME/EIT profile:
+- **Boost:** mechanical engineer (+25-30), EIT (+35), design engineer (+22), Colorado (+15)
+- **Penalty:** senior (-15), lead/principal (-20), management (-25), out-of-state (-10)
+- **Threshold:** `is_relevant = true` when `match_score >= 15`
+- Open Roles API filters `is_relevant = true` for outreach feed
+- All rows kept in `job_listings` for audit/debug
