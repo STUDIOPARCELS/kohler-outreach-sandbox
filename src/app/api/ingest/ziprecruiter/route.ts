@@ -346,7 +346,7 @@ function parseGovernmentJobsEmail(subject: string, bodyText: string, messageId: 
   const seen = new Set<string>();
   const warnings: string[] = [];
 
-  // Extract governmentjobs.com job URLs
+  // Extract governmentjobs.com job URLs with their anchor text
   const jobUrlRegex = /<(https?:\/\/[^<>]*governmentjobs\.com\/careers\/([^/"'<>]+)\/jobs\/(\d+)[^<>]*)>/gi;
   let urlMatch: RegExpExecArray | null;
 
@@ -359,9 +359,25 @@ function parseGovernmentJobsEmail(subject: string, bodyText: string, messageId: 
     seen.add(key);
     if (fullUrl.includes("jobInterestCards") || fullUrl.includes("privacypolicy") || fullUrl.includes("faq")) continue;
 
+    // Primary: extract anchor text (appears before <URL> in converted body)
     let title = "";
-    const slugMatch = fullUrl.match(/\/jobs\/\d+(?:-\d+)?\/([^?#"'<>]+)/);
-    if (slugMatch) title = slugMatch[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const urlPos = urlMatch.index;
+    if (urlPos > 0) {
+      // Look backwards from <URL> for the text on the same or previous line
+      const preceding = bodyText.slice(Math.max(0, urlPos - 300), urlPos).trim();
+      const lines = preceding.split("\n");
+      const lastLine = lines[lines.length - 1]?.trim();
+      // Anchor text is typically the last non-empty line before the URL
+      if (lastLine && lastLine.length > 3 && lastLine.length < 200 && !lastLine.startsWith("<") && !/^(View|Apply|Click|http)/i.test(lastLine)) {
+        title = lastLine;
+      }
+    }
+
+    // Fallback: URL slug
+    if (!title) {
+      const slugMatch = fullUrl.match(/\/jobs\/\d+(?:-\d+)?\/([^?#"'<>]+)/);
+      if (slugMatch) title = slugMatch[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    }
 
     // Subject fallback
     if (!title) {
@@ -431,9 +447,24 @@ const TITLE_BOOST: Array<[RegExp, number, string]> = [
   [/\beit\b/i, 35, "EIT"],
   [/\bmanufacturing\s+engineer\b/i, 20, "manufacturing engineer"],
   [/\bdesign\s+engineer\b/i, 22, "design engineer"],
-  [/\bproduct\s+development\s+engineer\b/i, 22, "product development engineer"],
+  [/\bproduct\s+(?:development\s+)?engineer\b/i, 22, "product engineer"],
+  [/\bmechanical\s+designer\b/i, 20, "mechanical designer"],
+  [/\bcad\s+designer\b/i, 18, "cad designer"],
+  [/\bcontrols\s+engineer\b/i, 18, "controls engineer"],
+  [/\bprocess\s+engineer\b/i, 16, "process engineer"],
+  [/\bsystems\s+engineer\b/i, 16, "systems engineer"],
+  [/\bindustrial\s+engineer\b/i, 16, "industrial engineer"],
+  [/\btest\s+engineer\b/i, 16, "test engineer"],
   [/\bmechanical\s+engineer\b/i, 25, "mechanical engineer"],
   [/\bengineer\b/i, 10, "engineer (general)"],
+];
+
+const TITLE_BLOCKED: RegExp[] = [
+  /\bpolice\b/i, /\bcustodian\b/i, /\bwarehouse\b/i, /\bcoordinator\b/i,
+  /\bassembler\b/i, /\bcustomer\s+service\b/i, /\bsales\s+(?:engineer|rep)\b/i,
+  /\bfield\s+technician\b/i, /\bofficer\b/i, /\brecruiter\b/i, /\b(?:hr|human\s+resources)\b/i,
+  /\badministrative\b/i, /\bprogrammer\s+machinist\b/i, /\bcnc\s+programmer\b/i,
+  /\binside\s+sales\b/i, /\bdrafter\b/i, /\btechnician\b/i,
 ];
 
 const TITLE_PENALTY: Array<[RegExp, number, string]> = [
@@ -447,16 +478,27 @@ const TITLE_PENALTY: Array<[RegExp, number, string]> = [
 function scoreRelevance(title: string, location: string): RelevanceResult {
   const reasons: string[] = [];
   let score = 0;
+  let hasTitleMatch = false;
 
-  // Title scoring
+  // Blocked families — immediate reject
+  for (const pattern of TITLE_BLOCKED) {
+    if (pattern.test(title)) {
+      reasons.push("blocked title family");
+      return { is_relevant: false, match_score: -50, relevance_reason: reasons.join("; ") };
+    }
+  }
+
+  // Title scoring — positive match required for relevance
   for (const [pattern, points, label] of TITLE_BOOST) {
     if (pattern.test(title)) {
       score += points;
       reasons.push(`+${points} ${label}`);
+      hasTitleMatch = true;
       break; // Take highest match only
     }
   }
 
+  // Seniority penalties
   for (const [pattern, points, label] of TITLE_PENALTY) {
     if (pattern.test(title)) {
       score += points;
@@ -464,7 +506,7 @@ function scoreRelevance(title: string, location: string): RelevanceResult {
     }
   }
 
-  // Location scoring
+  // Location modifier (never qualifies alone)
   const loc = location.toLowerCase();
   if (loc.includes(", co") || loc.includes("colorado") || loc.includes("denver") || loc.includes("boulder") || loc.includes("arvada") || loc.includes("littleton") || loc.includes("englewood") || loc.includes("centennial") || loc.includes("broomfield") || loc.includes("lakewood") || loc.includes("aurora") || loc.includes("westminster") || loc.includes("longmont")) {
     score += 15;
@@ -477,7 +519,9 @@ function scoreRelevance(title: string, location: string): RelevanceResult {
     reasons.push("-10 out-of-state");
   }
 
-  const is_relevant = score >= 15;
+  // Title match is REQUIRED — location alone cannot qualify
+  const is_relevant = hasTitleMatch && score >= 15;
+  if (!hasTitleMatch) reasons.push("no title family match");
   return {
     is_relevant,
     match_score: score,
