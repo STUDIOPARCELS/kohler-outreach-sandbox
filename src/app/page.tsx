@@ -216,19 +216,19 @@ function assembleLetter(
 const NICHE_PERSONAL: Record<string, string> = {
   "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
   "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
-  "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
-  "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
-  "Energy / Renewables / Power": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
-  "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
-  "Metals / Material Science": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
-  "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
-  "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
-  "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
-  "Water / Environmental / Geotech": "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis.",
-  "Aerospace / Space": "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis.",
-  "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
   "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
-  "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
+  "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
+  "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
+  "Automotive / Vehicles": "",
+  "Energy / Renewables / Power": "",
+  "Manufacturing / Automation / Product Design": "",
+  "Metals / Material Science": "",
+  "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
+  "Construction / Civil / Heavy Industry": "",
+  "MEP / HVAC / Building Systems": "",
+  "Water / Environmental / Geotech": "",
+  "Aerospace / Space": "",
+  "Food / Beverage Manufacturing": "",
   "Government / Public Works / Infrastructure": "",
 };
 
@@ -423,6 +423,37 @@ const DEFAULT_COLORS = { ...NICHE_COLORS["Real Estate / Facilities"] };
 /* ── Niche-specific letter body templates ── */
 /* ── Helper to build a full letter body from a niche paragraph ── */
 function nicheTemplate(nicheParagraph: string): string {
+  // If there's a personal niche sentence, include it
+  if (nicheParagraph && nicheParagraph.trim()) {
+    return `{{TODAY_DATE}}
+
+
+
+Hiring Manager
+{{COMPANY_FULL}}
+{{COMPANY_ADDRESS}}
+
+Hello Hiring Manager,
+
+My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to the Denver area.
+
+I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
+
+I just received my EIT and would love to interview with your team if the timing works. I've included my resume and a card that links to my projects and study.
+
+Thank you and I hope to hear from you.
+
+Sincerely,
+
+
+
+
+Kohler Wood
+208-720-4635
+Lakewood, CO
+akwood1@mines.edu`;
+  }
+  // Generic template — no niche sentence, no company name
   return `{{TODAY_DATE}}
 
 
@@ -433,11 +464,13 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area.
+My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to the Denver area.
 
-I'm writing because I'm interested in the work you're doing at {{COMPANY}}. ${nicheParagraph}
+I just received my EIT and would love to interview with your team if the timing works.
 
-I included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team. Thank you and I hope to hear from you.
+I've included my resume and a card that links to my projects and study.
+
+Thank you and I hope to hear from you.
 
 Sincerely,
 
@@ -451,38 +484,11 @@ akwood1@mines.edu`;
 }
 
 const NICHE_BODY_TEMPLATES: Record<string, string> = {
-  "Energy / Renewables / Power": nicheTemplate(
-    "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype."
-  ),
-  "MEP / HVAC / Building Systems": nicheTemplate(
-    "At Mines I studied CFD and heat transfer simulation for mechanical system design."
-  ),
-  "Construction / Civil / Heavy Industry": nicheTemplate(
-    "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship."
-  ),
-  "Water / Environmental / Geotech": nicheTemplate(
-    "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis."
-  ),
-  "Aerospace / Space": nicheTemplate(
-    "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis."
-  ),
-  "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate(
-    "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls."
-  ),
-  "Automotive / Vehicles": nicheTemplate(
-    "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype."
-  ),
-  "Manufacturing / Automation / Product Design": nicheTemplate(
-    "I studied electromechanical design, FEA, and GD&T, and my capstone involved tracking failure modes across design iterations from concept through prototype."
-  ),
-  "Acoustics / Audio / Musical Instruments": nicheTemplate(
-    "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years."
-  ),
   "Skiing": nicheTemplate(
     "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship."
   ),
-  "Outdoor Recreation & Equipment": nicheTemplate(
-    "I have spent my life in the outdoors and would love to engineer the products I use every day."
+  "Acoustics / Audio / Musical Instruments": nicheTemplate(
+    "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years."
   ),
   "Woodworking / Furniture / Cabinetry / Prototyping": nicheTemplate(
     "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet."
@@ -490,12 +496,17 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Medical / Biotech": nicheTemplate(
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability."
   ),
-  "Food / Beverage Manufacturing": nicheTemplate(
-    "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work."
-  ),
-  "Metals / Material Science": nicheTemplate(
-    "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype."
-  ),
+  "Energy / Renewables / Power": nicheTemplate(""),
+  "MEP / HVAC / Building Systems": nicheTemplate(""),
+  "Construction / Civil / Heavy Industry": nicheTemplate(""),
+  "Water / Environmental / Geotech": nicheTemplate(""),
+  "Aerospace / Space": nicheTemplate(""),
+  "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate("For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls."),
+  "Automotive / Vehicles": nicheTemplate(""),
+  "Manufacturing / Automation / Product Design": nicheTemplate(""),
+  "Outdoor Recreation & Equipment": nicheTemplate("I have spent my life in the outdoors and would love to engineer the products I use every day."),
+  "Food / Beverage Manufacturing": nicheTemplate(""),
+  "Metals / Material Science": nicheTemplate(""),
   "Government / Public Works / Infrastructure": `{{TODAY_DATE}}
 
 
@@ -510,9 +521,9 @@ My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to th
 
 I'm writing because I just received my EIT and I'm interested in working for CDOT.
 
-I've included my resume and a card that links to my projects and study. I would love to interview with your team if the timing works.
+I've included my resume and a card that links to my projects and study.
 
-Thank you, and I hope to hear from you.
+Thank you and I hope to hear from you.
 
 Sincerely,
 
@@ -583,6 +594,7 @@ export default function HomePage() {
   const [followupReady, setFollowupReady] = useState(0);
   const [followupPending, setFollowupPending] = useState(0);
   const [newJobsCount, setNewJobsCount] = useState(0);
+  const [totalJobsCount, setTotalJobsCount] = useState(0);
   const [companyJobCounts, setCompanyJobCounts] = useState<Map<string, number>>(new Map());
 
   /* ── Multi-letter helpers ── */
@@ -649,19 +661,25 @@ export default function HomePage() {
         }
       } catch { /* non-critical */ }
 
-      // Fetch new jobs count from ZipRecruiter ingest
+      // Fetch jobs stats from intake
       try {
         const jobsRes = await fetch("/api/open-roles-list");
         const jobsData = await jobsRes.json();
-        if (Array.isArray(jobsData)) {
-          const totalRoles = jobsData.reduce((sum: number, c: { roles: number }) => sum + (c.roles || 0), 0);
-          setNewJobsCount(totalRoles);
-          const jcMap = new Map<string, number>();
-          for (const c of jobsData) {
-            if (c.companyname && c.roles > 0) jcMap.set(c.companyname, c.roles);
-          }
-          setCompanyJobCounts(jcMap);
+        const companiesList = jobsData.companies || (Array.isArray(jobsData) ? jobsData : []);
+        const stats = jobsData.stats;
+        if (stats) {
+          setTotalJobsCount(stats.totalRoles || 0);
+          setNewJobsCount(stats.newRoles24h || 0);
+        } else {
+          const totalRoles = companiesList.reduce((sum: number, c: { roles: number }) => sum + (c.roles || 0), 0);
+          setTotalJobsCount(totalRoles);
+          setNewJobsCount(0);
         }
+        const jcMap = new Map<string, number>();
+        for (const c of companiesList) {
+          if (c.companyname && c.roles > 0) jcMap.set(c.companyname, c.roles);
+        }
+        setCompanyJobCounts(jcMap);
       } catch { /* non-critical */ }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
@@ -1385,13 +1403,14 @@ export default function HomePage() {
                   <div className="text-xs text-rose-300 uppercase tracking-wider font-semibold">Follow-ups</div>
                   <div className="text-[10px] text-amber-300 font-semibold mt-0.5">{followupPending} pending</div>
                 </a>
-                {newJobsCount > 0 && (
-                  <a href="/open-roles" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-violet-500/20 rounded-xl border border-violet-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[90px] sm:min-w-[110px] hover:bg-violet-500/30 transition-colors cursor-pointer animate-pulse">
-                    <div className="text-2xl font-bold text-white">{newJobsCount}</div>
-                    <div className="text-xs text-violet-300 uppercase tracking-wider font-semibold">New Jobs</div>
-                    <div className="text-[10px] text-violet-400 font-semibold mt-0.5">ZipRecruiter</div>
-                  </a>
-                )}
+                <a href="/open-roles" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-violet-500/20 rounded-xl border border-violet-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] hover:bg-violet-500/30 transition-colors cursor-pointer">
+                  <div className="text-2xl font-bold text-white">{totalJobsCount}</div>
+                  <div className="text-xs text-violet-300 uppercase tracking-wider font-semibold">Total Jobs</div>
+                </a>
+                <a href="/open-roles" className="text-center px-3 py-2 sm:px-4 sm:py-3 bg-emerald-500/20 rounded-xl border border-emerald-400/30 backdrop-blur-sm flex flex-col justify-center min-w-[70px] sm:min-w-[90px] hover:bg-emerald-500/30 transition-colors cursor-pointer">
+                  <div className="text-2xl font-bold text-white">{newJobsCount}</div>
+                  <div className="text-xs text-emerald-300 uppercase tracking-wider font-semibold">New 24h</div>
+                </a>
               </div>
             </div>
           </div>
@@ -1910,22 +1929,22 @@ export default function HomePage() {
                                                         const NICHE_DEFAULTS: Record<string, string> = {
                                                           "Skiing": "I grew up in Sun Valley, ID, have skied all my life, and fabricated mono-ski hardware for Special Olympics athletes during an internship.",
                                                           "Acoustics / Audio / Musical Instruments": "I built an adaptive bass guitar for my capstone project at MINES and have been studying and performing classical piano for the last four years.",
-                                                          "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
-                                                          "Automotive / Vehicles": "My background spans SolidWorks modeling with GD&T through CNC machining, and I've taken designs from concept through finished prototype.",
-                                                          "Energy / Renewables / Power": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
-                                                          "Manufacturing / Automation / Product Design": "I studied electromechanical design, FEA, and GD&T, and my capstone involved tracking failure modes across design iterations from concept through prototype.",
-                                                          "Metals / Material Science": "I have experience with FEA, thermal simulation, and FMEA-driven design iteration from concept through prototype.",
-                                                          "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
-                                                          "Construction / Civil / Heavy Industry": "I assisted with layout, fabrication, and installation of steel railings for residential projects during a fabrication internship.",
-                                                          "MEP / HVAC / Building Systems": "At Mines I studied CFD and heat transfer simulation for mechanical system design.",
-                                                          "Water / Environmental / Geotech": "At Mines I studied FEA and flow simulation for internal flow and heat transfer analysis.",
-                                                          "Aerospace / Space": "My capstone project used FMEA to track risks across design iterations, and my coursework covers FEA, GD&T, and tolerance stack-up analysis.",
-                                                          "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
                                                           "Woodworking / Furniture / Cabinetry / Prototyping": "I spent the last year designing and fabricating woodworking projects, including a Usonian record cabinet.",
-                                                          "Food / Beverage Manufacturing": "I have experience selecting food-safe materials and adhesives for fabrication and operating CNC equipment for production work.",
+                                                          "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
+                                                          "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
+                                                          "Automotive / Vehicles": "",
+                                                          "Energy / Renewables / Power": "",
+                                                          "Manufacturing / Automation / Product Design": "",
+                                                          "Metals / Material Science": "",
+                                                          "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
+                                                          "Construction / Civil / Heavy Industry": "",
+                                                          "MEP / HVAC / Building Systems": "",
+                                                          "Water / Environmental / Geotech": "",
+                                                          "Aerospace / Space": "",
+                                                          "Food / Beverage Manufacturing": "",
                                                           "Government / Public Works / Infrastructure": "",
                                                         };
-                                                        let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "I have hands-on experience in mechanical design, prototyping, and fabrication.";
+                                                        let skillSentence = (c.niche && NICHE_DEFAULTS[c.niche]) || "";
                                                         let matches: {job_skill: string; resume_skill: string}[] = [];
                                                         try {
                                                           const r = await fetch("/api/match-skills", {
@@ -1960,9 +1979,7 @@ My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to th
 
 I'm writing because I just received my EIT and I'm interested in working for CDOT.
 
-I have attached my resume below. My projects and study are at kohler.solokit.app. I would love to interview with your team if the timing works.
-
-Thank you, and I hope to hear from you.
+I have attached my resume below. My projects and study are at kohler.solokit.app. Thank you and I hope to hear from you.
 
 Kohler Wood
 208-720-4635
@@ -1970,13 +1987,15 @@ Lakewood, CO
 akwood1@mines.edu`
                                                             : `Hello ${firstName},
 
-My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area.
+My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to the Denver area.
 
-I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
+${skillSentence ? `I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I have attached my resume below. My projects and study are at kohler.solokit.app. I just received my EIT and would love to interview with your team.
+I just received my EIT and would love to interview with your team if the timing works.` : `I just received my EIT and would love to interview with your team if the timing works.`}
 
-Thank you and I hope to hear from you.
+I have attached my resume below. My projects and study are at kohler.solokit.app.
+
+Thank you!
 
 Kohler Wood
 208-720-4635
@@ -2013,9 +2032,9 @@ My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to th
 
 I'm writing because I just received my EIT and I'm interested in working for CDOT.
 
-I've included my resume and a card that links to my projects and study. I would love to interview with your team if the timing works.
+I've included my resume and a card that links to my projects and study.
 
-Thank you, and I hope to hear from you.
+Thank you and I hope to hear from you.
 
 Sincerely,
 
@@ -2037,11 +2056,13 @@ ${companyAddr}
 
 Hello ${ct.contactname.split(" ")[0]},
 
-My name is Kohler Wood. I am a BSME from Colorado School of Mines and I am committed to the Denver area.
+My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to the Denver area.
 
-I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
+${skillSentence ? `I'm writing because I'm interested in the work you're doing at ${displayName}. ${skillSentence}
 
-I included my resume and a card that links to my projects and study. I just received my EIT and would love to interview with your team.
+I just received my EIT and would love to interview with your team if the timing works.` : `I just received my EIT and would love to interview with your team if the timing works.`}
+
+I've included my resume and a card that links to my projects and study.
 
 Thank you and I hope to hear from you.
 
@@ -2415,10 +2436,31 @@ akwood1@mines.edu`;
             </div>
             <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
               <button
-                onClick={() => setEmailConfirm(null)}
+                onClick={async () => {
+                  // Auto-save edits before closing
+                  if (emailConfirm.editing && emailConfirm.body) {
+                    try {
+                      await fetch("/api/draft", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          companyname: emailConfirm.companyname,
+                          contactname: emailConfirm.contactname,
+                          body_final: emailConfirm.body,
+                        }),
+                      });
+                      if (currentLetter) {
+                        const updated = { ...currentLetter, body_final: emailConfirm.body };
+                        setCurrentLetter(updated);
+                        setLettersMap((prev) => upsertLetterInMap(prev, emailConfirm.companyname, updated));
+                      }
+                    } catch { /* silent save */ }
+                  }
+                  setEmailConfirm(null);
+                }}
                 className="px-4 py-2 text-sm font-semibold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors"
               >
-                Cancel
+                {emailConfirm.editing ? "Save & Close" : "Cancel"}
               </button>
               {!emailConfirm.editing && (
                 <button
@@ -2430,10 +2472,33 @@ akwood1@mines.edu`;
               )}
               {emailConfirm.editing && (
                 <button
-                  onClick={() => setEmailConfirm({ ...emailConfirm, editing: false })}
+                  onClick={async () => {
+                    // Persist edits to DB
+                    setSaving(true);
+                    try {
+                      await fetch("/api/draft", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          companyname: emailConfirm.companyname,
+                          contactname: emailConfirm.contactname,
+                          body_final: emailConfirm.body,
+                        }),
+                      });
+                      if (currentLetter) {
+                        const updated = { ...currentLetter, body_final: emailConfirm.body };
+                        setCurrentLetter(updated);
+                        setLettersMap((prev) => upsertLetterInMap(prev, emailConfirm.companyname, updated));
+                      }
+                      toast("Draft saved");
+                    } catch { toast("Save failed", "error"); }
+                    finally { setSaving(false); }
+                    setEmailConfirm({ ...emailConfirm, editing: false });
+                  }}
+                  disabled={saving}
                   className="px-4 py-2 text-sm font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
                 >
-                  Save
+                  {saving ? "Saving..." : "Save Draft"}
                 </button>
               )}
               <button
@@ -2532,7 +2597,28 @@ akwood1@mines.edu`;
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end gap-3 shrink-0">
-              <button onClick={() => setLetterConfirm(null)} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">Close</button>
+              <button onClick={async () => {
+                // Auto-save edits before closing
+                if (letterConfirm.editing && letterConfirm.body) {
+                  try {
+                    await fetch("/api/draft", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        companyname: letterConfirm.companyname,
+                        contactname: letterConfirm.contactname,
+                        body_final: letterConfirm.body,
+                      }),
+                    });
+                    if (currentLetter) {
+                      const updated = { ...currentLetter, body_final: letterConfirm.body };
+                      setCurrentLetter(updated);
+                      setLettersMap((prev) => upsertLetterInMap(prev, letterConfirm.companyname, updated));
+                    }
+                  } catch { /* silent save */ }
+                }
+                setLetterConfirm(null);
+              }} className="px-5 py-2 text-sm font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">{letterConfirm.editing ? "Save & Close" : "Close"}</button>
               {letterConfirm.editing ? (
                 <button onClick={async () => {
                   // Save directly — don't rely on editBody state (React batching issue)
@@ -2752,11 +2838,12 @@ akwood1@mines.edu`;
       {assembled && (
         <div
           className="hidden print:block"
+          data-print-letter=""
           style={{
-            padding: "0.75in 0.65in",
+            padding: "1in 1in",
             fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
             fontSize: "11pt",
-            lineHeight: "1.5",
+            lineHeight: "1.6",
             whiteSpace: "pre-wrap",
             maxHeight: "9.5in",
             overflow: "hidden",
@@ -2769,6 +2856,7 @@ akwood1@mines.edu`;
         @media print {
           @page { size: letter; margin: 0; }
           body { margin: 0; padding: 0; }
+          .no-print { display: none !important; }
         }
       `}</style>
     </div>

@@ -32,9 +32,9 @@ function generateFollowup1Body(row: FollowupRow): string {
 
   return `Hello ${firstName},
 
-I hope you received my recent letter expressing interest in ${company}. I am a recent BSME from Colorado School of Mines and I am committed to the Denver area. I just received my EIT and would love to interview with your team.
+I hope you received my letter expressing interest in ${company}. I'm a BSME from Colorado School of Mines committed to the Denver area. I just received my EIT and would love to interview with your team.
 
-I have included my resume, and my projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.
+I have included my resume, and my projects and study are at kohler.solokit.app. Thank you!
 
 Sincerely,
 
@@ -52,7 +52,7 @@ function generateFollowup2Body(row: FollowupRow): string {
 
 I wanted to follow up one last time regarding opportunities at ${company}. I remain very interested and am available to interview at your convenience.
 
-My projects and study are at kohler.solokit.app. Thank you, and I hope to hear from you.
+My projects and study are at kohler.solokit.app. Thank you!
 
 Sincerely,
 
@@ -70,13 +70,13 @@ function getStage(row: FollowupRow): Stage {
   return "followup1";
 }
 
-function getBucket(row: FollowupRow): "pending" | "ready1" | "ready2" | "done" {
+function getBucket(row: FollowupRow): "pending" | "ready1" | "sent1" | "ready2" | "done" {
   const days = daysAgo(row.sent_at!);
   const stage = getStage(row);
   if (stage === "done") return "done";
   if (stage === "followup2") {
     const daysSinceEmail = daysAgo(row.emailed_at!);
-    return daysSinceEmail >= 7 ? "ready2" : "pending";
+    return daysSinceEmail >= 7 ? "ready2" : "sent1";
   }
   // stage === followup1
   return days >= 7 ? "ready1" : "pending";
@@ -88,6 +88,7 @@ export default function FollowupsPage() {
   const [needsEmailItems, setNeedsEmailItems] = useState<FollowupRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
+  const [confirmSend, setConfirmSend] = useState(false);
   const [modalRow, setModalRow] = useState<FollowupRow | null>(null);
   const [activeTab, setActiveTab] = useState<"letter" | "followup">("letter");
   const [editSubject, setEditSubject] = useState("");
@@ -96,6 +97,7 @@ export default function FollowupsPage() {
   const [dark, setDark] = useState(false);
   const [emailInput, setEmailInput] = useState("");
   const [searching, setSearching] = useState(false);
+  const [altContacts, setAltContacts] = useState<{contactname: string; title: string; email: string}[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -116,25 +118,34 @@ export default function FollowupsPage() {
 
   function openModal(row: FollowupRow) {
     setModalRow(row);
+    setAltContacts([]);
     const stage = getStage(row);
     if (stage === "followup2") {
-      setEditSubject(`Following up — Mechanical Engineer, EIT — ${row.companyname}`);
+      setEditSubject(`Following up — Kohler Wood, BSME, EIT`);
       setEditBody(generateFollowup2Body(row));
     } else {
-      setEditSubject(`Following up — Mechanical Engineer, EIT — ${row.companyname}`);
+      setEditSubject(`Following up — Kohler Wood, BSME, EIT`);
       setEditBody(generateFollowup1Body(row));
     }
     setAttachResume(true);
     setActiveTab("letter");
+    // Fetch alternate contacts if no email
+    if (!row.contact_email || row.contact_email.trim() === "") {
+      fetch(`/api/alt-contacts?company=${encodeURIComponent(row.companyname)}&exclude=${encodeURIComponent(row.contactname || "")}`)
+        .then(r => r.json()).then(d => setAltContacts(d.contacts || [])).catch(() => {});
+    }
   }
 
   async function handleSend() {
     if (!modalRow) return;
+    if (!confirmSend) { setConfirmSend(true); return; }
+    setConfirmSend(false);
     const stage = getStage(modalRow);
     const followupNumber = stage === "followup2" ? 2 : 1;
-    if (!window.confirm(`Send follow-up #${followupNumber} to ${modalRow.contact_email}?\n\nThis will send immediately.`)) return;
     setSending(modalRow.id);
     try {
+      // Auto-save any edits before sending
+      try { await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyname: modalRow.companyname, contactname: modalRow.contactname, body_final: editBody }) }); } catch {}
       const res = await fetch("/api/approve-followup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,7 +154,7 @@ export default function FollowupsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       toast(`Follow-up #${followupNumber} sent to ${modalRow.contact_email}`);
-      setModalRow(null);
+      setConfirmSend(false); setModalRow(null);
       load();
     } catch (err) {
       toast(`Failed: ${err instanceof Error ? err.message : String(err)}`, "error");
@@ -155,6 +166,7 @@ export default function FollowupsPage() {
   // Bucket items
   const pending = items.filter((r) => getBucket(r) === "pending");
   const ready1 = items.filter((r) => getBucket(r) === "ready1");
+  const sent1 = items.filter((r) => getBucket(r) === "sent1");
   const ready2 = items.filter((r) => getBucket(r) === "ready2");
   const done = items.filter((r) => getBucket(r) === "done");
 
@@ -192,7 +204,7 @@ export default function FollowupsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       toast(`Email saved for ${modalRow.contactname}`);
-      setModalRow(null);
+      setConfirmSend(false); setModalRow(null);
       setEmailInput("");
       load();
     } catch (err) {
@@ -245,6 +257,10 @@ export default function FollowupsPage() {
                 <div className="text-center px-2.5 py-2 sm:px-4 sm:py-3 bg-emerald-500/20 rounded-xl border border-emerald-400/30">
                   <div className="text-xl sm:text-2xl font-bold text-white">{ready1.length + ready2.length}</div>
                   <div className="text-[9px] sm:text-[10px] text-emerald-300 uppercase tracking-wider font-semibold">Ready</div>
+                </div>
+                <div className="text-center px-2.5 py-2 sm:px-4 sm:py-3 bg-sky-500/20 rounded-xl border border-sky-400/30">
+                  <div className="text-xl sm:text-2xl font-bold text-white">{sent1.length}</div>
+                  <div className="text-[9px] sm:text-[10px] text-sky-300 uppercase tracking-wider font-semibold">1st Sent</div>
                 </div>
                 <div className="text-center px-2.5 py-2 sm:px-4 sm:py-3 bg-amber-500/20 rounded-xl border border-amber-400/30">
                   <div className="text-xl sm:text-2xl font-bold text-white">{pending.length}</div>
@@ -304,7 +320,24 @@ export default function FollowupsPage() {
               </Section>
             )}
 
-            {/* PENDING — Letter sent, waiting for window */}
+            {/* 1ST FOLLOW-UP SENT — waiting for 2nd follow-up window */}
+            {sent1.length > 0 && (
+              <Section label="1ST FOLLOW-UP SENT" color="sky" count={sent1.length} dark={dark} sectionLabel={sectionLabel}>
+                <BentoGrid>
+                  {sent1.map((row) => {
+                    const days = Math.max(0, 7 - daysAgo(row.emailed_at!));
+                    return (
+                      <BentoCard key={row.id} row={row} onClick={() => openModal(row)} dark={dark}
+                        cardBg={cardBg} cardHover={cardHover} textPrimary={textPrimary} textSecondary={textSecondary} textMuted={textMuted}
+                        badge={<span className="px-2 py-0.5 text-[9px] font-bold text-sky-700 bg-sky-100 rounded-full uppercase">2nd in {days}d</span>}
+                      />
+                    );
+                  })}
+                </BentoGrid>
+              </Section>
+            )}
+
+            {/* PENDING — Letter sent, waiting for 1st follow-up window */}
             {pending.length > 0 && (
               <Section label="PENDING" color="amber" count={pending.length} dark={dark} sectionLabel={sectionLabel}>
                 <BentoGrid>
@@ -357,11 +390,10 @@ export default function FollowupsPage() {
 
       {/* Modal */}
       {modalRow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setModalRow(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
             className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl ${modalBg}`}
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Modal header */}
             <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b rounded-t-2xl" style={{ background: dark ? "#111827" : "#f8fafc", borderColor: dark ? "#374151" : "#e2e8f0" }}>
@@ -381,7 +413,12 @@ export default function FollowupsPage() {
                   <StepDot filled={!!modalRow.followup2_at} label="Email 2" />
                 </div>
               </div>
-              <button onClick={() => setModalRow(null)} className={`ml-4 p-2 rounded-lg transition-colors ${dark ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-100 text-gray-500"}`}>
+              <button onClick={async () => {
+                if (modalRow && editBody) {
+                  try { await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyname: modalRow.companyname, contactname: modalRow.contactname, body_final: editBody }) }); } catch {}
+                }
+                setConfirmSend(false); setModalRow(null);
+              }} className={`ml-4 p-2 rounded-lg transition-colors ${dark ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-100 text-gray-500"}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -432,6 +469,19 @@ export default function FollowupsPage() {
                       </button>
                     </div>
                     <p className={`text-[10px] mt-1.5 ${textMuted}`}>Type manually or click Search to look up via RocketReach</p>
+                    {altContacts.length > 0 && (
+                      <div className={`mt-4 rounded-lg border ${dark ? "border-sky-800 bg-sky-900/20" : "border-sky-200 bg-sky-50"} p-3`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${dark ? "text-sky-400" : "text-sky-600"}`}>Other contacts with email</p>
+                        {altContacts.map((ac, i) => (
+                          <button key={i} onClick={() => setEmailInput(ac.email)}
+                            className={`w-full text-left px-3 py-2 rounded-lg mb-1 last:mb-0 transition-colors ${dark ? "hover:bg-sky-900/40" : "hover:bg-sky-100"}`}>
+                            <span className={`text-xs font-semibold ${textPrimary}`}>{ac.contactname}</span>
+                            <span className={`text-[10px] ml-2 ${textMuted}`}>{ac.title}</span>
+                            <span className="text-[11px] text-sky-500 ml-2">{ac.email}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {emailInput.trim() && (
                       <button
                         onClick={handleSaveEmail}
@@ -457,12 +507,40 @@ export default function FollowupsPage() {
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" checked={attachResume} onChange={(e) => setAttachResume(e.target.checked)} className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-200" />
                         <span className={`text-xs ${textSecondary}`}>Attach resume</span>
+                        <a href="/KOHLER_RESUME_2026.pdf" target="_blank" rel="noopener" className="text-[10px] text-sky-500 hover:text-sky-400 underline ml-1">(view PDF)</a>
                       </label>
-                      <button onClick={handleSend} disabled={sending === modalRow.id || getBucket(modalRow) === "pending"} className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all disabled:opacity-40 uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]">
-                        {sending === modalRow.id ? "Sending…" : getBucket(modalRow) === "pending" ? "Waiting…" : `Send Follow-up #${getStage(modalRow) === "followup2" ? "2" : "1"}`}
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={async () => {
+                          if (!modalRow) return;
+                          try {
+                            await fetch("/api/draft", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ companyname: modalRow.companyname, contactname: modalRow.contactname, body_final: editBody }),
+                            });
+                            toast("Draft saved");
+                          } catch { toast("Save failed", "error"); }
+                        }} className={`px-4 py-2.5 text-xs font-semibold rounded-xl transition-all border ${dark ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
+                          Save Draft
+                        </button>
+                        {confirmSend ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-amber-600 font-semibold">Send to {modalRow.contact_email}?</span>
+                            <button onClick={handleSend} className="px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all uppercase tracking-wide shadow-md active:scale-[0.98]">
+                              Confirm
+                            </button>
+                            <button onClick={() => setConfirmSend(false)} className={`px-3 py-2.5 text-xs font-semibold rounded-xl transition-all border ${dark ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-gray-200 text-gray-500 hover:bg-gray-100"}`}>
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={handleSend} disabled={sending === modalRow.id || getBucket(modalRow) === "pending"} className="px-6 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all disabled:opacity-40 uppercase tracking-wide shadow-md hover:shadow-lg active:scale-[0.98]">
+                            {sending === modalRow.id ? "Sending…" : getBucket(modalRow) === "pending" ? "Waiting…" : `Send Follow-up #${getStage(modalRow) === "followup2" ? "2" : "1"}`}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <p className={`text-[10px] mt-2 ${textMuted}`}>Includes HTML signature · Reply-to: akwood1@mines.edu · Sent from Gmail</p>
+                    <p className={`text-[10px] mt-2 ${textMuted}`}>Includes HTML signature · Reply-to: akwood1@mines.edu · Sent from kwood12802@gmail.com</p>
                   </>
                 )}
               </div>
@@ -477,8 +555,8 @@ export default function FollowupsPage() {
 /* ─── Sub-components ─── */
 
 function Section({ label, color, count, dark, sectionLabel, children }: { label: string; color: string; count: number; dark: boolean; sectionLabel: string; children: React.ReactNode }) {
-  const dotColors: Record<string, string> = { emerald: "bg-emerald-500", rose: "bg-rose-500", amber: "bg-amber-400", slate: "bg-slate-400", orange: "bg-orange-500" };
-  const textColors: Record<string, string> = { emerald: "text-emerald-500", rose: "text-rose-500", amber: "text-amber-500", slate: "text-slate-400", orange: "text-orange-500" };
+  const dotColors: Record<string, string> = { emerald: "bg-emerald-500", rose: "bg-rose-500", amber: "bg-amber-400", slate: "bg-slate-400", orange: "bg-orange-500", sky: "bg-sky-500" };
+  const textColors: Record<string, string> = { emerald: "text-emerald-500", rose: "text-rose-500", amber: "text-amber-500", slate: "text-slate-400", orange: "text-orange-500", sky: "text-sky-500" };
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">

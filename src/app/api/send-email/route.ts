@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Auth with Lisa's Gmail, send as "Kohler Wood", reply-to goes to Kohler
-    const gmailUser = process.env.GMAIL_USER;       // Lisa's Gmail
-    const gmailPass = process.env.GMAIL_APP_PASSWORD; // App password for Lisa's Gmail
+    const gmailUser = process.env.GMAIL_USER;       // Kohler's Gmail (kwood12802)
+    const gmailPass = process.env.GMAIL_APP_PASSWORD; // App password for Kohler's Gmail
     const replyTo = process.env.REPLY_TO_EMAIL || "akwood1@mines.edu";
 
     if (!gmailUser || !gmailPass) {
