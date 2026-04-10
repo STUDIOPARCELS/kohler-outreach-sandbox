@@ -506,11 +506,13 @@ Hiring Manager
 
 Hello Hiring Manager,
 
-My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
+My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to the Denver area.
 
-I am writing because I am interested in working for the Colorado Department of Transportation. I just received my EIT and would love to interview with your team if the timing works.
+I'm writing because I just received my EIT and I'm interested in working for CDOT.
 
-I included my resume and a card that links to my projects and study. Thank you and I hope to hear from you.
+I've included my resume and a card that links to my projects and study. I would love to interview with your team if the timing works.
+
+Thank you, and I hope to hear from you.
 
 Sincerely,
 
@@ -1954,11 +1956,13 @@ export default function HomePage() {
                                                           const emailBody = isGov
                                                             ? `Hello ${firstName},
 
-My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
+My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to the Denver area.
 
-I am writing because I am interested in working for the Colorado Department of Transportation. I just received my EIT and would love to interview with your team if the timing works.
+I'm writing because I just received my EIT and I'm interested in working for CDOT.
 
-I have attached my resume below. My projects and study are at kohler.solokit.app. Thank you and I hope to hear from you.
+I have attached my resume below. My projects and study are at kohler.solokit.app. I would love to interview with your team if the timing works.
+
+Thank you, and I hope to hear from you.
 
 Kohler Wood
 208-720-4635
@@ -2005,11 +2009,13 @@ ${companyAddr}
 
 Hello ${ct.contactname.split(" ")[0]},
 
-My name is Kohler Wood. I am a recent BSME graduate from Colorado School of Mines, committed to the Denver area.
+My name is Kohler Wood. I'm a BSME from Colorado School of Mines committed to the Denver area.
 
-I am writing because I am interested in working for the Colorado Department of Transportation. I just received my EIT and would love to interview with your team if the timing works.
+I'm writing because I just received my EIT and I'm interested in working for CDOT.
 
-I included my resume and a card that links to my projects and study. Thank you and I hope to hear from you.
+I've included my resume and a card that links to my projects and study. I would love to interview with your team if the timing works.
+
+Thank you, and I hope to hear from you.
 
 Sincerely,
 
