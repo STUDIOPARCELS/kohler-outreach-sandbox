@@ -1,5 +1,6 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isTodayTargetJob } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -8,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from("job_listings")
-    .select("companyname, company_id, title, source, ingest_status, is_relevant, first_seen_at, last_seen_at, times_seen")
+    .select("companyname, company_id, title, job_url, apply_url, source, ingest_status, is_relevant, first_seen_at, last_seen_at, times_seen")
     .in("ingest_status", ["new", "open"])
     .eq("is_relevant", true);
 
@@ -21,14 +22,47 @@ export async function GET(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const jobs = allJobs || [];
+  const prelimJobs = (allJobs || []).filter((job) =>
+    isTodayTargetJob({
+      title: job.title,
+      companyname: job.companyname,
+      is_relevant: job.is_relevant,
+      job_url: job.job_url,
+      apply_url: job.apply_url,
+    })
+  );
+
+  // Enrich with companies table data where available, then apply niche exclusions.
+  const namesForDetails = Array.from(new Set(prelimJobs.map((job) => job.companyname).filter(Boolean)));
+  const { data: companyDetails } = namesForDetails.length > 0
+    ? await supabaseAdmin
+        .from("companies")
+        .select("companyname, tier, city, niche")
+        .in("companyname", namesForDetails)
+    : { data: [] };
+
+  const detailMap = new Map<string, { tier: number; city: string; niche: string }>();
+  for (const c of companyDetails || []) {
+    detailMap.set(c.companyname, { tier: c.tier, city: c.city, niche: c.niche });
+  }
+
+  const jobs = prelimJobs.filter((job) =>
+    isTodayTargetJob({
+      title: job.title,
+      companyname: job.companyname,
+      niche: detailMap.get(job.companyname)?.niche,
+      is_relevant: job.is_relevant,
+      job_url: job.job_url,
+      apply_url: job.apply_url,
+    })
+  );
+
   const now = new Date();
   const h24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const totalRoles = jobs.length;
-  const companySet = new Set(jobs.map(j => j.company_id?.toString() || j.companyname));
   const newRoles24h = jobs.filter(j => j.first_seen_at && new Date(j.first_seen_at) >= h24).length;
   const updatedExisting24h = jobs.filter(j =>
     j.last_seen_at && new Date(j.last_seen_at) >= h24 &&
@@ -41,7 +75,8 @@ export async function GET(req: NextRequest) {
 
   const bySource: Record<string, number> = {};
   for (const j of jobs) {
-    bySource[j.source] = (bySource[j.source] || 0) + 1;
+    const source = j.source || "unknown";
+    bySource[source] = (bySource[source] || 0) + 1;
   }
 
   // Build company list from job_listings directly (not dependent on companies table)
@@ -55,17 +90,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Enrich with companies table data where available
   const companyNames = Array.from(companyMap.keys());
-  const { data: companyDetails } = await supabaseAdmin
-    .from("companies")
-    .select("companyname, tier, city, niche")
-    .in("companyname", companyNames);
-
-  const detailMap = new Map<string, { tier: number; city: string; niche: string }>();
-  for (const c of companyDetails || []) {
-    detailMap.set(c.companyname, { tier: c.tier, city: c.city, niche: c.niche });
-  }
 
   const rows = companyNames.map(name => {
     const entry = companyMap.get(name)!;
@@ -82,7 +107,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     stats: {
       totalRoles,
-      companies: companySet.size,
+      companies: companyMap.size,
       newRoles24h,
       updatedExisting24h,
       newRoles7d,

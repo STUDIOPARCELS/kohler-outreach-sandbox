@@ -1,5 +1,6 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isTodayTargetJob } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 /* ── Build direct job board search URLs instead of useless Google search ── */
@@ -34,14 +35,25 @@ export async function POST(req: NextRequest) {
   // FIRST: check job_listings for existing jobs linked to this company
   const { data: dbJobs } = await supabaseAdmin
     .from("job_listings")
-    .select("title, location, salary, job_url, apply_url, employment_type, source, received_at")
+    .select("title, companyname, location, salary, job_url, apply_url, employment_type, source, received_at, is_relevant")
     .eq("companyname", companyname)
+    .eq("is_relevant", true)
     .in("ingest_status", ["new", "open"])
     .order("received_at", { ascending: false });
 
-  if (dbJobs && dbJobs.length > 0) {
+  const targetDbJobs = (dbJobs || []).filter((job) =>
+    isTodayTargetJob({
+      title: job.title,
+      companyname: job.companyname,
+      is_relevant: job.is_relevant,
+      job_url: job.job_url,
+      apply_url: job.apply_url,
+    })
+  );
+
+  if (targetDbJobs.length > 0) {
     return NextResponse.json({
-      jobs: dbJobs.map((j) => ({
+      jobs: targetDbJobs.map((j) => ({
         title: j.title,
         location: j.location || "Denver metro",
         salary: j.salary || null,
@@ -80,7 +92,7 @@ Search these sources and return the ACTUAL URL from your search results for each
 2. LinkedIn: search "${companyname} engineer jobs Colorado site:linkedin.com/jobs"
 3. Company careers page${careersUrl ? `: ${careersUrl}` : ""}
 
-INCLUDE: Any engineering role — mechanical, design, manufacturing, test, project, systems, field, process, quality, structural, reliability, environmental, electrical, civil, chemical, petroleum, or related. Include Engineer I, entry-level, early career, new grad, associate, junior, or 0-3 years experience. Must require a Bachelor's degree in engineering or related field.
+INCLUDE: Mechanical/EIT-track engineering roles first: mechanical, MEP/HVAC/building systems, aerospace/space hardware, robotics/mechatronics, manufacturing, design, test, project, systems, process, quality, structural, reliability, environmental, water, energy, civil, or related. Include Engineer I, entry-level, early career, new grad, associate, junior, or 0-3 years experience. Prefer roles with PE mentorship, licensed engineering leadership, or a path toward PE. Must require a Bachelor's degree in engineering or related field.
 EXCLUDE: Engineer II, Engineer III, Senior, Lead, Principal, Staff, Manager, Director, VP, or 5+ years required. Also exclude any position that requires only a GED, high school diploma, or associate degree. Also exclude technician, operator, assembler, machinist, and warehouse roles.
 
 CRITICAL: For apply_url, ONLY use URLs that appeared in your web search results. Each must link to the SPECIFIC JOB POSTING page. If you cannot find a direct link, leave apply_url as an empty string.
@@ -114,9 +126,16 @@ ONLY the JSON array.`,
       const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed)) {
-        const rejectPattern = /\b(senior|sr\.?\s|lead\s|principal|staff\s|manager|director|supervisor|chief|vp\b|vice president)\b|\bII\b|\bIII\b|\bIV\b|\b(technician|operator|assembler|machinist|warehouse|forklift|picker|clerk)\b/i;
         jobs = parsed
-          .filter((j: Record<string, unknown>) => j.title && !rejectPattern.test(j.title as string))
+          .filter((j: Record<string, unknown>) =>
+            j.title &&
+            isTodayTargetJob({
+              title: String(j.title),
+              companyname,
+              is_relevant: true,
+              apply_url: String(j.apply_url || ""),
+            })
+          )
           .slice(0, 8)
           .map((j: Record<string, unknown>) => {
             let url = String(j.apply_url || "");

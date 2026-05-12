@@ -1,11 +1,13 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isExcludedStaffingCompany, isTodayExcludedNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
+  const includeExcluded = req.nextUrl.searchParams.get("includeExcluded") === "1";
   // Get all companies (Supabase defaults to 1000 rows, so paginate)
   let allCompanies: { companyname: string; tier: number; city: string; company_key: string; company_about: string; niche: string; mailing_zip: string }[] = [];
   let from = 0;
@@ -22,7 +24,12 @@ export async function GET(req: NextRequest) {
     if (!data || data.length < pageSize) break;
     from += pageSize;
   }
-  const companies = allCompanies;
+  const companies = includeExcluded
+    ? allCompanies
+    : allCompanies.filter((company) =>
+        !isTodayExcludedNiche(company.niche) &&
+        !isExcludedStaffingCompany(company.companyname)
+      );
 
   // Get all contacts to find best contact per company
   const { data: contacts } = await supabaseAdmin

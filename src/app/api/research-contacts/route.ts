@@ -22,13 +22,23 @@ export async function POST(req: NextRequest) {
         query: {
           current_employer: [companyname],
           current_title: [
-                            "Engineering Manager",
+            "Mechanical Engineering Manager",
+            "Engineering Manager",
             "Director of Engineering",
             "VP of Engineering",
             "VP Engineering",
             "Vice President of Engineering",
             "Head of Engineering",
             "Chief Engineer",
+            "MEP Manager",
+            "HVAC Engineering Manager",
+            "Mechanical Department Manager",
+            "Mechanical Principal",
+            "Principal Mechanical Engineer",
+            "Licensed Mechanical Engineer",
+            "Professional Engineer",
+            "Mechanical PE",
+            "Senior Mechanical Engineer",
             "R&D Manager",
             "Plant Manager",
             "Product Development Manager",
@@ -63,13 +73,23 @@ export async function POST(req: NextRequest) {
           query: {
             current_employer: [companyname],
             current_title: [
-                              "Engineering Manager",
+            "Mechanical Engineering Manager",
+            "Engineering Manager",
             "Director of Engineering",
             "VP of Engineering",
             "VP Engineering",
             "Vice President of Engineering",
             "Head of Engineering",
             "Chief Engineer",
+            "MEP Manager",
+            "HVAC Engineering Manager",
+            "Mechanical Department Manager",
+            "Mechanical Principal",
+            "Principal Mechanical Engineer",
+            "Licensed Mechanical Engineer",
+            "Professional Engineer",
+            "Mechanical PE",
+            "Senior Mechanical Engineer",
             "R&D Manager",
             "Plant Manager",
             "Product Development Manager",
@@ -101,7 +121,8 @@ export async function POST(req: NextRequest) {
               tools: [{ type: "web_search_preview" }],
               input: `Search LinkedIn and the company website for people who work at "${companyname}" in Colorado or nearby.
 
-I need engineering leadership contacts: Engineering Manager, Director of Engineering, VP Engineering, Chief Engineer, Owner, Founder, President, Plant Manager, Manufacturing Manager.
+I need engineering leadership contacts: Mechanical Engineering Manager, Director of Engineering, VP Engineering, Chief Engineer, licensed Professional Engineer/PE, Principal Mechanical Engineer, MEP Manager, HVAC Engineering Manager, Owner, Founder, President, Plant Manager, Manufacturing Manager.
+Prioritize Colorado School of Mines alumni and licensed PE signals when they are visible.
 
 Search: "${companyname} engineering manager site:linkedin.com" and "${companyname} director engineering site:linkedin.com" and "${companyname} team" or "${companyname} about us".
 
@@ -201,7 +222,9 @@ ONLY the JSON array.`,
       /ceo/i, /cto/i, /coo/i, /chief/i, /head of/i, /founder/i, /owner/i,
       /principal/i, /partner/i, /svp/i, /evp/i, /general manager/i,
       /plant manager/i, /superintendent/i, /supervisor/i, /pres$/i,
-      /lead\b/i, /senior\s+director/i, /executive/i,
+      /lead\b/i, /senior\s+director/i, /executive/i, /professional engineer/i,
+      /\bp\.?\s*e\.?\b/i, /licensed mechanical/i, /senior mechanical engineer/i,
+      /practice leader/i, /mechanical department/i,
     ];
     // Reject non-engineering management (HR, sales, IT, recruiting, marketing)
     const rejectPatterns = [

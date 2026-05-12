@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/Toast";
+import { isTodayExcludedNiche } from "@/lib/targeting";
 
 /* ── Types ── */
 interface LetterRow {
@@ -220,14 +221,14 @@ const NICHE_PERSONAL: Record<string, string> = {
   "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
   "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
   "Automotive / Vehicles": "",
-  "Energy / Renewables / Power": "",
-  "Manufacturing / Automation / Product Design": "",
+  "Energy / Renewables / Power": "I'm focused on mechanical systems for power, utilities, and energy infrastructure where EIT-to-PE development is part of the path.",
+  "Manufacturing / Automation / Product Design": "I'm interested in mechanical design, manufacturing, and automation roles with hands-on hardware ownership.",
   "Metals / Material Science": "",
-  "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
-  "Construction / Civil / Heavy Industry": "",
-  "MEP / HVAC / Building Systems": "",
-  "Water / Environmental / Geotech": "",
-  "Aerospace / Space": "",
+  "Quantum / Deep Tech / Electronics / Robotics": "I'm interested in robotics, electromechanical systems, and hardware engineering roles where mechanical design connects with controls and testing.",
+  "Construction / Civil / Heavy Industry": "I'm interested in project and mechanical engineering roles on infrastructure and building projects where I can build toward a PE.",
+  "MEP / HVAC / Building Systems": "I'm especially interested in building systems roles where I can develop under licensed mechanical engineers toward my PE.",
+  "Water / Environmental / Geotech": "I'm interested in infrastructure and environmental engineering teams where a mechanical EIT can grow under licensed engineers.",
+  "Aerospace / Space": "I'm interested in mechanical design, test, and manufacturing work for aerospace and space hardware.",
   "Food / Beverage Manufacturing": "",
   "Government / Public Works / Infrastructure": "",
 };
@@ -236,19 +237,19 @@ const NICHE_ORDER = [
   "TEST",
   "Government / Public Works / Infrastructure",
   "ZipRecruiter Intake",
-  "Skiing",
-  "Acoustics / Audio / Musical Instruments",
-  "Outdoor Recreation & Equipment",
-  "Automotive / Vehicles",
+  "MEP / HVAC / Building Systems",
+  "Aerospace / Space",
+  "Quantum / Deep Tech / Electronics / Robotics",
   "Energy / Renewables / Power",
   "Manufacturing / Automation / Product Design",
-  "Metals / Material Science",
-  "Quantum / Deep Tech / Electronics / Robotics",
-  "Construction / Civil / Heavy Industry",
-  "MEP / HVAC / Building Systems",
   "Water / Environmental / Geotech",
-  "Aerospace / Space",
+  "Construction / Civil / Heavy Industry",
+  "Metals / Material Science",
+  "Automotive / Vehicles",
   "Medical / Biotech",
+  "Outdoor Recreation & Equipment",
+  "Skiing",
+  "Acoustics / Audio / Musical Instruments",
   "Woodworking / Furniture / Cabinetry / Prototyping",
   "Food / Beverage Manufacturing",
   "Real Estate / Facilities",
@@ -496,14 +497,14 @@ const NICHE_BODY_TEMPLATES: Record<string, string> = {
   "Medical / Biotech": nicheTemplate(
     "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability."
   ),
-  "Energy / Renewables / Power": nicheTemplate(""),
-  "MEP / HVAC / Building Systems": nicheTemplate(""),
-  "Construction / Civil / Heavy Industry": nicheTemplate(""),
-  "Water / Environmental / Geotech": nicheTemplate(""),
-  "Aerospace / Space": nicheTemplate(""),
-  "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate("For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls."),
+  "Energy / Renewables / Power": nicheTemplate("I'm focused on mechanical systems for power, utilities, and energy infrastructure where EIT-to-PE development is part of the path."),
+  "MEP / HVAC / Building Systems": nicheTemplate("I'm especially interested in building systems roles where I can develop under licensed mechanical engineers toward my PE."),
+  "Construction / Civil / Heavy Industry": nicheTemplate("I'm interested in project and mechanical engineering roles on infrastructure and building projects where I can build toward a PE."),
+  "Water / Environmental / Geotech": nicheTemplate("I'm interested in infrastructure and environmental engineering teams where a mechanical EIT can grow under licensed engineers."),
+  "Aerospace / Space": nicheTemplate("I'm interested in mechanical design, test, and manufacturing work for aerospace and space hardware."),
+  "Quantum / Deep Tech / Electronics / Robotics": nicheTemplate("I'm interested in robotics, electromechanical systems, and hardware engineering roles where mechanical design connects with controls and testing."),
   "Automotive / Vehicles": nicheTemplate(""),
-  "Manufacturing / Automation / Product Design": nicheTemplate(""),
+  "Manufacturing / Automation / Product Design": nicheTemplate("I'm interested in mechanical design, manufacturing, and automation roles with hands-on hardware ownership."),
   "Outdoor Recreation & Equipment": nicheTemplate("I have spent my life in the outdoors and would love to engineer the products I use every day."),
   "Food / Beverage Manufacturing": nicheTemplate(""),
   "Metals / Material Science": nicheTemplate(""),
@@ -960,14 +961,14 @@ export default function HomePage() {
     "Outdoor Recreation & Equipment": ["outdoor equipment manufacturer Denver", "bicycle frame manufacturer Colorado", "camping gear manufacturer Denver"],
     "Woodworking / Furniture / Cabinetry / Prototyping": ["custom cabinetry manufacturer Denver", "woodworking fabrication shop Colorado", "CNC woodworking Denver"],
     "Automotive / Vehicles": ["custom vehicle fabrication Denver", "van conversion builder Colorado", "automotive fabrication shop Denver"],
-    "Energy / Renewables / Power": ["oil gas engineering firm Denver", "solar energy engineering Colorado", "power plant engineering Denver"],
-    "Manufacturing / Automation / Product Design": ["CNC machine shop Denver", "industrial automation company Colorado", "product design engineering Denver"],
-    "Metals / Material Science": ["metal fabrication shop Denver", "precision machining company Colorado", "welding fabrication Denver"],
-    "Quantum / Deep Tech / Electronics / Robotics": ["robotics manufacturer Denver", "electronics engineering company Colorado", "circuit board manufacturer Denver"],
-    "Construction / Civil / Heavy Industry": ["civil engineering firm Denver", "structural engineering company Colorado", "heavy construction engineering Denver"],
-    "MEP / HVAC / Building Systems": ["mechanical engineering firm Denver", "HVAC engineering company Colorado", "MEP design firm Denver"],
-    "Water / Environmental / Geotech": ["water treatment engineering Denver", "environmental engineering firm Colorado", "geotechnical engineering Denver"],
-    "Aerospace / Space": ["aerospace manufacturer Denver", "satellite manufacturer Colorado", "rocket propulsion company Denver"],
+    "Energy / Renewables / Power": ["power engineering firm Denver", "energy infrastructure engineering Colorado", "renewable energy mechanical engineering Denver"],
+    "Manufacturing / Automation / Product Design": ["mechanical design engineering company Denver", "industrial automation engineering Colorado", "manufacturing engineering company Denver"],
+    "Metals / Material Science": ["precision machining company Colorado", "metal fabrication engineering Denver", "additive manufacturing company Colorado"],
+    "Quantum / Deep Tech / Electronics / Robotics": ["robotics engineering company Denver", "mechatronics company Colorado", "electromechanical systems engineering Denver"],
+    "Construction / Civil / Heavy Industry": ["mechanical contractor engineering Denver", "design build mechanical contractor Colorado", "construction engineering firm Denver"],
+    "MEP / HVAC / Building Systems": ["MEP engineering firm Denver", "HVAC mechanical engineering Colorado", "building systems engineering firm Denver"],
+    "Water / Environmental / Geotech": ["water wastewater engineering firm Denver", "environmental engineering mechanical Colorado", "water infrastructure engineering Denver"],
+    "Aerospace / Space": ["space systems company Denver", "aerospace mechanical engineering Colorado", "satellite manufacturer Colorado", "rocket propulsion company Denver"],
     "Medical / Biotech": ["medical device manufacturer Denver", "surgical instrument manufacturer Colorado", "biotech engineering Denver"],
     "Food / Beverage Manufacturing": ["food processing plant Denver", "beverage manufacturing facility Colorado", "food production factory Denver"],
   };
@@ -1565,6 +1566,7 @@ export default function HomePage() {
             const grouped = new Map<string, CompanyRow[]>();
             for (const c of filteredCompanies) {
               const n = c.niche || "Other";
+              if (isTodayExcludedNiche(n)) continue;
               if (!grouped.has(n)) grouped.set(n, []);
               grouped.get(n)!.push(c);
             }
@@ -1933,14 +1935,14 @@ export default function HomePage() {
                                                           "Medical / Biotech": "My senior capstone was an adaptive bass guitar designed for a musician with physical disabilities — I redesigned the mechanism to eliminate failure modes and improve reliability.",
                                                           "Outdoor Recreation & Equipment": "I have spent my life in the outdoors and would love to engineer the products I use every day.",
                                                           "Automotive / Vehicles": "",
-                                                          "Energy / Renewables / Power": "",
-                                                          "Manufacturing / Automation / Product Design": "",
+                                                          "Energy / Renewables / Power": "I'm focused on mechanical systems for power, utilities, and energy infrastructure where EIT-to-PE development is part of the path.",
+                                                          "Manufacturing / Automation / Product Design": "I'm interested in mechanical design, manufacturing, and automation roles with hands-on hardware ownership.",
                                                           "Metals / Material Science": "",
-                                                          "Quantum / Deep Tech / Electronics / Robotics": "For my senior capstone I designed electromechanical systems with 3D-printed interfaces and embedded controls.",
-                                                          "Construction / Civil / Heavy Industry": "",
-                                                          "MEP / HVAC / Building Systems": "",
-                                                          "Water / Environmental / Geotech": "",
-                                                          "Aerospace / Space": "",
+                                                          "Quantum / Deep Tech / Electronics / Robotics": "I'm interested in robotics, electromechanical systems, and hardware engineering roles where mechanical design connects with controls and testing.",
+                                                          "Construction / Civil / Heavy Industry": "I'm interested in project and mechanical engineering roles on infrastructure and building projects where I can build toward a PE.",
+                                                          "MEP / HVAC / Building Systems": "I'm especially interested in building systems roles where I can develop under licensed mechanical engineers toward my PE.",
+                                                          "Water / Environmental / Geotech": "I'm interested in infrastructure and environmental engineering teams where a mechanical EIT can grow under licensed engineers.",
+                                                          "Aerospace / Space": "I'm interested in mechanical design, test, and manufacturing work for aerospace and space hardware.",
                                                           "Food / Beverage Manufacturing": "",
                                                           "Government / Public Works / Infrastructure": "",
                                                         };

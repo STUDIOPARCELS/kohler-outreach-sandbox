@@ -1,5 +1,6 @@
 import { getAuthedGmailClient } from "@/lib/googleAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isExcludedStaffingCompany, isExcludedTodayJobTitle, isNonEngineeringJobTitle } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 import type { gmail_v1 } from "googleapis";
 import { createHash } from "crypto";
@@ -119,7 +120,8 @@ function isStaffingAgency(company: string): boolean {
   const clean = normalizeCompanyName(company).toLowerCase();
   return STAFFING_BLOCKLIST.has(clean) ||
     STAFFING_BLOCKLIST.has(company.toLowerCase()) ||
-    clean.includes("staffing") || clean.includes("recruiting") || clean.includes("personnel");
+    clean.includes("staffing") || clean.includes("recruiting") || clean.includes("personnel") ||
+    isExcludedStaffingCompany(company);
 }
 
 /* ── Source detection ── */
@@ -442,9 +444,13 @@ interface RelevanceResult {
 
 const TITLE_BOOST: Array<[RegExp, number, string]> = [
   [/\bmechanical\s+engineer\s*(?:i|1)?\b/i, 30, "mechanical engineer (entry)"],
-  [/\bmechanical\s+design\s+engineer\b/i, 28, "mechanical design engineer"],
   [/\bengineer\s+in\s+training\b/i, 35, "engineer in training"],
   [/\beit\b/i, 35, "EIT"],
+  [/\bmechanical\s+project\s+engineer\b/i, 30, "mechanical project engineer"],
+  [/\b(?:hvac|mep|building\s+systems?|plumbing|piping)\b.*\b(?:engineer|designer)\b|\b(?:engineer|designer)\b.*\b(?:hvac|mep|building\s+systems?|plumbing|piping)\b/i, 28, "MEP/HVAC/building systems"],
+  [/\b(?:aerospace|space|satellite|propulsion|thermal\s+systems?)\b.*\b(?:engineer|designer)\b|\b(?:engineer|designer)\b.*\b(?:aerospace|space|satellite|propulsion|thermal\s+systems?)\b/i, 26, "aerospace/space mechanical"],
+  [/\b(?:robotics|mechatronics|electromechanical)\b.*\b(?:engineer|designer)\b|\b(?:engineer|designer)\b.*\b(?:robotics|mechatronics|electromechanical)\b/i, 24, "robotics/electromechanical"],
+  [/\bmechanical\s+design\s+engineer\b/i, 28, "mechanical design engineer"],
   [/\bmanufacturing\s+engineer\b/i, 20, "manufacturing engineer"],
   [/\bdesign\s+engineer\b/i, 22, "design engineer"],
   [/\bproduct\s+(?:development\s+)?engineer\b/i, 22, "product engineer"],
@@ -479,6 +485,13 @@ function scoreRelevance(title: string, location: string): RelevanceResult {
   const reasons: string[] = [];
   let score = 0;
   let hasTitleMatch = false;
+
+  if (isExcludedTodayJobTitle(title)) {
+    return { is_relevant: false, match_score: -50, relevance_reason: "excluded seniority/management title" };
+  }
+  if (isNonEngineeringJobTitle(title)) {
+    return { is_relevant: false, match_score: -50, relevance_reason: "excluded non-engineering title" };
+  }
 
   // Blocked families — immediate reject
   for (const pattern of TITLE_BLOCKED) {
