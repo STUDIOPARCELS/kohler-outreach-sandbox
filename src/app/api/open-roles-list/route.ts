@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
       niche: normalizeNiche(detail?.niche, name, titleMap.get(name)?.join(" ")),
       roles: entry.roles,
     };
-  }).sort((a, b) => a.tier - b.tier || b.roles - a.roles);
+  }).sort((a, b) => b.roles - a.roles || a.companyname.localeCompare(b.companyname));
 
   return NextResponse.json({
     stats: {

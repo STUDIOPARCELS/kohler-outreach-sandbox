@@ -191,7 +191,7 @@ export default function OpenRolesPage() {
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [tierFilter, setTierFilter] = useState("");
+  const [nicheFilter, setNicheFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -222,7 +222,9 @@ export default function OpenRolesPage() {
     setRoles([]);
     setRolesLoading(true);
     try {
-      const res = await fetch("/api/relevant-roles?companyname=" + encodeURIComponent(companyname));
+      const params = new URLSearchParams({ companyname });
+      if (sourceFilter !== "all") params.set("source", sourceFilter);
+      const res = await fetch("/api/relevant-roles?" + params.toString());
       const d = await res.json();
       if (d.error) throw new Error(d.error);
       setRoles(d);
@@ -231,11 +233,19 @@ export default function OpenRolesPage() {
     } finally {
       setRolesLoading(false);
     }
-  }, [expanded, toast]);
+  }, [expanded, sourceFilter, toast]);
+
+  const nicheOptions = [
+    ...NICHE_ORDER.filter((niche) => rows.some((row) => (row.niche || "Other") === niche)),
+    ...Array.from(new Set(rows.map((row) => row.niche || "Other")))
+      .filter((niche) => !NICHE_ORDER.includes(niche) && niche !== "Other")
+      .sort((a, b) => a.localeCompare(b)),
+    ...(rows.some((row) => !row.niche) ? ["Other"] : []),
+  ];
 
   const filtered = rows.filter((r) => {
     if (search && !r.companyname.toLowerCase().includes(search.toLowerCase())) return false;
-    if (tierFilter && r.tier !== Number(tierFilter)) return false;
+    if (nicheFilter && (r.niche || "Other") !== nicheFilter) return false;
     return true;
   });
 
@@ -251,6 +261,10 @@ export default function OpenRolesPage() {
     ...Array.from(grouped.keys()).filter((niche) => !NICHE_ORDER.includes(niche) && niche !== "Other"),
     ...(grouped.has("Other") ? ["Other"] : []),
   ];
+  const displayedRoles = [...roles].sort((a, b) =>
+    srcLabel(a.source || "").localeCompare(srcLabel(b.source || "")) ||
+    new Date(b.date_posted || 0).getTime() - new Date(a.date_posted || 0).getTime()
+  );
 
   let globalIdx = 0;
 
@@ -294,8 +308,26 @@ export default function OpenRolesPage() {
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 outline-none"
         />
         <select
+          value={nicheFilter}
+          onChange={(e) => {
+            setNicheFilter(e.target.value);
+            setExpanded(null);
+            setRoles([]);
+          }}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
+        >
+          <option value="">All Niches</option>
+          {nicheOptions.map((niche) => (
+            <option key={niche} value={niche}>{niche}</option>
+          ))}
+        </select>
+        <select
           value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
+          onChange={(e) => {
+            setSourceFilter(e.target.value);
+            setExpanded(null);
+            setRoles([]);
+          }}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
         >
           <option value="all">All Sources</option>
@@ -314,18 +346,6 @@ export default function OpenRolesPage() {
           <option value="workday_careers">Workday</option>
           <option value="icims_careers">iCIMS</option>
           <option value="career_pages">Careers Page</option>
-        </select>
-        <select
-          value={tierFilter}
-          onChange={(e) => setTierFilter(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
-        >
-          <option value="">All Tiers</option>
-          <option value="1">Tier 1</option>
-          <option value="2">Tier 2</option>
-          <option value="3">Tier 3</option>
-          <option value="4">Tier 4</option>
-          <option value="5">Tier 5</option>
         </select>
       </div>
 
@@ -412,7 +432,7 @@ export default function OpenRolesPage() {
                               </div>
                             ) : (
                               <div className="rounded-xl border border-blue-100 bg-blue-50/30 overflow-hidden">
-                                {roles.map((role, index) => (
+                                {displayedRoles.map((role, index) => (
                                   <div key={index} className="px-4 py-3 border-b border-blue-100/70 last:border-b-0">
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0">

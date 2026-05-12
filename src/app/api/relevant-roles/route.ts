@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
   const companyname = req.nextUrl.searchParams.get("companyname");
+  const sourceFilter = req.nextUrl.searchParams.get("source");
 
   let query = supabaseAdmin
     .from("job_listings")
@@ -14,6 +15,13 @@ export async function GET(req: NextRequest) {
     .in("ingest_status", ["new", "open"]);
 
   if (companyname) query = query.eq("companyname", companyname);
+  if (sourceFilter === "career_pages") {
+    query = query.in("source", ["jsonld_careers", "career_links_careers"]);
+  } else if (sourceFilter === "government") {
+    query = query.in("source", ["governmentjobs_email", "governmentjobs_direct", "usajobs"]);
+  } else if (sourceFilter && sourceFilter !== "all") {
+    query = query.eq("source", sourceFilter);
+  }
   query = query.order("received_at", { ascending: false });
 
   const { data, error } = await query;
