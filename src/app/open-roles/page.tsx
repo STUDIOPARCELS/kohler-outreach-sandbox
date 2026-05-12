@@ -192,15 +192,13 @@ export default function OpenRolesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [nicheFilter, setNicheFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("all");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [rolesLoading, setRolesLoading] = useState(false);
 
-  const fetchData = useCallback((source: string) => {
+  const fetchData = useCallback(() => {
     setLoading(true);
-    const qs = source !== "all" ? "?source=" + encodeURIComponent(source) : "";
-    fetch("/api/open-roles-list" + qs)
+    fetch("/api/open-roles-list")
       .then((r) => r.json())
       .then((d) => {
         if (d.error) throw new Error(d.error);
@@ -211,7 +209,7 @@ export default function OpenRolesPage() {
       .finally(() => setLoading(false));
   }, [toast]);
 
-  useEffect(() => { fetchData(sourceFilter); }, [fetchData, sourceFilter]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const loadRoles = useCallback(async (companyname: string) => {
     if (expanded === companyname) {
@@ -223,7 +221,6 @@ export default function OpenRolesPage() {
     setRolesLoading(true);
     try {
       const params = new URLSearchParams({ companyname });
-      if (sourceFilter !== "all") params.set("source", sourceFilter);
       const res = await fetch("/api/relevant-roles?" + params.toString());
       const d = await res.json();
       if (d.error) throw new Error(d.error);
@@ -233,7 +230,7 @@ export default function OpenRolesPage() {
     } finally {
       setRolesLoading(false);
     }
-  }, [expanded, sourceFilter, toast]);
+  }, [expanded, toast]);
 
   const nicheOptions = [
     ...NICHE_ORDER.filter((niche) => rows.some((row) => (row.niche || "Other") === niche)),
@@ -262,7 +259,6 @@ export default function OpenRolesPage() {
     ...(grouped.has("Other") ? ["Other"] : []),
   ];
   const displayedRoles = [...roles].sort((a, b) =>
-    srcLabel(a.source || "").localeCompare(srcLabel(b.source || "")) ||
     new Date(b.date_posted || 0).getTime() - new Date(a.date_posted || 0).getTime()
   );
 
@@ -299,7 +295,7 @@ export default function OpenRolesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(220px,1fr)_minmax(240px,auto)] gap-2 mb-5">
         <input
           type="text"
           placeholder="Search company..."
@@ -321,43 +317,7 @@ export default function OpenRolesPage() {
             <option key={niche} value={niche}>{niche}</option>
           ))}
         </select>
-        <select
-          value={sourceFilter}
-          onChange={(e) => {
-            setSourceFilter(e.target.value);
-            setExpanded(null);
-            setRoles([]);
-          }}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
-        >
-          <option value="all">All Sources</option>
-          <option value="ziprecruiter_email">ZipRecruiter</option>
-          <option value="government">Government Sources</option>
-          <option value="governmentjobs_email">GovernmentJobs</option>
-          <option value="governmentjobs_direct">GovernmentJobs Direct</option>
-          <option value="builtin_colorado">Built In Colorado</option>
-          <option value="dice.com">Dice</option>
-          <option value="usajobs">USAJobs</option>
-          <option value="greenhouse_careers">Greenhouse</option>
-          <option value="lever_careers">Lever</option>
-          <option value="ashby_careers">Ashby</option>
-          <option value="smartrecruiters_careers">SmartRecruiters</option>
-          <option value="workable_careers">Workable</option>
-          <option value="workday_careers">Workday</option>
-          <option value="icims_careers">iCIMS</option>
-          <option value="career_pages">Careers Page</option>
-        </select>
       </div>
-
-      {Object.keys(stats.bySource).length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-5">
-          {Object.entries(stats.bySource).sort((a, b) => b[1] - a[1]).map(([src, count]) => (
-            <span key={src} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-              {srcLabel(src)} <span className="font-semibold">{count}</span>
-            </span>
-          ))}
-        </div>
-      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
