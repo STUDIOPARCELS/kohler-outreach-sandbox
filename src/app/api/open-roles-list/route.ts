@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
     .in("ingest_status", ["new", "open"])
     .eq("is_relevant", true);
 
-  if (sourceFilter && sourceFilter !== "all") {
+  if (sourceFilter === "career_pages") {
+    query = query.in("source", ["jsonld_careers", "career_links_careers"]);
+  } else if (sourceFilter && sourceFilter !== "all") {
     query = query.eq("source", sourceFilter);
   }
 

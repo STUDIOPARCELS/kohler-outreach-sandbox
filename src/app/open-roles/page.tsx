@@ -44,6 +44,15 @@ const SRC_LABELS: Record<string, string> = {
   "blueorigin.com": "Blue Origin",
   manual_seed: "Manual",
   "ball.com": "Ball",
+  greenhouse_careers: "Greenhouse",
+  lever_careers: "Lever",
+  ashby_careers: "Ashby",
+  smartrecruiters_careers: "SmartRecruiters",
+  workable_careers: "Workable",
+  workday_careers: "Workday",
+  icims_careers: "iCIMS",
+  jsonld_careers: "Careers Page",
+  career_links_careers: "Careers Page",
 };
 
 const NICHE_ORDER = [
@@ -292,6 +301,14 @@ export default function OpenRolesPage() {
           <option value="governmentjobs_email">GovernmentJobs</option>
           <option value="dice.com">Dice</option>
           <option value="usajobs">USAJobs</option>
+          <option value="greenhouse_careers">Greenhouse</option>
+          <option value="lever_careers">Lever</option>
+          <option value="ashby_careers">Ashby</option>
+          <option value="smartrecruiters_careers">SmartRecruiters</option>
+          <option value="workable_careers">Workable</option>
+          <option value="workday_careers">Workday</option>
+          <option value="icims_careers">iCIMS</option>
+          <option value="career_pages">Careers Page</option>
         </select>
         <select
           value={tierFilter}

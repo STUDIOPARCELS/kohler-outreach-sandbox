@@ -180,6 +180,74 @@ export function isGenericJobUrl(url?: string | null): boolean {
   ].some((pattern) => pattern.test(lower));
 }
 
+export function scoreTargetRole(title?: string | null, location?: string | null, bodyText?: string | null): {
+  is_relevant: boolean;
+  match_score: number;
+  relevance_reason: string;
+} {
+  const t = title || "";
+  const text = `${title || ""} ${bodyText || ""}`;
+  const reasons: string[] = [];
+  let score = 0;
+  let hasTargetTitle = false;
+
+  if (isExcludedTodayJobTitle(t)) {
+    return { is_relevant: false, match_score: -50, relevance_reason: "excluded seniority/level title" };
+  }
+  if (isNonEngineeringJobTitle(t)) {
+    return { is_relevant: false, match_score: -50, relevance_reason: "excluded non-engineering title" };
+  }
+
+  const boosts: Array<[RegExp, number, string]> = [
+    [/\bengineer[-\s]?in[-\s]?training\b|\beit\b/i, 40, "EIT / engineer-in-training"],
+    [/\bmechanical\s+engineer\s*(?:i|1)?\b/i, 34, "mechanical engineer"],
+    [/\b(?:entry[-\s]?level|junior|associate|graduate|new\s+grad)\b.*\bmechanical\b/i, 34, "entry mechanical"],
+    [/\bmechanical\s+design\s+engineer\b/i, 32, "mechanical design"],
+    [/\b(?:hvac|mep|building\s+systems?|plumbing|piping)\b.*\b(?:engineer|designer)\b|\b(?:engineer|designer)\b.*\b(?:hvac|mep|building\s+systems?|plumbing|piping)\b/i, 32, "MEP/HVAC/building systems"],
+    [/\bproject\s+engineer\s*(?:i|1)?\b/i, 28, "project engineer"],
+    [/\b(?:tooling|equipment|manufacturing|process|production|quality|test|validation|environmental\s+test)\s+engineer\b/i, 24, "manufacturing/test engineer"],
+    [/\b(?:electromechanical|mechatronics|robotics)\b.*\bengineer\b|\bengineer\b.*\b(?:electromechanical|mechatronics|robotics)\b/i, 26, "electromechanical/robotics"],
+    [/\b(?:thermal|fea|stress|systems)\s+engineer\b/i, 22, "thermal/FEA/systems"],
+    [/\b(?:aerospace|space|satellite|propulsion)\b.*\b(?:engineer|designer)\b|\b(?:engineer|designer)\b.*\b(?:aerospace|space|satellite|propulsion)\b/i, 22, "aerospace/space"],
+  ];
+
+  for (const [pattern, points, label] of boosts) {
+    if (pattern.test(text)) {
+      score += points;
+      reasons.push(`+${points} ${label}`);
+      hasTargetTitle = true;
+      break;
+    }
+  }
+
+  if (/\b(?:professional\s+engineer|p\.?e\.?|licensed\s+engineer|under\s+the\s+supervision|mentorship|fe\s+exam|abet)\b/i.test(text)) {
+    score += 12;
+    reasons.push("+12 PE path signal");
+  }
+
+  const loc = (location || "").toLowerCase();
+  if (!loc) {
+    score += 4;
+    reasons.push("+4 unknown location");
+  } else if (/\b(?:denver|lakewood|golden|boulder|littleton|englewood|arvada|aurora|broomfield|westminster|centennial|longmont|colorado|\bco\b)\b/i.test(loc)) {
+    score += 16;
+    reasons.push("+16 Colorado/Denver");
+  } else if (loc.includes("remote")) {
+    score += 4;
+    reasons.push("+4 remote");
+  } else {
+    score -= 15;
+    reasons.push("-15 outside target region");
+  }
+
+  if (!hasTargetTitle) reasons.push("no target title match");
+  return {
+    is_relevant: hasTargetTitle && score >= 24,
+    match_score: score,
+    relevance_reason: reasons.join("; "),
+  };
+}
+
 export function isTodayTargetJob(job: {
   title?: string | null;
   companyname?: string | null;
