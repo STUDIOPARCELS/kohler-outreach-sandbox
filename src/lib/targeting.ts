@@ -25,9 +25,13 @@ const STAFFING_AGENCY_PATTERNS = [
   /\bbelcan\b/i,
   /\bbradley\s*&\s*associates\b/i,
   /\bc4\s+technical\b/i,
+  /\bchipton\s+ross\b/i,
   /\bcybercoders\b/i,
+  /\bespo\s+corporation\b/i,
+  /\bexpress\s+employment\b/i,
   /\bepc\s+staff\b/i,
   /\bfutures\s+consulting\b/i,
+  /\bkellyconnect\b/i,
   /\binsight\s+global\b/i,
   /\bjcsi\b/i,
   /\bjobot\b/i,
@@ -37,14 +41,81 @@ const STAFFING_AGENCY_PATTERNS = [
   /\bliberty\s+personnel\b/i,
   /\bnetgroup\b/i,
   /\bpacer\b/i,
+  /\bpop[-\s]?up\s+talent\b/i,
+  /\bprofessional\s+employment\s+group\b/i,
   /\brandstad\b/i,
   /\brobert\s+half\b/i,
   /\bsoftcom\s+systems\b/i,
+  /\bsupplied\s+talent\b/i,
+  /\btalentburst\b/i,
   /\bthree\s+point\s+solutions\b/i,
+  /\ballstem\s+connections\b/i,
+  /\balten\s+technology\b/i,
   /\bzobility\b/i,
+  /\bzen\s+sherpa\b/i,
   /\bharrison\s+consulting\s+solutions\b/i,
   /\bstaffing\b|\brecruit(?:er|ing)\b|\bpersonnel\b|\btalent\s+acquisition\b/i,
 ];
+
+const NICHE_ALIASES: Record<string, string> = {
+  "MEP / HVAC / Facilities": "MEP / HVAC / Building Systems",
+  "Manufacturing / Consumer Products": "Manufacturing / Automation / Product Design",
+};
+
+const COMPANY_NICHE_OVERRIDES: Array<[RegExp, string]> = [
+  [/\b(?:smith\s+seckman\s+reid|henderson\s+engineers|hendersonco|the\s+rmh\s+group|way\s+mechanical|me&p\s+management|legence|jetson\s+home|safe\s+air\s+technology|blender\s+products|farnsworth|o'?brien\s+engineering|wold\s+architects)\b/i, "MEP / HVAC / Building Systems"],
+  [/\b(?:cdot|colorado\s+department\s+of\s+transportation|air\s+force\s+civilian\s+service|disa\s+technologies)\b/i, "Government / Public Works / Infrastructure"],
+  [/\b(?:brown\s+and\s+caldwell|knight\s+pi[eé]sold|anchor\s+engineering|tetratech|cdm\s+smith)\b/i, "Water / Environmental / Geotech"],
+  [/\b(?:paragon\s+space|hummingbird\s+aero|raytheon|pilatus\s+aircraft|shield\s+ai|southwest\s+research\s+institute|first\s+rf|eoi\s+space|lunar\s+outpost|red\s+6|national\s+solar\s+observatory|association\s+of\s+universities\s+for\s+research\s+in\s+astronomy|aura|barber-?nichols|aerocom\s+industries)\b/i, "Aerospace / Space"],
+  [/\b(?:ionq|atom\s+computing|maybell\s+quantum|amp\s+robotics|nova\s+automation|outrider|spectra\s+logic|nlight|meadowlark\s+optics|aureate\s+technologies|accelsius)\b/i, "Quantum / Deep Tech / Electronics / Robotics"],
+  [/\b(?:enabled\s+energy|rowan\s+digital\s+infrastructure|cofan\s+thermal|vpe\s+thermal|e2companies|falcon\s+power|quality\s+electrical\s+systems|xcimer\s+energy|liberty\s+energy|geodynamics)\b/i, "Energy / Renewables / Power"],
+  [/\b(?:wanco|karcher|the\s+toro\s+company|productivity|todd\s+technologies|imagetek|ringspann|stolle\s+machinery|acorn\s+product\s+development|structural\s+integrity\s+associates|tote\s+systems|sematool|tampoprint|arrigo\s+enterprises|beehive|production\s+products|codi\s+manufacturing|basile\s+studio|halker\s+consulting|guinn\s+partners|verotouch|h3x\s+technologies|s[i1]\s+solutions)\b/i, "Manufacturing / Automation / Product Design"],
+  [/\b(?:voestalpine|u\.s\.\s+pipe|steel\s+storage\s+systems|boyds\s+machine\s+shop|fortius\s+metals|coorstek)\b/i, "Metals / Material Science"],
+  [/\b(?:shrewsberry|merrick\s+&\s+company|merrick\s+and\s+company|exponent|fm\s+construction|mastec|rick\s+engineering|stantec|hdr|haskell|hntb|apex\s+engineers)\b/i, "Construction / Civil / Heavy Industry"],
+  [/\b(?:rad\s+source|diversatek|ge\s+healthcare|conmed|stryker)\b/i, "Medical / Biotech"],
+  [/\b(?:featherbuilt|titan\s+vans)\b/i, "Automotive / Vehicles"],
+];
+
+function inferNiche(companyname?: string | null, titleText?: string | null): string | null {
+  const combined = `${companyname || ""} ${titleText || ""}`;
+  for (const [pattern, niche] of COMPANY_NICHE_OVERRIDES) {
+    if (pattern.test(combined)) return niche;
+  }
+  if (/\b(?:hvac|mep|mechanical\s+systems?|building\s+systems?|plumbing|piping|thermal\s+comfort)\b/i.test(combined)) {
+    return "MEP / HVAC / Building Systems";
+  }
+  if (/\b(?:transportation|highway|bridge|public\s+works|government|state\s+of\s+colorado|federal)\b/i.test(combined)) {
+    return "Government / Public Works / Infrastructure";
+  }
+  if (/\b(?:water|wastewater|environmental|geotech|geotechnical)\b/i.test(combined)) {
+    return "Water / Environmental / Geotech";
+  }
+  if (/\b(?:space|aerospace|satellite|propulsion|avionics|aircraft|defense)\b/i.test(combined)) {
+    return "Aerospace / Space";
+  }
+  if (/\b(?:robotics?|mechatronics?|automation|quantum|electronics?|electromechanical|optics?)\b/i.test(combined)) {
+    return "Quantum / Deep Tech / Electronics / Robotics";
+  }
+  if (/\b(?:energy|power|solar|renewable|thermal|electrical\s+systems?)\b/i.test(combined)) {
+    return "Energy / Renewables / Power";
+  }
+  if (/\b(?:manufactur|product|machin|tooling|cnc|fabrication|industrial|process|quality|plant)\b/i.test(combined)) {
+    return "Manufacturing / Automation / Product Design";
+  }
+  if (/\b(?:civil|construction|structural|infrastructure)\b/i.test(combined)) {
+    return "Construction / Civil / Heavy Industry";
+  }
+  return null;
+}
+
+export function normalizeNiche(niche?: string | null, companyname?: string | null, titleText?: string | null): string {
+  const raw = (niche || "").trim();
+  const aliased = NICHE_ALIASES[raw] || raw;
+  if (!aliased || aliased === "ZipRecruiter Intake" || aliased === "Other") {
+    return inferNiche(companyname, titleText) || "Manufacturing / Automation / Product Design";
+  }
+  return aliased;
+}
 
 const SENIORITY_TITLE_PATTERNS = [
   /\b(?:senior|sr\.?)\b/i,

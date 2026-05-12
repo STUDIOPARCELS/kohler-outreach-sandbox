@@ -1,6 +1,6 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { isExcludedStaffingCompany, isTodayExcludedNiche } from "@/lib/targeting";
+import { isExcludedStaffingCompany, isTodayExcludedNiche, normalizeNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -24,12 +24,25 @@ export async function GET(req: NextRequest) {
     if (!data || data.length < pageSize) break;
     from += pageSize;
   }
+  const { data: trackedJobs } = await supabaseAdmin
+    .from("job_listings")
+    .select("companyname, title, is_relevant, ingest_status")
+    .eq("is_relevant", true)
+    .in("ingest_status", ["new", "open"]);
+
+  const jobTitleMap = new Map<string, string[]>();
+  for (const job of trackedJobs || []) {
+    const titles = jobTitleMap.get(job.companyname) || [];
+    if (job.title) titles.push(job.title);
+    jobTitleMap.set(job.companyname, titles);
+  }
+
   const companies = includeExcluded
     ? allCompanies
-    : allCompanies.filter((company) =>
-        !isTodayExcludedNiche(company.niche) &&
-        !isExcludedStaffingCompany(company.companyname)
-      );
+    : allCompanies.filter((company) => {
+        const niche = normalizeNiche(company.niche, company.companyname, jobTitleMap.get(company.companyname)?.join(" "));
+        return !isTodayExcludedNiche(niche) && !isExcludedStaffingCompany(company.companyname);
+      });
 
   // Get all contacts to find best contact per company
   const { data: contacts } = await supabaseAdmin
@@ -75,8 +88,10 @@ export async function GET(req: NextRequest) {
   // Merge
   const rows = (companies || []).map((co) => {
     const contact = contactMap.get(co.companyname);
+    const niche = normalizeNiche(co.niche, co.companyname, jobTitleMap.get(co.companyname)?.join(" "));
     return {
       ...co,
+      niche,
       contactname: contact?.contactname || null,
       contact_title: contact?.title || null,
       email: contact?.email || null,

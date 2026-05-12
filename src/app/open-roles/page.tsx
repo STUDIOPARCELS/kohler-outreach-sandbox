@@ -48,7 +48,6 @@ const SRC_LABELS: Record<string, string> = {
 
 const NICHE_ORDER = [
   "MEP / HVAC / Building Systems",
-  "MEP / HVAC / Facilities",
   "Government / Public Works / Infrastructure",
   "Construction / Civil / Heavy Industry",
   "Water / Environmental / Geotech",
@@ -56,11 +55,9 @@ const NICHE_ORDER = [
   "Quantum / Deep Tech / Electronics / Robotics",
   "Energy / Renewables / Power",
   "Manufacturing / Automation / Product Design",
-  "Manufacturing / Consumer Products",
   "Metals / Material Science",
   "Automotive / Vehicles",
   "Medical / Biotech",
-  "ZipRecruiter Intake",
   "Real Estate / Facilities",
 ];
 

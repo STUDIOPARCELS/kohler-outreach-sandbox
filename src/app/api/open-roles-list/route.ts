@@ -1,6 +1,6 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { isTodayTargetJob } from "@/lib/targeting";
+import { isTodayTargetJob, normalizeNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -46,11 +46,18 @@ export async function GET(req: NextRequest) {
     detailMap.set(c.companyname, { tier: c.tier, city: c.city, niche: c.niche });
   }
 
+  const titleMap = new Map<string, string[]>();
+  for (const job of prelimJobs) {
+    const titles = titleMap.get(job.companyname) || [];
+    if (job.title) titles.push(job.title);
+    titleMap.set(job.companyname, titles);
+  }
+
   const jobs = prelimJobs.filter((job) =>
     isTodayTargetJob({
       title: job.title,
       companyname: job.companyname,
-      niche: detailMap.get(job.companyname)?.niche,
+      niche: normalizeNiche(detailMap.get(job.companyname)?.niche, job.companyname, titleMap.get(job.companyname)?.join(" ")),
       is_relevant: job.is_relevant,
       job_url: job.job_url,
       apply_url: job.apply_url,
@@ -99,7 +106,7 @@ export async function GET(req: NextRequest) {
       companyname: name,
       tier: detail?.tier || 5,
       city: detail?.city || null,
-      niche: detail?.niche || null,
+      niche: normalizeNiche(detail?.niche, name, titleMap.get(name)?.join(" ")),
       roles: entry.roles,
     };
   }).sort((a, b) => a.tier - b.tier || b.roles - a.roles);
