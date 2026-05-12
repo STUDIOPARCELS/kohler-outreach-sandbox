@@ -122,8 +122,8 @@ const SENIORITY_TITLE_PATTERNS = [
   /\bmid[-\s]?career\b|\bmid[-\s]?level\b|\bexperienced\b/i,
   /\b(?:lead|principal|staff)\b/i,
   /\b(?:manager|director|supervisor|vp|vice\s+president|chief|head)\b/i,
-  /\b(?:iii|iv|v)\b/i,
-  /\b(?:level\s*)?[3-9]\b/i,
+  /\b(?:engineer|level)(?:\s|[-,/])*(?:iii|iv|v)\b|\b(?:iii|iv|v)(?:\s|[-,/])*(?:engineer|level)\b/i,
+  /\b(?:engineer|level)(?:\s|[-,/])*[3-9]\b|\b[3-9](?:\s|[-,/])*(?:engineer|level)\b/i,
 ];
 
 const NON_ENGINEERING_TITLE_PATTERNS = [
@@ -196,6 +196,9 @@ export function scoreTargetRole(title?: string | null, location?: string | null,
   }
   if (isNonEngineeringJobTitle(t)) {
     return { is_relevant: false, match_score: -50, relevance_reason: "excluded non-engineering title" };
+  }
+  if (/\b(?:senior\s+level|expert\/leader)\b/i.test(text)) {
+    return { is_relevant: false, match_score: -50, relevance_reason: "excluded seniority/level body signal" };
   }
 
   const boosts: Array<[RegExp, number, string]> = [
