@@ -39,6 +39,8 @@ interface Role {
 const SRC_LABELS: Record<string, string> = {
   ziprecruiter_email: "ZipRecruiter",
   governmentjobs_email: "GovernmentJobs",
+  governmentjobs_direct: "GovernmentJobs",
+  builtin_colorado: "Built In Colorado",
   "dice.com": "Dice",
   usajobs: "USAJobs",
   "blueorigin.com": "Blue Origin",
@@ -298,7 +300,10 @@ export default function OpenRolesPage() {
         >
           <option value="all">All Sources</option>
           <option value="ziprecruiter_email">ZipRecruiter</option>
+          <option value="government">Government Sources</option>
           <option value="governmentjobs_email">GovernmentJobs</option>
+          <option value="governmentjobs_direct">GovernmentJobs Direct</option>
+          <option value="builtin_colorado">Built In Colorado</option>
           <option value="dice.com">Dice</option>
           <option value="usajobs">USAJobs</option>
           <option value="greenhouse_careers">Greenhouse</option>

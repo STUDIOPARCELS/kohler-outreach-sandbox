@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
 
   if (sourceFilter === "career_pages") {
     query = query.in("source", ["jsonld_careers", "career_links_careers"]);
+  } else if (sourceFilter === "government") {
+    query = query.in("source", ["governmentjobs_email", "governmentjobs_direct", "usajobs"]);
   } else if (sourceFilter && sourceFilter !== "all") {
     query = query.eq("source", sourceFilter);
   }
@@ -78,7 +80,10 @@ export async function GET(req: NextRequest) {
     j.first_seen_at && new Date(j.first_seen_at) < h24
   ).length;
   const newZR24h = jobs.filter(j => j.source === "ziprecruiter_email" && j.first_seen_at && new Date(j.first_seen_at) >= h24).length;
-  const newGov24h = jobs.filter(j => j.source === "governmentjobs_email" && j.first_seen_at && new Date(j.first_seen_at) >= h24).length;
+  const newGov24h = jobs.filter(j =>
+    ["governmentjobs_email", "governmentjobs_direct", "usajobs"].includes(j.source || "") &&
+    j.first_seen_at && new Date(j.first_seen_at) >= h24
+  ).length;
   const newRoles7d = jobs.filter(j => j.first_seen_at && new Date(j.first_seen_at) >= d7).length;
   const newRoles30d = jobs.filter(j => j.first_seen_at && new Date(j.first_seen_at) >= d30).length;
 

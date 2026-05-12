@@ -122,8 +122,8 @@ const SENIORITY_TITLE_PATTERNS = [
   /\bmid[-\s]?career\b|\bmid[-\s]?level\b|\bexperienced\b/i,
   /\b(?:lead|principal|staff)\b/i,
   /\b(?:manager|director|supervisor|vp|vice\s+president|chief|head)\b/i,
-  /\b(?:ii|iii|iv|v)\b/i,
-  /\b(?:level\s*)?[2-9]\b/i,
+  /\b(?:iii|iv|v)\b/i,
+  /\b(?:level\s*)?[3-9]\b/i,
 ];
 
 const NON_ENGINEERING_TITLE_PATTERNS = [

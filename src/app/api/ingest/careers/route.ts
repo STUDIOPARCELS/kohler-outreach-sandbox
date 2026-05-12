@@ -6,7 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-type AtsSource = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "workday" | "icims" | "jsonld" | "career_links";
+type DirectCareerSource = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "workday" | "icims" | "jsonld" | "career_links";
+type AggregateJobSource = "builtin_colorado" | "governmentjobs_direct" | "usajobs";
+type JobSource = DirectCareerSource | AggregateJobSource;
 
 interface WorkdayToken {
   host: string;
@@ -16,7 +18,7 @@ interface WorkdayToken {
 }
 
 interface CompanyRow {
-  id: number;
+  id: number | null;
   companyname: string;
   city: string | null;
   niche: string | null;
@@ -28,7 +30,7 @@ interface CareerJob {
   companyname: string;
   location: string;
   job_url: string;
-  source: AtsSource;
+  source: JobSource;
   external_job_key: string;
   description?: string;
   employment_type?: string;
@@ -56,6 +58,41 @@ function contentKey(source: string, company: string, title: string, url: string,
 
 function absoluteUrl(url: string, base: string): string {
   try { return new URL(url, base).toString(); } catch { return url; }
+}
+
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function cleanText(input: string): string {
+  return decodeHtmlEntities(input).replace(/\s+/g, " ").trim();
+}
+
+function dbSourceFor(source: JobSource): string {
+  if (source === "builtin_colorado" || source === "governmentjobs_direct" || source === "usajobs") return source;
+  return `${source}_careers`;
+}
+
+function friendlySource(source: JobSource): string {
+  if (source === "builtin_colorado") return "Built In Colorado";
+  if (source === "governmentjobs_direct") return "GovernmentJobs";
+  if (source === "usajobs") return "USAJOBS";
+  return `${source} careers`;
+}
+
+function inferCity(location?: string | null): string {
+  const loc = location || "";
+  const match = loc.match(/\b(Denver|Lakewood|Golden|Boulder|Littleton|Englewood|Arvada|Aurora|Broomfield|Westminster|Centennial|Longmont|Louisville|Lafayette|Highlands Ranch|Greenwood Village|Colorado Springs)\b/i);
+  return match ? match[1] : "Denver";
 }
 
 async function fetchText(url: string): Promise<string> {
@@ -105,13 +142,10 @@ async function fetchJsonPost<T>(url: string, body: unknown): Promise<T> {
 }
 
 function stripHtml(input: string): string {
-  return input.replace(/<script[\s\S]*?<\/script>/gi, " ")
+  return cleanText(input.replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ")
-    .trim();
+  );
 }
 
 function detectBoardTokens(url: string, html: string): {
@@ -346,9 +380,252 @@ function fromCareerLinks(html: string, baseUrl: string, company: CompanyRow): Ca
   return jobs;
 }
 
-async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]; sources: AtsSource[]; warnings: string[] }> {
+const BUILTIN_COLORADO_SEARCH_URLS = [
+  "https://www.builtincolorado.com/jobs/dev-engineering/search/mechanical-engineer",
+  "https://www.builtincolorado.com/jobs/dev-engineering/search/mechanical-design-engineer",
+  "https://www.builtincolorado.com/jobs/dev-engineering/search/manufacturing-engineer",
+  "https://www.builtincolorado.com/jobs/dev-engineering/search/aerospace-engineer",
+  "https://www.builtincolorado.com/jobs/dev-engineering/search/robotics-engineer",
+  "https://www.builtincolorado.com/jobs/dev-engineering/search/hvac-engineer",
+];
+
+function getAttr(fragment: string, attr: string): string {
+  return fragment.match(new RegExp(`${attr}=["']([^"']+)["']`, "i"))?.[1] || "";
+}
+
+function iconText(block: string, iconClass: string): string {
+  const match = block.match(new RegExp(`${iconClass}[\\s\\S]{0,900}?<span[^>]*>([\\s\\S]*?)<\\/span>`, "i"));
+  return match ? stripHtml(match[1]) : "";
+}
+
+function fromBuiltInColoradoHtml(html: string, sourceUrl: string): CareerJob[] {
+  const jobs: CareerJob[] = [];
+  const cardRegex = /<div\s+id=["']job-card-(\d+)["'][\s\S]*?(?=<div\s+id=["']job-card-\d+["']|<nav|<footer|$)/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = cardRegex.exec(html)) !== null) {
+    const [, id] = match;
+    const block = match[0];
+    const titleAnchor = block.match(/<a\s+[^>]*data-id=["']job-card-title["'][^>]*>[\s\S]*?<\/a>/i)?.[0]
+      || block.match(/<a\s+[^>]*href=["'][^"']+["'][^>]*data-id=["']job-card-title["'][^>]*>[\s\S]*?<\/a>/i)?.[0]
+      || "";
+    const href = getAttr(titleAnchor, "href");
+    const title = stripHtml(titleAnchor);
+    const companyBlock = block.match(/data-id=["']company-title["'][^>]*>([\s\S]*?)<\/(?:div|a)>/i)?.[1] || "";
+    const companyname = stripHtml(companyBlock);
+    const location = iconText(block, "fa-location-dot")
+      || stripHtml(block.match(/data-bs-title=["']([^"']*(?:CO|Colorado)[^"']*)["']/i)?.[1] || "")
+      || "Denver, CO";
+    const level = iconText(block, "fa-trophy");
+    const salary = iconText(block, "fa-sack-dollar");
+    const description = stripHtml(block.match(/class=["'][^"']*text-gray-04[^"']*["'][^>]*>([\s\S]*?)<\/[^>]+>/i)?.[1] || "");
+    const url = href ? absoluteUrl(href, "https://www.builtincolorado.com") : sourceUrl;
+
+    if (!title || !companyname || !url) continue;
+    jobs.push({
+      title: title.slice(0, 180),
+      companyname,
+      location,
+      salary,
+      job_url: url,
+      source: "builtin_colorado",
+      external_job_key: id ? `builtin_colorado_${id}` : contentKey("builtin_colorado", companyname, title, url, location),
+      description: [level, description].filter(Boolean).join(". "),
+      raw: { id, sourceUrl, level },
+    });
+  }
+
+  return jobs;
+}
+
+async function fetchBuiltInColoradoJobs(): Promise<{ jobs: CareerJob[]; warnings: string[] }> {
+  const jobs: CareerJob[] = [];
   const warnings: string[] = [];
-  const sources: AtsSource[] = [];
+  const seen = new Set<string>();
+
+  for (const url of BUILTIN_COLORADO_SEARCH_URLS) {
+    try {
+      const html = await fetchText(url);
+      for (const job of fromBuiltInColoradoHtml(html, url)) {
+        const key = job.job_url.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        jobs.push(job);
+      }
+    } catch (err) {
+      warnings.push(`builtin_colorado ${url}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return { jobs, warnings };
+}
+
+const GOVERNMENTJOBS_SEARCHES: Array<{ agency: string; companyname: string }> = [
+  { agency: "colorado", companyname: "State of Colorado" },
+  { agency: "denver", companyname: "City and County of Denver" },
+  { agency: "aurora", companyname: "City of Aurora" },
+  { agency: "lakewood", companyname: "City of Lakewood" },
+  { agency: "arvada", companyname: "City of Arvada" },
+  { agency: "boulder", companyname: "City of Boulder" },
+  { agency: "broomfield", companyname: "City and County of Broomfield" },
+  { agency: "jeffco", companyname: "Jefferson County" },
+  { agency: "rtd", companyname: "Regional Transportation District" },
+];
+
+function fromGovernmentJobsHtml(html: string, agency: string, companyname: string, sourceUrl: string): CareerJob[] {
+  const anchors = html.match(/<a\s+[^>]*href=["'][^"']*\/careers\/[^/"']+\/jobs\/\d+[^"']*["'][^>]*>[\s\S]*?<\/a>/gi) || [];
+  const jobs: CareerJob[] = [];
+  const seen = new Set<string>();
+
+  for (const anchor of anchors) {
+    const href = getAttr(anchor, "href");
+    const jobId = href.match(/\/jobs\/(\d+)/i)?.[1] || "";
+    if (!href || !jobId || seen.has(jobId)) continue;
+    seen.add(jobId);
+
+    const title = stripHtml(anchor).replace(/\b(apply|view details|view job)\b/gi, "").trim();
+    if (!title || title.length < 4) continue;
+
+    const url = absoluteUrl(href, "https://www.governmentjobs.com");
+    jobs.push({
+      title: title.slice(0, 180),
+      companyname,
+      location: "Colorado",
+      job_url: url,
+      source: "governmentjobs_direct",
+      external_job_key: `governmentjobs_${agency}_${jobId}`,
+      description: `${companyname} public-sector engineering role from GovernmentJobs.`,
+      raw: { agency, jobId, sourceUrl },
+    });
+  }
+
+  return jobs;
+}
+
+async function fetchGovernmentJobsDirect(): Promise<{ jobs: CareerJob[]; warnings: string[] }> {
+  const jobs: CareerJob[] = [];
+  const warnings: string[] = [];
+  const seen = new Set<string>();
+
+  for (const search of GOVERNMENTJOBS_SEARCHES) {
+    const url = `https://www.governmentjobs.com/careers/${encodeURIComponent(search.agency)}?keyword=engineer`;
+    try {
+      const html = await fetchText(url);
+      for (const job of fromGovernmentJobsHtml(html, search.agency, search.companyname, url)) {
+        if (seen.has(job.external_job_key)) continue;
+        seen.add(job.external_job_key);
+        jobs.push(job);
+      }
+    } catch (err) {
+      warnings.push(`governmentjobs_direct ${search.agency}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return { jobs, warnings };
+}
+
+interface UsaJobsResponse {
+  SearchResult?: {
+    SearchResultItems?: Array<{
+      MatchedObjectDescriptor?: {
+        PositionID?: string;
+        PositionTitle?: string;
+        PositionURI?: string;
+        OrganizationName?: string;
+        PositionLocationDisplay?: string;
+        PositionSchedule?: Array<{ Name?: string }>;
+        PositionRemuneration?: Array<{ MinimumRange?: string; MaximumRange?: string; RateIntervalCode?: string; Description?: string }>;
+        UserArea?: {
+          Details?: {
+            JobSummary?: string;
+            MajorDuties?: string[] | string;
+            Requirements?: string;
+          };
+        };
+      };
+    }>;
+  };
+}
+
+function formatUsaJobsSalary(remuneration?: Array<{ MinimumRange?: string; MaximumRange?: string; RateIntervalCode?: string; Description?: string }>): string {
+  const item = remuneration?.[0];
+  if (!item) return "";
+  if (item.Description) return item.Description;
+  const min = item.MinimumRange ? `$${Number(item.MinimumRange).toLocaleString("en-US")}` : "";
+  const max = item.MaximumRange ? `$${Number(item.MaximumRange).toLocaleString("en-US")}` : "";
+  const range = [min, max].filter(Boolean).join(" - ");
+  return item.RateIntervalCode ? `${range} ${item.RateIntervalCode}`.trim() : range;
+}
+
+async function fetchUsaJobs(): Promise<{ jobs: CareerJob[]; warnings: string[] }> {
+  const key = process.env.USAJOBS_AUTHORIZATION_KEY || process.env.USAJOBS_API_KEY;
+  const userAgent = process.env.USAJOBS_USER_AGENT || process.env.USAJOBS_EMAIL;
+  if (!key || !userAgent) {
+    return { jobs: [], warnings: ["usajobs not configured: set USAJOBS_AUTHORIZATION_KEY and USAJOBS_USER_AGENT or USAJOBS_EMAIL"] };
+  }
+
+  const keywords = ["Mechanical Engineer", "Engineer In Training", "General Engineer", "Aerospace Engineer", "Civil Engineer"];
+  const jobs: CareerJob[] = [];
+  const warnings: string[] = [];
+  const seen = new Set<string>();
+
+  for (const keyword of keywords) {
+    const params = new URLSearchParams({
+      Keyword: keyword,
+      LocationName: "Denver, Colorado",
+      Radius: "50",
+      ResultsPerPage: "50",
+    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    try {
+      const res = await fetch(`https://data.usajobs.gov/api/search?${params.toString()}`, {
+        signal: controller.signal,
+        headers: {
+          Host: "data.usajobs.gov",
+          "User-Agent": userAgent,
+          "Authorization-Key": key,
+          accept: "application/json",
+        },
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const data = await res.json() as UsaJobsResponse;
+      for (const item of data.SearchResult?.SearchResultItems || []) {
+        const job = item.MatchedObjectDescriptor;
+        if (!job?.PositionTitle || !job.PositionURI) continue;
+        const key = job.PositionID || job.PositionURI;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const majorDuties = Array.isArray(job.UserArea?.Details?.MajorDuties)
+          ? job.UserArea?.Details?.MajorDuties.join(" ")
+          : job.UserArea?.Details?.MajorDuties || "";
+        jobs.push({
+          title: job.PositionTitle,
+          companyname: job.OrganizationName || "USAJOBS Federal Agency",
+          location: job.PositionLocationDisplay || "Denver, CO",
+          employment_type: job.PositionSchedule?.map((schedule) => schedule.Name).filter(Boolean).join(", ") || "",
+          salary: formatUsaJobsSalary(job.PositionRemuneration),
+          job_url: job.PositionURI,
+          source: "usajobs",
+          external_job_key: `usajobs_${key}`,
+          description: [job.UserArea?.Details?.JobSummary, majorDuties, job.UserArea?.Details?.Requirements].filter(Boolean).join(" "),
+          raw: { positionId: job.PositionID, keyword },
+        });
+      }
+    } catch (err) {
+      warnings.push(`usajobs ${keyword}: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return { jobs, warnings };
+}
+
+async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]; sources: DirectCareerSource[]; warnings: string[] }> {
+  const warnings: string[] = [];
+  const sources: DirectCareerSource[] = [];
   const careersUrl = company.careers_url || "";
   if (!careersUrl) return { jobs: [], sources, warnings: ["no careers_url"] };
 
@@ -362,7 +639,7 @@ async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]
   const tokens = detectBoardTokens(careersUrl, html);
   const jobs: CareerJob[] = [];
 
-  const attempts: Array<[AtsSource, () => Promise<CareerJob[]>]> = [];
+  const attempts: Array<[DirectCareerSource, () => Promise<CareerJob[]>]> = [];
   if (tokens.greenhouse) attempts.push(["greenhouse", () => fromGreenhouse(tokens.greenhouse!, company)]);
   if (tokens.lever) attempts.push(["lever", () => fromLever(tokens.lever!, company)]);
   if (tokens.ashby) attempts.push(["ashby", () => fromAshby(tokens.ashby!, company)]);
@@ -405,7 +682,7 @@ async function upsertJob(job: CareerJob, company: CompanyRow, dryRun: boolean): 
   if (dryRun) return "dry_run";
 
   const now = new Date().toISOString();
-  const source = `${job.source}_careers`;
+  const source = dbSourceFor(job.source);
   const { data: existing } = await supabaseAdmin
     .from("job_listings")
     .select("id, times_seen, first_seen_at")
@@ -460,6 +737,88 @@ async function upsertJob(job: CareerJob, company: CompanyRow, dryRun: boolean): 
   return "inserted";
 }
 
+async function fetchAggregateJobs(): Promise<{ jobs: CareerJob[]; sources: JobSource[]; warnings: string[] }> {
+  const warnings: string[] = [];
+  const jobs: CareerJob[] = [];
+  const sources = new Set<JobSource>();
+
+  const batches = [
+    await fetchBuiltInColoradoJobs(),
+    await fetchGovernmentJobsDirect(),
+    await fetchUsaJobs(),
+  ];
+
+  const seen = new Set<string>();
+  for (const batch of batches) {
+    warnings.push(...batch.warnings);
+    for (const job of batch.jobs) {
+      const key = `${job.source}:${job.external_job_key || job.job_url}`.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      jobs.push(job);
+      sources.add(job.source);
+    }
+  }
+
+  return { jobs, sources: Array.from(sources), warnings };
+}
+
+async function ensureCompanyForJob(job: CareerJob, dryRun: boolean): Promise<{ company: CompanyRow; created: boolean } | null> {
+  if (!job.companyname || isExcludedStaffingCompany(job.companyname)) return null;
+
+  const companyKey = slugify(job.companyname);
+  const selectColumns = "id, companyname, city, niche, careers_url";
+  const { data: keyMatches } = await supabaseAdmin
+    .from("companies")
+    .select(selectColumns)
+    .eq("company_key", companyKey)
+    .limit(1);
+  const byKey = keyMatches?.[0] as CompanyRow | undefined;
+  if (byKey) return { company: byKey, created: false };
+
+  const { data: nameMatches } = await supabaseAdmin
+    .from("companies")
+    .select(selectColumns)
+    .ilike("companyname", job.companyname)
+    .limit(1);
+  const byName = nameMatches?.[0] as CompanyRow | undefined;
+  if (byName) return { company: byName, created: false };
+
+  const titleText = `${job.title} ${job.description || ""}`;
+  const niche = normalizeNiche(null, job.companyname, titleText);
+  const city = inferCity(job.location);
+
+  if (dryRun) {
+    return {
+      company: {
+        id: null,
+        companyname: job.companyname,
+        city,
+        niche,
+        careers_url: null,
+      },
+      created: true,
+    };
+  }
+
+  const isGovSource = job.source === "usajobs" || job.source === "governmentjobs_direct";
+  const { data: created, error } = await supabaseAdmin
+    .from("companies")
+    .insert({
+      companyname: job.companyname,
+      company_key: companyKey,
+      city,
+      tier: isGovSource || niche === "MEP / HVAC / Building Systems" || niche === "Aerospace / Space" ? 2 : 4,
+      niche,
+      company_about: `Added from ${friendlySource(job.source)} ingest. Job: ${job.title}`,
+    })
+    .select(selectColumns)
+    .single();
+
+  if (error) throw new Error(`company create failed for ${job.companyname}: ${error.message}`);
+  return { company: created as CompanyRow, created: true };
+}
+
 async function runCareersIngest(options: { dryRun: boolean; limit: number; companyname?: string }) {
   let query = supabaseAdmin
     .from("companies")
@@ -481,6 +840,8 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     dryRun: options.dryRun,
     companies_checked: 0,
     companies_with_jobs: 0,
+    aggregate_sources_checked: 0,
+    aggregate_companies_created: 0,
     jobs_found: 0,
     jobs_relevant: 0,
     inserted: 0,
@@ -488,7 +849,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     skipped: 0,
     source_counts: {} as Record<string, number>,
   };
-  const results: Array<{ company: string; careers_url: string | null; found: number; relevant: number; actions: Record<string, number>; sources: AtsSource[]; warnings: string[]; sample: Array<{ title: string; location: string; url: string; source: string }> }> = [];
+  const results: Array<{ company: string; careers_url: string | null; found: number; relevant: number; actions: Record<string, number>; sources: JobSource[]; warnings: string[]; sample: Array<{ title: string; location: string; url: string; source: string }> }> = [];
 
   for (const company of companies) {
     summary.companies_checked++;
@@ -521,6 +882,63 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
       warnings: fetched.warnings,
       sample: fetched.jobs.slice(0, 5).map((job) => ({ title: job.title, location: job.location, url: job.job_url, source: job.source })),
     });
+  }
+
+  if (!options.companyname) {
+    const aggregate = await fetchAggregateJobs();
+    summary.aggregate_sources_checked = aggregate.sources.length;
+    const grouped = new Map<string, { jobs: CareerJob[]; actions: Record<string, number>; relevant: number; warnings: string[]; sources: JobSource[]; createdCompany: boolean }>();
+    const createdCompanyKeys = new Set<string>();
+
+    for (const job of aggregate.jobs) {
+      summary.jobs_found++;
+      summary.source_counts[job.source] = (summary.source_counts[job.source] || 0) + 1;
+      const relevance = scoreTargetRole(job.title, job.location, job.description);
+      if (relevance.is_relevant) summary.jobs_relevant++;
+
+      const companyResult = relevance.is_relevant ? await ensureCompanyForJob(job, options.dryRun) : null;
+      let action: "inserted" | "updated" | "dry_run" | "skipped" = "skipped";
+      if (companyResult) {
+        const createdKey = slugify(companyResult.company.companyname);
+        if (companyResult.created && !createdCompanyKeys.has(createdKey)) {
+          createdCompanyKeys.add(createdKey);
+          summary.aggregate_companies_created++;
+        }
+        action = await upsertJob(job, companyResult.company, options.dryRun);
+      }
+
+      if (action === "inserted") summary.inserted++;
+      if (action === "updated") summary.updated++;
+      if (action === "skipped") summary.skipped++;
+      if (action === "dry_run") summary.skipped++;
+
+      const bucket = grouped.get(job.companyname) || { jobs: [], actions: {}, relevant: 0, warnings: [], sources: [], createdCompany: false };
+      bucket.jobs.push(job);
+      bucket.actions[action] = (bucket.actions[action] || 0) + 1;
+      if (relevance.is_relevant) bucket.relevant++;
+      if (!bucket.sources.includes(job.source)) bucket.sources.push(job.source);
+      if (companyResult?.created) bucket.createdCompany = true;
+      grouped.set(job.companyname, bucket);
+    }
+
+    for (const warning of aggregate.warnings) {
+      const bucket = grouped.get("_aggregate_warnings") || { jobs: [], actions: {}, relevant: 0, warnings: [], sources: [], createdCompany: false };
+      bucket.warnings.push(warning);
+      grouped.set("_aggregate_warnings", bucket);
+    }
+
+    for (const [company, bucket] of Array.from(grouped.entries())) {
+      results.push({
+        company,
+        careers_url: null,
+        found: bucket.jobs.length,
+        relevant: bucket.relevant,
+        actions: bucket.actions,
+        sources: bucket.sources,
+        warnings: bucket.warnings,
+        sample: bucket.jobs.slice(0, 5).map((job) => ({ title: job.title, location: job.location, url: job.job_url, source: job.source })),
+      });
+    }
   }
 
   return { success: true, summary, results };
