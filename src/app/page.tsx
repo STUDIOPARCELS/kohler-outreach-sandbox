@@ -36,6 +36,15 @@ interface Contact {
   email_searched?: boolean;
 }
 
+interface JobResult {
+  title: string;
+  salary?: string;
+  location?: string;
+  summary?: string;
+  apply_url: string;
+  source?: string;
+}
+
 interface CompanyRow {
   companyname: string;
   tier: number;
@@ -100,6 +109,18 @@ function cleanCompanyName(name: string): string {
   }
   
   return clean;
+}
+
+function mapTrackedJobs(data: unknown): JobResult[] {
+  if (!Array.isArray(data)) return [];
+  return data.map((job: Record<string, unknown>) => ({
+    title: String(job.title || ""),
+    salary: job.salary ? String(job.salary) : undefined,
+    location: job.location ? String(job.location) : undefined,
+    summary: job.summary ? String(job.summary) : undefined,
+    apply_url: String(job.apply_url || job.url || ""),
+    source: job.source ? String(job.source) : undefined,
+  })).filter((job) => job.title && job.apply_url);
 }
 
 /* ── Zip code coordinates for distance filtering ── */
@@ -234,25 +255,27 @@ const NICHE_PERSONAL: Record<string, string> = {
 };
 
 const NICHE_ORDER = [
-  "TEST",
-  "Government / Public Works / Infrastructure",
-  "ZipRecruiter Intake",
   "MEP / HVAC / Building Systems",
+  "MEP / HVAC / Facilities",
+  "Government / Public Works / Infrastructure",
+  "Construction / Civil / Heavy Industry",
+  "Water / Environmental / Geotech",
   "Aerospace / Space",
   "Quantum / Deep Tech / Electronics / Robotics",
   "Energy / Renewables / Power",
   "Manufacturing / Automation / Product Design",
-  "Water / Environmental / Geotech",
-  "Construction / Civil / Heavy Industry",
+  "Manufacturing / Consumer Products",
   "Metals / Material Science",
   "Automotive / Vehicles",
   "Medical / Biotech",
+  "ZipRecruiter Intake",
+  "Real Estate / Facilities",
+  "TEST",
   "Outdoor Recreation & Equipment",
   "Skiing",
   "Acoustics / Audio / Musical Instruments",
   "Woodworking / Furniture / Cabinetry / Prototyping",
   "Food / Beverage Manufacturing",
-  "Real Estate / Facilities",
 ];
 
 /* ── Niche color themes ── */
@@ -567,7 +590,7 @@ export default function HomePage() {
   const [findingEmailIdx, setFindingEmailIdx] = useState<number | null>(null);
   const [addLeadNiche, setAddLeadNiche] = useState<string | null>(null);
   const [batchJobsNiche, setBatchJobsNiche] = useState<string | null>(null);
-  const [batchJobsResults, setBatchJobsResults] = useState<{company: string; jobs: {title: string; salary?: string; location?: string; summary?: string; apply_url: string; source?: string}[]}[]>([]);
+  const [batchJobsResults, setBatchJobsResults] = useState<{company: string; jobs: JobResult[]}[]>([]);
   const [batchJobsProgress, setBatchJobsProgress] = useState<{done: number; total: number}>({done: 0, total: 0});
   const [addLeadSearch, setAddLeadSearch] = useState("");
   const [addLeadResults, setAddLeadResults] = useState<{name: string; address: string; address1: string; city: string; state: string; zip: string; types: string | null; rating: number | null; place_id: string}[]>([]);
@@ -577,7 +600,7 @@ export default function HomePage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [jobsCompany, setJobsCompany] = useState<string | null>(null);
   const [jobsLoading2, setJobsLoading2] = useState(false);
-  const [jobResults2, setJobResults2] = useState<{title: string; salary?: string; location?: string; summary?: string; apply_url: string; source?: string}[]>([]);
+  const [jobResults2, setJobResults2] = useState<JobResult[]>([]);
   const [jobContactPicker, setJobContactPicker] = useState<{jobIdx: number; action: "email"|"letter"; company: string} | null>(null);
   const [jobsSearched, setJobsSearched] = useState(false);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
@@ -1642,18 +1665,16 @@ export default function HomePage() {
                             onClick={async () => {
                               setBatchJobsNiche(niche);
                               setBatchJobsResults([]);
-                              setBatchJobsProgress({done: 0, total: items.length});
+                              const companiesToCheck = items.filter((company) => (companyJobCounts.get(company.companyname) || 0) > 0);
+                              setBatchJobsProgress({done: 0, total: companiesToCheck.length});
                               const results: typeof batchJobsResults = [];
-                              for (const company of items) {
+                              for (const company of companiesToCheck) {
                                 try {
-                                  const res = await fetch("/api/search-jobs", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ companyname: company.companyname }),
-                                  });
+                                  const res = await fetch(`/api/relevant-roles?companyname=${encodeURIComponent(company.companyname)}`);
                                   const data = await res.json();
-                                  if (data.jobs && data.jobs.length > 0) {
-                                    results.push({ company: company.companyname, jobs: data.jobs });
+                                  const jobs = mapTrackedJobs(data);
+                                  if (jobs.length > 0) {
+                                    results.push({ company: company.companyname, jobs });
                                     setBatchJobsResults([...results]);
                                   }
                                 } catch { /* skip */ }
@@ -1854,16 +1875,12 @@ export default function HomePage() {
                                           if (jobsCompany === c.companyname) { setJobsCompany(null); return; }
                                           setJobsCompany(c.companyname);
                                           setJobsLoading2(true);
-                                          setJobResults2([]);
-                                          setJobsSearched(false);
-                                          try {
-                                            const res = await fetch("/api/search-jobs", {
-                                              method: "POST",
-                                              headers: { "Content-Type": "application/json" },
-                                              body: JSON.stringify({ companyname: c.companyname }),
-                                            });
+                                            setJobResults2([]);
+                                            setJobsSearched(false);
+                                            try {
+                                            const res = await fetch(`/api/relevant-roles?companyname=${encodeURIComponent(c.companyname)}`);
                                             const data = await res.json();
-                                            setJobResults2(data.jobs || []);
+                                            setJobResults2(mapTrackedJobs(data));
                                           } catch { setJobResults2([]); }
                                           finally { setJobsLoading2(false); setJobsSearched(true); }
                                         }}
@@ -1872,7 +1889,7 @@ export default function HomePage() {
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
-                                        {jobsLoading2 && jobsCompany === c.companyname ? "Searching..." : "Jobs"}
+                                        {jobsLoading2 && jobsCompany === c.companyname ? "Loading..." : "Jobs"}
                                       </button>
 
                                       {jobsCompany === c.companyname && (
@@ -1888,7 +1905,7 @@ export default function HomePage() {
                                                   <div className="h-6 w-14 bg-blue-100 rounded-lg" />
                                                 </div>
                                               ))}
-                                              <p className="text-[10px] text-blue-400 text-center pt-1">Searching live job boards...</p>
+                                              <p className="text-[10px] text-blue-400 text-center pt-1">Loading tracked openings...</p>
                                             </div>
                                           )}
                                           {!jobsLoading2 && jobResults2.length === 0 && jobsSearched && (
@@ -2682,7 +2699,7 @@ akwood1@mines.edu`;
                 </h3>
                 <p className="text-xs text-white/60 mt-0.5">
                   {batchJobsProgress.done < batchJobsProgress.total
-                    ? `Searching ${batchJobsProgress.done + 1} of ${batchJobsProgress.total} companies...`
+                    ? `Loading ${batchJobsProgress.done + 1} of ${batchJobsProgress.total} companies...`
                     : `${batchJobsResults.filter(r => r.jobs.length > 0).length} companies with openings`}
                 </p>
               </div>
@@ -2695,7 +2712,7 @@ akwood1@mines.edu`;
                 <div className="px-5 py-3 bg-blue-50/50">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-                    <span className="text-xs text-blue-600">Searching... ({batchJobsProgress.done}/{batchJobsProgress.total})</span>
+                    <span className="text-xs text-blue-600">Loading tracked jobs... ({batchJobsProgress.done}/{batchJobsProgress.total})</span>
                   </div>
                   <div className="mt-1.5 h-1.5 bg-blue-100 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${(batchJobsProgress.done / batchJobsProgress.total) * 100}%` }} />

@@ -1,4 +1,5 @@
 export const TODAY_EXCLUDED_NICHES = [
+  "TEST",
   "Skiing",
   "Woodworking / Furniture / Cabinetry / Prototyping",
   "Acoustics / Audio / Musical Instruments",
@@ -7,11 +8,13 @@ export const TODAY_EXCLUDED_NICHES = [
 ] as const;
 
 const EXCLUDED_NICHE_PATTERNS = [
+  /^test$/i,
   /\bski(?:ing)?\b/i,
   /\bwoodworking\b|\bfurniture\b|\bcabinetry\b|\bmillwork\b/i,
   /\bacoustics?\b|\baudio\b|\bmusical\s+instruments?\b/i,
   /\boutdoor\s+recreation\b|\boutdoor\s+equipment\b/i,
   /\bfood\b|\bbeverage\b/i,
+  /\bstaffing\b|\brecruiting\b/i,
 ];
 
 const STAFFING_AGENCY_PATTERNS = [
