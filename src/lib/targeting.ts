@@ -7,6 +7,16 @@ export const TODAY_EXCLUDED_NICHES = [
   "Food / Beverage Manufacturing",
 ] as const;
 
+export const CAREER_INGEST_TARGET_NICHES = [
+  "MEP / HVAC / Building Systems",
+  "Government / Public Works / Infrastructure",
+  "Aerospace / Space",
+  "Quantum / Deep Tech / Electronics / Robotics",
+  "Manufacturing / Automation / Product Design",
+  "Energy / Renewables / Power",
+  "Water / Environmental / Geotech",
+] as const;
+
 const EXCLUDED_NICHE_PATTERNS = [
   /^test$/i,
   /\bski(?:ing)?\b/i,
@@ -150,6 +160,11 @@ const NON_ENGINEERING_TITLE_PATTERNS = [
 export function isTodayExcludedNiche(niche?: string | null): boolean {
   if (!niche) return false;
   return EXCLUDED_NICHE_PATTERNS.some((pattern) => pattern.test(niche));
+}
+
+export function isCareerIngestTargetNiche(niche?: string | null): boolean {
+  if (!niche || isTodayExcludedNiche(niche)) return false;
+  return CAREER_INGEST_TARGET_NICHES.includes(niche as typeof CAREER_INGEST_TARGET_NICHES[number]);
 }
 
 export function isExcludedStaffingCompany(companyname?: string | null): boolean {

@@ -1,10 +1,15 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { isExcludedStaffingCompany, isTodayExcludedNiche, normalizeNiche, scoreTargetRole } from "@/lib/targeting";
+import { isCareerIngestTargetNiche, isExcludedStaffingCompany, normalizeNiche, scoreTargetRole } from "@/lib/targeting";
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+const FETCH_TIMEOUT_MS = 8000;
+const DEFAULT_COMPANY_LIMIT = 300;
+const MAX_COMPANY_LIMIT = 500;
+const COMPANY_FETCH_CONCURRENCY = 8;
 
 type DirectCareerSource = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "workday" | "icims" | "jsonld" | "career_links";
 type AggregateJobSource = "builtin_colorado" | "governmentjobs_direct" | "usajobs";
@@ -97,7 +102,7 @@ function inferCity(location?: string | null): string {
 
 async function fetchText(url: string): Promise<string> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       signal: controller.signal,
@@ -121,7 +126,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 async function fetchJsonPost<T>(url: string, body: unknown): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -577,7 +582,7 @@ async function fetchUsaJobs(): Promise<{ jobs: CareerJob[]; warnings: string[] }
       ResultsPerPage: "50",
     });
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
       const res = await fetch(`https://data.usajobs.gov/api/search?${params.toString()}`, {
         signal: controller.signal,
@@ -819,13 +824,38 @@ async function ensureCompanyForJob(job: CareerJob, dryRun: boolean): Promise<{ c
   return { company: created as CompanyRow, created: true };
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex++;
+      results[currentIndex] = await mapper(items[currentIndex]);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
+function parseCompanyLimit(value: string | number | undefined): number {
+  const parsed = Number(value || DEFAULT_COMPANY_LIMIT);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_COMPANY_LIMIT;
+  return Math.min(Math.floor(parsed), MAX_COMPANY_LIMIT);
+}
+
 async function runCareersIngest(options: { dryRun: boolean; limit: number; companyname?: string }) {
   let query = supabaseAdmin
     .from("companies")
     .select("id, companyname, city, niche, careers_url")
     .not("careers_url", "is", null)
-    .order("tier", { ascending: true })
-    .limit(options.limit);
+    .order("tier", { ascending: true });
   if (options.companyname) query = query.eq("companyname", options.companyname);
 
   const { data, error } = await query;
@@ -833,8 +863,8 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
 
   const companies = (data || []).filter((company) => {
     const niche = normalizeNiche(company.niche, company.companyname);
-    return !isTodayExcludedNiche(niche) && !isExcludedStaffingCompany(company.companyname);
-  }) as CompanyRow[];
+    return isCareerIngestTargetNiche(niche) && !isExcludedStaffingCompany(company.companyname);
+  }).slice(0, options.limit) as CompanyRow[];
 
   const summary = {
     dryRun: options.dryRun,
@@ -851,37 +881,61 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
   };
   const results: Array<{ company: string; careers_url: string | null; found: number; relevant: number; actions: Record<string, number>; sources: JobSource[]; warnings: string[]; sample: Array<{ title: string; location: string; url: string; source: string }> }> = [];
 
-  for (const company of companies) {
-    summary.companies_checked++;
+  const companyResults = await mapWithConcurrency(companies, COMPANY_FETCH_CONCURRENCY, async (company) => {
     const fetched = await fetchCareerJobs(company);
     const actions: Record<string, number> = {};
+    const sourceCounts: Record<string, number> = {};
+    let inserted = 0;
+    let updated = 0;
+    let skipped = 0;
     let relevant = 0;
 
     for (const job of fetched.jobs) {
-      summary.jobs_found++;
       const relevance = scoreTargetRole(job.title, job.location, job.description);
       if (relevance.is_relevant) relevant++;
       const action = await upsertJob(job, company, options.dryRun);
       actions[action] = (actions[action] || 0) + 1;
-      if (action === "inserted") summary.inserted++;
-      if (action === "updated") summary.updated++;
-      if (action === "skipped") summary.skipped++;
-      if (action === "dry_run") summary.skipped++;
-      summary.source_counts[job.source] = (summary.source_counts[job.source] || 0) + 1;
+      if (action === "inserted") inserted++;
+      if (action === "updated") updated++;
+      if (action === "skipped") skipped++;
+      if (action === "dry_run") skipped++;
+      sourceCounts[job.source] = (sourceCounts[job.source] || 0) + 1;
     }
 
-    if (fetched.jobs.length > 0) summary.companies_with_jobs++;
-    summary.jobs_relevant += relevant;
-    results.push({
-      company: company.companyname,
-      careers_url: company.careers_url,
-      found: fetched.jobs.length,
-      relevant,
-      actions,
-      sources: fetched.sources,
-      warnings: fetched.warnings,
-      sample: fetched.jobs.slice(0, 5).map((job) => ({ title: job.title, location: job.location, url: job.job_url, source: job.source })),
-    });
+    return {
+      summary: {
+        jobs_found: fetched.jobs.length,
+        jobs_relevant: relevant,
+        inserted,
+        updated,
+        skipped,
+        source_counts: sourceCounts,
+      },
+      result: {
+        company: company.companyname,
+        careers_url: company.careers_url,
+        found: fetched.jobs.length,
+        relevant,
+        actions,
+        sources: fetched.sources,
+        warnings: fetched.warnings,
+        sample: fetched.jobs.slice(0, 5).map((job) => ({ title: job.title, location: job.location, url: job.job_url, source: job.source })),
+      },
+    };
+  });
+
+  summary.companies_checked = companies.length;
+  for (const companyResult of companyResults) {
+    if (companyResult.summary.jobs_found > 0) summary.companies_with_jobs++;
+    summary.jobs_found += companyResult.summary.jobs_found;
+    summary.jobs_relevant += companyResult.summary.jobs_relevant;
+    summary.inserted += companyResult.summary.inserted;
+    summary.updated += companyResult.summary.updated;
+    summary.skipped += companyResult.summary.skipped;
+    for (const [source, count] of Object.entries(companyResult.summary.source_counts)) {
+      summary.source_counts[source] = (summary.source_counts[source] || 0) + count;
+    }
+    results.push(companyResult.result);
   }
 
   if (!options.companyname) {
@@ -950,7 +1004,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") || 60), 150);
+    const limit = parseCompanyLimit(req.nextUrl.searchParams.get("limit") || undefined);
     const companyname = req.nextUrl.searchParams.get("companyname") || undefined;
     const result = await runCareersIngest({ dryRun: false, limit, companyname });
     return NextResponse.json(result);
@@ -966,7 +1020,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const dryRun = !!body.dryRun;
-  const limit = Math.min(Number(body.limit || 60), 150);
+  const limit = parseCompanyLimit(body.limit);
   const companyname = typeof body.companyname === "string" ? body.companyname : undefined;
 
   try {

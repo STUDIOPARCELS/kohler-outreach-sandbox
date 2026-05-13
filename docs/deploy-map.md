@@ -9,6 +9,16 @@
 - **DST drift:** 1 hour (7 AM vs 8 AM) — accepted as operationally insignificant
 - **Vercel cron (`vercel.json`):** declares only `/api/cron/research` — ingest is pg_cron only
 
+## Sandbox Career-Page Ingest
+
+- **Engine:** Vercel cron on the sandbox deployment
+- **Schedule:** `15 14 * * 2,5` UTC = Tuesday/Friday Denver morning with DST drift
+- **Target:** `https://kohler-outreach-sandbox.vercel.app/api/ingest/careers`
+- **Auth:** Vercel `CRON_SECRET` authorization header, accepted by the route as `Authorization: Bearer <secret>`
+- **Coverage:** company rows with `careers_url` in the target niches, plus Built In Colorado, GovernmentJobs direct, and optional USAJOBS
+- **No per-search fee:** direct company career pages/ATS, Built In, and GovernmentJobs direct are HTTP fetches; expected cost is normal Vercel function runtime plus Supabase usage
+- **USAJOBS:** optional; missing USAJOBS env vars produce a warning and do not block the run
+
 To inspect:
 ```sql
 SELECT jobid, schedule, active, substring(command from '''(https://[^'']+)''') as target
