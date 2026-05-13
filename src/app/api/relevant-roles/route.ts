@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { getReliableJobUrl } from "@/lib/jobLinks";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isTodayTargetJob } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
@@ -28,19 +29,19 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const mapped = (data || [])
-    .filter((r) => isTodayTargetJob({
+    .map((r) => ({ ...r, reliable_url: getReliableJobUrl(r) }))
+    .filter((r) => r.reliable_url && isTodayTargetJob({
       title: r.title,
       companyname: r.companyname,
       is_relevant: r.is_relevant,
-      job_url: r.job_url,
-      apply_url: r.apply_url,
+      job_url: r.reliable_url,
     }))
     .map((r) => ({
     title: r.title,
     location: r.location,
     work_type: r.employment_type,
     salary: r.salary,
-    url: r.job_url || r.apply_url,
+    url: r.reliable_url,
     date_posted: r.received_at,
     source: r.source,
     first_seen: r.first_seen_at,

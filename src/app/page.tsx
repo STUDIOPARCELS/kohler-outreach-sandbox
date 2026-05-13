@@ -117,8 +117,12 @@ function cleanCompanyName(name: string): string {
 }
 
 function mapTrackedJobs(data: unknown): JobResult[] {
-  if (!Array.isArray(data)) return [];
-  return data.map((job: Record<string, unknown>) => ({
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray((data as { jobs?: unknown[] })?.jobs)
+      ? (data as { jobs: unknown[] }).jobs
+      : [];
+  return rows.map((job: Record<string, unknown>) => ({
     title: String(job.title || ""),
     salary: job.salary ? String(job.salary) : undefined,
     location: job.location ? String(job.location) : undefined,
@@ -126,6 +130,23 @@ function mapTrackedJobs(data: unknown): JobResult[] {
     apply_url: String(job.apply_url || job.url || ""),
     source: job.source ? String(job.source) : undefined,
   })).filter((job) => job.title && job.apply_url);
+}
+
+async function fetchCompanyJobs(companyname: string, options: { liveFallback?: boolean } = {}): Promise<JobResult[]> {
+  const trackedRes = await fetch(`/api/relevant-roles?companyname=${encodeURIComponent(companyname)}`);
+  const trackedData = await trackedRes.json();
+  if (!trackedRes.ok) throw new Error(trackedData?.error || "Could not load tracked jobs");
+  const trackedJobs = mapTrackedJobs(trackedData);
+  if (trackedJobs.length > 0 || !options.liveFallback) return trackedJobs;
+
+  const liveRes = await fetch("/api/search-jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ companyname }),
+  });
+  const liveData = await liveRes.json();
+  if (!liveRes.ok) throw new Error(liveData?.error || "Could not search live jobs");
+  return mapTrackedJobs(liveData);
 }
 
 /* ── Zip code coordinates for distance filtering ── */
@@ -1671,9 +1692,7 @@ export default function HomePage() {
                               const results: typeof batchJobsResults = [];
                               for (const company of companiesToCheck) {
                                 try {
-                                  const res = await fetch(`/api/relevant-roles?companyname=${encodeURIComponent(company.companyname)}`);
-                                  const data = await res.json();
-                                  const jobs = mapTrackedJobs(data);
+                                  const jobs = await fetchCompanyJobs(company.companyname);
                                   if (jobs.length > 0) {
                                     results.push({ company: company.companyname, jobs });
                                     setBatchJobsResults([...results]);
@@ -1887,9 +1906,8 @@ export default function HomePage() {
                                             setJobResults2([]);
                                             setJobsSearched(false);
                                             try {
-                                            const res = await fetch(`/api/relevant-roles?companyname=${encodeURIComponent(c.companyname)}`);
-                                            const data = await res.json();
-                                            setJobResults2(mapTrackedJobs(data));
+                                            const jobs = await fetchCompanyJobs(c.companyname, { liveFallback: true });
+                                            setJobResults2(jobs);
                                           } catch { setJobResults2([]); }
                                           finally { setJobsLoading2(false); setJobsSearched(true); }
                                         }}

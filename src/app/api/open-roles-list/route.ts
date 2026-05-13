@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { getReliableJobUrl } from "@/lib/jobLinks";
 import { computeOutreachScore } from "@/lib/outreachScore";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isTodayTargetJob, normalizeNiche } from "@/lib/targeting";
@@ -27,13 +28,14 @@ export async function GET(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const prelimJobs = (allJobs || []).filter((job) =>
-    isTodayTargetJob({
+  const prelimJobs = (allJobs || [])
+    .map((job) => ({ ...job, reliable_url: getReliableJobUrl(job) }))
+    .filter((job) =>
+      job.reliable_url && isTodayTargetJob({
       title: job.title,
       companyname: job.companyname,
       is_relevant: job.is_relevant,
-      job_url: job.job_url,
-      apply_url: job.apply_url,
+      job_url: job.reliable_url,
     })
   );
 
@@ -80,8 +82,7 @@ export async function GET(req: NextRequest) {
       companyname: job.companyname,
       niche: normalizeNiche(detailMap.get(job.companyname)?.niche, job.companyname, titleMap.get(job.companyname)?.join(" ")),
       is_relevant: job.is_relevant,
-      job_url: job.job_url,
-      apply_url: job.apply_url,
+      job_url: job.reliable_url,
     })
   );
 

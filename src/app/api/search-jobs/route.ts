@@ -1,30 +1,10 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { getReliableJobUrl, isDirectJobUrl } from "@/lib/jobLinks";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isTodayTargetJob } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
-/* ── Build direct job board search URLs instead of useless Google search ── */
-function indeedSearchUrl(company: string): string {
-  return `https://www.indeed.com/jobs?q=${encodeURIComponent(company + " engineer")}&l=Colorado`;
-}
-
-function linkedinSearchUrl(company: string): string {
-  return `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(company + " engineer")}&location=Colorado`;
-}
-
-/* ── Check if a URL looks like a real job posting (not fabricated) ── */
-function isRealJobUrl(url: string): boolean {
-  if (!url || !url.startsWith("http")) return false;
-  // Real indeed URLs have hex job keys
-  if (url.includes("indeed.com/viewjob") && /jk=[0-9a-f]{10,}/.test(url)) return true;
-  // Real LinkedIn job URLs have numeric IDs
-  if (url.includes("linkedin.com/jobs/view/") && /\/\d{8,}/.test(url)) return true;
-  // Real Glassdoor URLs
-  if (url.includes("glassdoor.com/job-listing")) return true;
-  // Company careers pages
-  if (url.includes("/careers") || url.includes("/jobs") || url.includes("greenhouse.io") || url.includes("lever.co") || url.includes("workday")) return true;
-  return false;
-}
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
@@ -41,13 +21,14 @@ export async function POST(req: NextRequest) {
     .in("ingest_status", ["new", "open"])
     .order("received_at", { ascending: false });
 
-  const targetDbJobs = (dbJobs || []).filter((job) =>
-    isTodayTargetJob({
+  const targetDbJobs = (dbJobs || [])
+    .map((job) => ({ ...job, reliable_url: getReliableJobUrl(job) }))
+    .filter((job) =>
+      job.reliable_url && isTodayTargetJob({
       title: job.title,
       companyname: job.companyname,
       is_relevant: job.is_relevant,
-      job_url: job.job_url,
-      apply_url: job.apply_url,
+      job_url: job.reliable_url,
     })
   );
 
@@ -57,7 +38,7 @@ export async function POST(req: NextRequest) {
         title: j.title,
         location: j.location || "Denver metro",
         salary: j.salary || null,
-        url: j.job_url || j.apply_url || "",
+        url: j.reliable_url || "",
         work_type: j.employment_type || null,
         source: j.source || "database",
       })),
@@ -87,18 +68,15 @@ export async function POST(req: NextRequest) {
         tools: [{ type: "web_search_preview" }],
         input: `Search for current engineering job openings at "${companyname}" in Colorado.
 
-Search these sources and return the ACTUAL URL from your search results for each job:
-1. Indeed: search "${companyname} engineer jobs Colorado site:indeed.com"
-2. LinkedIn: search "${companyname} engineer jobs Colorado site:linkedin.com/jobs"
-3. Company careers page${careersUrl ? `: ${careersUrl}` : ""}
+Search the company careers page and its applicant tracking system only${careersUrl ? `, starting here: ${careersUrl}` : ""}.
 
 INCLUDE: Mechanical/EIT-track engineering roles first: mechanical, MEP/HVAC/building systems, aerospace/space hardware, robotics/mechatronics, manufacturing, design, test, project, systems, process, quality, structural, reliability, environmental, water, energy, civil, or related. Include Engineer I, entry-level, early career, new grad, associate, junior, or 0-3 years experience. Prefer roles with PE mentorship, licensed engineering leadership, or a path toward PE. Must require a Bachelor's degree in engineering or related field.
 EXCLUDE: Engineer II, Engineer III, Senior, Lead, Principal, Staff, Manager, Director, VP, or 5+ years required. Also exclude any position that requires only a GED, high school diploma, or associate degree. Also exclude technician, operator, assembler, machinist, and warehouse roles.
 
-CRITICAL: For apply_url, ONLY use URLs that appeared in your web search results. Each must link to the SPECIFIC JOB POSTING page. If you cannot find a direct link, leave apply_url as an empty string.
+CRITICAL: For apply_url, ONLY use URLs that appeared in your web search results and link to the SPECIFIC JOB POSTING page. Do not return Indeed search pages, LinkedIn search pages, generic careers pages, or generic job-list pages. If you cannot find a direct posting URL, leave apply_url as an empty string.
 
 Return ONLY a JSON array (no markdown, no backticks):
-[{"title":"exact title","salary":"range or empty string","location":"city, state","summary":"1 sentence; required skills: [skill1, skill2]","apply_url":"direct URL to this specific job posting or empty string","source":"indeed.com or linkedin.com etc"}]
+[{"title":"exact title","salary":"range or empty string","location":"city, state","summary":"1 sentence; required skills: [skill1, skill2]","apply_url":"direct URL to this specific job posting or empty string","source":"company careers or ATS name"}]
 
 If no engineering jobs found, return [].
 ONLY the JSON array.`,
@@ -129,6 +107,7 @@ ONLY the JSON array.`,
         jobs = parsed
           .filter((j: Record<string, unknown>) =>
             j.title &&
+            isDirectJobUrl(String(j.apply_url || "")) &&
             isTodayTargetJob({
               title: String(j.title),
               companyname,
@@ -140,18 +119,6 @@ ONLY the JSON array.`,
           .map((j: Record<string, unknown>) => {
             let url = String(j.apply_url || "");
             let source = String(j.source || "");
-
-            // Only keep URLs that look like real job postings
-            if (!isRealJobUrl(url)) {
-              // Fallback priority: careers page > Indeed search > LinkedIn search
-              if (careersUrl) {
-                url = careersUrl;
-                source = "careers page";
-              } else {
-                url = indeedSearchUrl(companyname);
-                source = "Indeed search";
-              }
-            }
 
             return {
               title: String(j.title || ""),

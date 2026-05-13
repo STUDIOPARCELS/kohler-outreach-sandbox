@@ -1,7 +1,8 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { computeOutreachScore } from "@/lib/outreachScore";
+import { getReliableJobUrl } from "@/lib/jobLinks";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { isExcludedStaffingCompany, isTodayExcludedNiche, normalizeNiche } from "@/lib/targeting";
+import { isExcludedStaffingCompany, isTodayExcludedNiche, isTodayTargetJob, normalizeNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -27,13 +28,20 @@ export async function GET(req: NextRequest) {
   }
   const { data: trackedJobs } = await supabaseAdmin
     .from("job_listings")
-    .select("companyname, title, is_relevant, ingest_status")
+    .select("companyname, title, source, job_url, apply_url, is_relevant, ingest_status")
     .eq("is_relevant", true)
     .in("ingest_status", ["new", "open"]);
 
   const jobTitleMap = new Map<string, string[]>();
   const roleCountMap = new Map<string, number>();
   for (const job of trackedJobs || []) {
+    const reliableUrl = getReliableJobUrl(job);
+    if (!reliableUrl || !isTodayTargetJob({
+      title: job.title,
+      companyname: job.companyname,
+      is_relevant: job.is_relevant,
+      job_url: reliableUrl,
+    })) continue;
     const titles = jobTitleMap.get(job.companyname) || [];
     if (job.title) titles.push(job.title);
     jobTitleMap.set(job.companyname, titles);
