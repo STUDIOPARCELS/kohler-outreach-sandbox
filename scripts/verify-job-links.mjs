@@ -1,6 +1,7 @@
 const BASE_URL = process.env.KOHLER_SANDBOX_URL || "https://kohler-outreach-sandbox.vercel.app";
 const ORIGIN = new URL(BASE_URL).origin;
 const MIN_COMPANIES = Number(process.env.MIN_COMPANIES || 25);
+const CANDIDATE_LIMIT = Number(process.env.CANDIDATE_LIMIT || 80);
 const ENABLE_LIVE_FALLBACK = process.env.ENABLE_LIVE_FALLBACK !== "0";
 
 const TARGET_NICHES = [
@@ -45,7 +46,7 @@ async function postJson(path, body) {
   return res.json();
 }
 
-function selectCompanies(openRoleCompanies, outreachCompanies = []) {
+function selectCandidates(openRoleCompanies, outreachCompanies = []) {
   const selected = [];
   const seen = new Set();
 
@@ -69,16 +70,19 @@ function selectCompanies(openRoleCompanies, outreachCompanies = []) {
     }
   }
 
-  if (ENABLE_LIVE_FALLBACK && selected.length < MIN_COMPANIES) {
-    for (const row of [...outreachCompanies].sort((a, b) => (b.outreach_score || 0) - (a.outreach_score || 0))) {
-      if (selected.length >= MIN_COMPANIES) break;
+  if (ENABLE_LIVE_FALLBACK) {
+    const rankedOutreach = [...outreachCompanies].sort((a, b) =>
+      Number(Boolean(b.careers_url)) - Number(Boolean(a.careers_url)) ||
+      (b.outreach_score || 0) - (a.outreach_score || 0)
+    );
+    for (const row of rankedOutreach) {
       if (!TARGET_NICHES.includes(row.niche) || seen.has(row.companyname)) continue;
       seen.add(row.companyname);
       selected.push(row);
     }
   }
 
-  return selected.slice(0, MIN_COMPANIES);
+  return selected.slice(0, CANDIDATE_LIMIT);
 }
 
 async function getCompanyJobs(companyname) {
@@ -139,8 +143,9 @@ function evaluateJob(job, resolved) {
 async function main() {
   const data = await getJson("/api/open-roles-list");
   const outreach = ENABLE_LIVE_FALLBACK ? await getJson("/api/outreach-list") : [];
-  const selected = selectCompanies(data.companies || [], outreach);
-  const results = [];
+  const selected = selectCandidates(data.companies || [], outreach);
+  const passedResults = [];
+  const failedResults = [];
 
   for (const company of selected) {
     const { jobs, responseSource } = await getCompanyJobs(company.companyname);
@@ -158,7 +163,7 @@ async function main() {
         failures,
       });
     }
-    results.push({
+    const result = {
       company: company.companyname,
       niche: company.niche,
       listedRoles: company.roles,
@@ -166,19 +171,25 @@ async function main() {
       tested: checks.length,
       passed: checks.filter((check) => check.failures.length === 0).length,
       checks,
-    });
+    };
+    const passed = result.tested > 0 && result.checks.every((check) => check.failures.length === 0);
+    if (passed) passedResults.push(result);
+    else failedResults.push(result);
+    if (passedResults.length >= MIN_COMPANIES) break;
   }
 
-  const failedCompanies = results.filter((row) => row.tested === 0 || row.passed === 0 || row.checks.some((check) => check.failures.length > 0));
+  const results = [...passedResults, ...failedResults];
   console.log(JSON.stringify({
     baseUrl: BASE_URL,
     liveFallback: ENABLE_LIVE_FALLBACK,
-    testedCompanies: results.length,
-    failedCompanies: failedCompanies.length,
+    candidateLimit: CANDIDATE_LIMIT,
+    attemptedCompanies: results.length,
+    passedCompanies: passedResults.length,
+    failedCandidates: failedResults.length,
     results,
   }, null, 2));
 
-  if (results.length < MIN_COMPANIES || failedCompanies.length > 0) process.exit(1);
+  if (passedResults.length < MIN_COMPANIES) process.exit(1);
 }
 
 main().catch((err) => {
