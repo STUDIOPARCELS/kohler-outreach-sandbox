@@ -57,6 +57,11 @@ interface CompanyRow {
   contact_count?: number;
   email_count?: number;
   mailing_zip?: string;
+  roles?: number;
+  outreach_score?: number;
+  score_label?: string;
+  score_reasons?: string[];
+  distance_miles?: number | null;
 }
 
 /* ── Remove duplicate paragraphs from a letter body ── */
@@ -1617,11 +1622,10 @@ export default function HomePage() {
               const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
               const PREVIEW_COUNT = 3;
               const isFullyExpanded = expandedNiches.has(niche);
-              // Sort: companies with email first, then without
+              // Sort by fit score first, then contact readiness.
               const sortedItems = [...items].sort((a, b) => {
-                // Tier 1: has contact with email (3), Tier 2: has contact no email (2), Tier 3: no contact (1)
                 const tierOf = (c: CompanyRow) => c.email ? 3 : c.contactname ? 2 : 1;
-                return tierOf(b) - tierOf(a);
+                return (b.outreach_score || 0) - (a.outreach_score || 0) || tierOf(b) - tierOf(a) || a.companyname.localeCompare(b.companyname);
               });
               const visibleItems = isFullyExpanded ? sortedItems : sortedItems.slice(0, PREVIEW_COUNT);
               const hiddenCount = items.length - PREVIEW_COUNT;
@@ -1742,6 +1746,14 @@ export default function HomePage() {
                                 {(companyJobCounts.get(c.companyname) || 0) > 0 && (
                                   <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-bold bg-violet-100 text-violet-700 rounded-full">
                                     {companyJobCounts.get(c.companyname)} {companyJobCounts.get(c.companyname) === 1 ? 'job' : 'jobs'}
+                                  </span>
+                                )}
+                                {typeof c.outreach_score === "number" && (
+                                  <span
+                                    title={(c.score_reasons || []).join("; ")}
+                                    className="shrink-0 px-1.5 py-0.5 text-[9px] font-bold bg-emerald-100 text-emerald-700 rounded-full"
+                                  >
+                                    {c.outreach_score}
                                   </span>
                                 )}
                               </div>

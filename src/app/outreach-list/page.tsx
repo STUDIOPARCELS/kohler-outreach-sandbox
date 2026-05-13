@@ -8,6 +8,11 @@ interface Row {
   companyname: string;
   tier: number;
   city: string;
+  roles?: number;
+  outreach_score?: number;
+  score_label?: string;
+  score_reasons?: string[];
+  distance_miles?: number | null;
   contactname?: string;
   contact_title?: string;
   email?: string;
@@ -88,8 +93,10 @@ export default function OutreachListPage() {
             <thead>
               <tr className="border-b text-left text-gray-500">
                 <th className="py-2 pr-4">Company</th>
+                <th className="py-2 pr-4">Fit</th>
                 <th className="py-2 pr-4">Tier</th>
                 <th className="py-2 pr-4 hidden sm:table-cell">City</th>
+                <th className="py-2 pr-4 hidden lg:table-cell">Signals</th>
                 <th className="py-2 pr-4 hidden md:table-cell">Best Contact</th>
               </tr>
             </thead>
@@ -105,6 +112,20 @@ export default function OutreachListPage() {
                     </Link>
                   </td>
                   <td className="py-2 pr-4">
+                    <span
+                      title={(r.score_reasons || []).join("; ")}
+                      className={`inline-flex min-w-14 justify-center rounded-full px-2 py-0.5 text-xs font-bold ${
+                        (r.outreach_score || 0) >= 75 ? "bg-emerald-100 text-emerald-800" :
+                        (r.outreach_score || 0) >= 55 ? "bg-blue-100 text-blue-800" :
+                        (r.outreach_score || 0) >= 35 ? "bg-amber-100 text-amber-800" :
+                        "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {r.outreach_score ?? 0}
+                    </span>
+                    <span className="ml-1 hidden sm:inline text-xs text-gray-400">{r.score_label}</span>
+                  </td>
+                  <td className="py-2 pr-4">
                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                       r.tier === 1 ? "bg-green-100 text-green-800" :
                       r.tier === 2 ? "bg-blue-100 text-blue-800" :
@@ -116,6 +137,11 @@ export default function OutreachListPage() {
                   </td>
                   <td className="py-2 pr-4 hidden sm:table-cell text-gray-600">
                     {r.city}
+                  </td>
+                  <td className="py-2 pr-4 hidden lg:table-cell text-xs text-gray-500">
+                    {(r.roles || 0) > 0 && <span>{r.roles} jobs</span>}
+                    {(r.roles || 0) > 0 && r.distance_miles !== null && r.distance_miles !== undefined && <span> · </span>}
+                    {r.distance_miles !== null && r.distance_miles !== undefined && <span>{r.distance_miles} mi</span>}
                   </td>
                   <td className="py-2 pr-4 hidden md:table-cell text-gray-600">
                     {r.contactname ? (

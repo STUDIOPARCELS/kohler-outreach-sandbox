@@ -9,6 +9,9 @@ interface RoleRow {
   city?: string;
   niche?: string;
   roles: number;
+  outreach_score?: number;
+  score_label?: string;
+  score_reasons?: string[];
 }
 
 interface Stats {
@@ -326,7 +329,9 @@ export default function OpenRolesPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
           {orderedNiches.map((niche) => {
-            const items = grouped.get(niche) || [];
+            const items = [...(grouped.get(niche) || [])].sort((a, b) =>
+              (b.outreach_score || 0) - (a.outreach_score || 0) || b.roles - a.roles || a.companyname.localeCompare(b.companyname)
+            );
             const colors = NICHE_COLORS[niche] || DEFAULT_COLORS;
             const roleCount = items.reduce((sum, item) => sum + item.roles, 0);
 
@@ -368,6 +373,12 @@ export default function OpenRolesPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              title={(row.score_reasons || []).join("; ")}
+                              className="px-1.5 py-0.5 text-[9px] font-bold bg-emerald-100 text-emerald-700 rounded-full"
+                            >
+                              {row.outreach_score ?? 0}
+                            </span>
                             <span className="px-1.5 py-0.5 text-[9px] font-bold bg-violet-100 text-violet-700 rounded-full">
                               {roleLabel(row.roles)}
                             </span>

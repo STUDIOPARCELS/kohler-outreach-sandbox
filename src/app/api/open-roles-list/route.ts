@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { computeOutreachScore } from "@/lib/outreachScore";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isTodayTargetJob, normalizeNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
@@ -41,13 +42,29 @@ export async function GET(req: NextRequest) {
   const { data: companyDetails } = namesForDetails.length > 0
     ? await supabaseAdmin
         .from("companies")
-        .select("companyname, tier, city, niche")
+        .select("companyname, tier, city, niche, mailing_zip, careers_url")
         .in("companyname", namesForDetails)
     : { data: [] };
 
-  const detailMap = new Map<string, { tier: number; city: string; niche: string }>();
+  const detailMap = new Map<string, { tier: number; city: string; niche: string; mailing_zip: string | null; careers_url: string | null }>();
   for (const c of companyDetails || []) {
-    detailMap.set(c.companyname, { tier: c.tier, city: c.city, niche: c.niche });
+    detailMap.set(c.companyname, { tier: c.tier, city: c.city, niche: c.niche, mailing_zip: c.mailing_zip, careers_url: c.careers_url });
+  }
+
+  const { data: contacts } = namesForDetails.length > 0
+    ? await supabaseAdmin
+        .from("contacts")
+        .select("companyname, contactname, email")
+        .in("companyname", namesForDetails)
+    : { data: [] };
+
+  const contactMap = new Map<string, { contact_count: number; email_count: number }>();
+  for (const contact of contacts || []) {
+    if (!contact.contactname || contact.contactname === "(no results)") continue;
+    const entry = contactMap.get(contact.companyname) || { contact_count: 0, email_count: 0 };
+    entry.contact_count++;
+    if (contact.email) entry.email_count++;
+    contactMap.set(contact.companyname, entry);
   }
 
   const titleMap = new Map<string, string[]>();
@@ -109,14 +126,29 @@ export async function GET(req: NextRequest) {
   const rows = companyNames.map(name => {
     const entry = companyMap.get(name)!;
     const detail = detailMap.get(name);
+    const niche = normalizeNiche(detail?.niche, name, titleMap.get(name)?.join(" "));
+    const contactCounts = contactMap.get(name) || { contact_count: 0, email_count: 0 };
+    const score = computeOutreachScore({
+      tier: detail?.tier,
+      niche,
+      city: detail?.city,
+      mailing_zip: detail?.mailing_zip,
+      careers_url: detail?.careers_url,
+      roles: entry.roles,
+      contact_count: contactCounts.contact_count,
+      email_count: contactCounts.email_count,
+    });
     return {
       companyname: name,
       tier: detail?.tier || 5,
       city: detail?.city || null,
-      niche: normalizeNiche(detail?.niche, name, titleMap.get(name)?.join(" ")),
+      niche,
       roles: entry.roles,
+      contact_count: contactCounts.contact_count,
+      email_count: contactCounts.email_count,
+      ...score,
     };
-  }).sort((a, b) => b.roles - a.roles || a.companyname.localeCompare(b.companyname));
+  }).sort((a, b) => b.outreach_score - a.outreach_score || b.roles - a.roles || a.companyname.localeCompare(b.companyname));
 
   return NextResponse.json({
     stats: {
