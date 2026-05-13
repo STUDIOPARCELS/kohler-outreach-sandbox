@@ -6,6 +6,7 @@ const UNRELIABLE_TRACKED_SOURCES = new Set([
 const GENERIC_JOB_URL_PATTERNS = [
   /indeed\.com\/jobs\?/i,
   /linkedin\.com\/jobs\/search/i,
+  /linkedin\.com\/jobs\/(?!view\/)/i,
   /\/careers\/?($|[?#])/i,
   /\/jobs\/?($|[?#])/i,
   /\/job-search\/?($|[?#])/i,

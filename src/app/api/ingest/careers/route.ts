@@ -11,6 +11,7 @@ const FETCH_TIMEOUT_MS = 8000;
 const DEFAULT_COMPANY_LIMIT = 300;
 const MAX_COMPANY_LIMIT = 500;
 const COMPANY_FETCH_CONCURRENCY = 8;
+const CLOSED_POSTING_TEXT = /\b(?:job is no longer available|position has been filled|posting has expired|job has expired|no longer accepting applications|this job is closed|page not found|404)\b/i;
 
 type DirectCareerSource = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "workday" | "icims" | "jsonld" | "career_links";
 type AggregateJobSource = "builtin_colorado" | "governmentjobs_direct" | "usajobs";
@@ -144,6 +145,15 @@ async function fetchJsonPost<T>(url: string, body: unknown): Promise<T> {
     return await res.json() as T;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function isActivePostingUrl(url: string): Promise<boolean> {
+  try {
+    const text = await fetchText(url);
+    return !CLOSED_POSTING_TEXT.test(text);
+  } catch {
+    return false;
   }
 }
 
@@ -371,6 +381,7 @@ function fromCareerLinks(html: string, baseUrl: string, company: CompanyRow): Ca
     if (!href || !text || seen.has(href)) continue;
     if (!/(engineer|eit|mechanical|hvac|mep|project|tooling|test|validation|manufacturing|thermal|aerospace|space|robotics)/i.test(text)) continue;
     const url = absoluteUrl(href, baseUrl);
+    if (/linkedin\.com\/jobs\/(?!view\/)/i.test(url)) continue;
     if (!/(job|career|opening|posting|position|requisition|greenhouse|lever|ashby|workday|icims|smartrecruiters|workable)/i.test(url)) continue;
     seen.add(href);
     jobs.push({
@@ -681,10 +692,23 @@ async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]
   return { jobs, sources, warnings };
 }
 
+async function closeExistingJob(job: CareerJob): Promise<void> {
+  const source = dbSourceFor(job.source);
+  await supabaseAdmin
+    .from("job_listings")
+    .update({ ingest_status: "closed", last_seen_at: new Date().toISOString() })
+    .eq("source", source)
+    .eq("external_job_key", job.external_job_key);
+}
+
 async function upsertJob(job: CareerJob, company: CompanyRow, dryRun: boolean): Promise<"inserted" | "updated" | "dry_run" | "skipped"> {
   const relevance = scoreTargetRole(job.title, job.location, job.description);
   if (!relevance.is_relevant) return "skipped";
   if (!isDirectJobUrl(job.job_url)) return "skipped";
+  if (!(await isActivePostingUrl(job.job_url))) {
+    if (!dryRun) await closeExistingJob(job);
+    return "skipped";
+  }
 
   if (dryRun) return "dry_run";
 

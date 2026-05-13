@@ -194,6 +194,7 @@ export function isGenericJobUrl(url?: string | null): boolean {
   return [
     /indeed\.com\/jobs\?/,
     /linkedin\.com\/jobs\/search/,
+    /linkedin\.com\/jobs\/(?!view\/)/,
     /blueorigin\.com\/careers\/search(?:\?|$)/,
     /\/careers\/?($|[?#])/,
     /\/jobs\/?($|[?#])/,
