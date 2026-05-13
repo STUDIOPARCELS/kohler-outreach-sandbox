@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   }
   const { data: trackedJobs } = await supabaseAdmin
     .from("job_listings")
-    .select("companyname, title, source, job_url, apply_url, is_relevant, ingest_status")
+    .select("companyname, title, location, source, job_url, apply_url, is_relevant, ingest_status")
     .eq("is_relevant", true)
     .in("ingest_status", ["new", "open"]);
 
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
     if (!reliableUrl || !isTodayTargetJob({
       title: job.title,
       companyname: job.companyname,
+      location: job.location,
       is_relevant: job.is_relevant,
       job_url: reliableUrl,
     })) continue;

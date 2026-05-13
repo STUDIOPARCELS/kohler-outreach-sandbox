@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isDirectJobUrl } from "@/lib/jobLinks";
 import { isCareerIngestTargetNiche, isExcludedStaffingCompany, normalizeNiche, scoreTargetRole } from "@/lib/targeting";
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
@@ -683,6 +684,7 @@ async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]
 async function upsertJob(job: CareerJob, company: CompanyRow, dryRun: boolean): Promise<"inserted" | "updated" | "dry_run" | "skipped"> {
   const relevance = scoreTargetRole(job.title, job.location, job.description);
   if (!relevance.is_relevant) return "skipped";
+  if (!isDirectJobUrl(job.job_url)) return "skipped";
 
   if (dryRun) return "dry_run";
 

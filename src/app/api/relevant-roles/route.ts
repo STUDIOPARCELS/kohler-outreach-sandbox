@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
     .filter((r) => r.reliable_url && isTodayTargetJob({
       title: r.title,
       companyname: r.companyname,
+      location: r.location,
       is_relevant: r.is_relevant,
       job_url: r.reliable_url,
     }))

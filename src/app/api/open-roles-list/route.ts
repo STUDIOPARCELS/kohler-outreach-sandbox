@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from("job_listings")
-    .select("companyname, company_id, title, job_url, apply_url, source, ingest_status, is_relevant, first_seen_at, last_seen_at, times_seen")
+    .select("companyname, company_id, title, location, job_url, apply_url, source, ingest_status, is_relevant, first_seen_at, last_seen_at, times_seen")
     .in("ingest_status", ["new", "open"])
     .eq("is_relevant", true);
 
@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
       job.reliable_url && isTodayTargetJob({
       title: job.title,
       companyname: job.companyname,
+      location: job.location,
       is_relevant: job.is_relevant,
       job_url: job.reliable_url,
     })
@@ -81,6 +82,7 @@ export async function GET(req: NextRequest) {
       title: job.title,
       companyname: job.companyname,
       niche: normalizeNiche(detailMap.get(job.companyname)?.niche, job.companyname, titleMap.get(job.companyname)?.join(" ")),
+      location: job.location,
       is_relevant: job.is_relevant,
       job_url: job.reliable_url,
     })

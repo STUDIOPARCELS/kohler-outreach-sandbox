@@ -129,11 +129,12 @@ export function normalizeNiche(niche?: string | null, companyname?: string | nul
 
 const SENIORITY_TITLE_PATTERNS = [
   /\b(?:senior|sr\.?)\b/i,
-  /\bmid[-\s]?career\b|\bmid[-\s]?level\b|\bexperienced\b/i,
-  /\b(?:lead|principal|staff)\b/i,
+  /\bmid[-\s]?career\b|\bmid[-\s]?level\b|\bexperienced\b|\bintermediate\b/i,
+  /\b(?:lead|leader|principal|staff)\b/i,
   /\b(?:manager|director|supervisor|vp|vice\s+president|chief|head)\b/i,
-  /\b(?:engineer|level)(?:\s|[-,/])*(?:iii|iv|v)\b|\b(?:iii|iv|v)(?:\s|[-,/])*(?:engineer|level)\b/i,
-  /\b(?:engineer|level)(?:\s|[-,/])*[3-9]\b|\b[3-9](?:\s|[-,/])*(?:engineer|level)\b/i,
+  /\b(?:engineer|level)(?:\s|[-,/])*(?:ii|iii|iv|v)\b|\b(?:ii|iii|iv|v)(?:\s|[-,/])*(?:engineer|level)\b/i,
+  /\b(?:engineer|level)(?:\s|[-,/])*[2-9]\b|\b[2-9](?:\s|[-,/])*(?:engineer|level)\b/i,
+  /\b(?:i|ii)\s*[-/]\s*(?:ii|iii|iv|v)\b/i,
 ];
 
 const NON_ENGINEERING_TITLE_PATTERNS = [
@@ -155,6 +156,11 @@ const NON_ENGINEERING_TITLE_PATTERNS = [
   /\bscheduler\b/i,
   /\bestimator\b/i,
   /\bdrafter\b/i,
+  /\barchitect\b/i,
+  /\bplanner\b/i,
+  /\bconsultant\b/i,
+  /\binterior\s+designer\b/i,
+  /\bcadd?\b/i,
 ];
 
 export function isTodayExcludedNiche(niche?: string | null): boolean {
@@ -201,7 +207,7 @@ export function scoreTargetRole(title?: string | null, location?: string | null,
   relevance_reason: string;
 } {
   const t = title || "";
-  const text = `${title || ""} ${bodyText || ""}`;
+  const contextText = `${title || ""} ${bodyText || ""}`;
   const reasons: string[] = [];
   let score = 0;
   let hasTargetTitle = false;
@@ -212,7 +218,7 @@ export function scoreTargetRole(title?: string | null, location?: string | null,
   if (isNonEngineeringJobTitle(t)) {
     return { is_relevant: false, match_score: -50, relevance_reason: "excluded non-engineering title" };
   }
-  if (/\b(?:senior\s+level|expert\/leader)\b/i.test(text)) {
+  if (/\b(?:senior\s+level|expert\/leader)\b/i.test(contextText)) {
     return { is_relevant: false, match_score: -50, relevance_reason: "excluded seniority/level body signal" };
   }
 
@@ -225,12 +231,14 @@ export function scoreTargetRole(title?: string | null, location?: string | null,
     [/\bproject\s+engineer\s*(?:i|1)?\b/i, 28, "project engineer"],
     [/\b(?:tooling|equipment|manufacturing|process|production|quality|test|validation|environmental\s+test)\s+engineer\b/i, 24, "manufacturing/test engineer"],
     [/\b(?:electromechanical|mechatronics|robotics)\b.*\bengineer\b|\bengineer\b.*\b(?:electromechanical|mechatronics|robotics)\b/i, 26, "electromechanical/robotics"],
-    [/\b(?:thermal|fea|stress|systems)\s+engineer\b/i, 22, "thermal/FEA/systems"],
+    [/\b(?:thermal|fea|stress|systems|controls?|optics?|optical)\s+engineer\b/i, 22, "thermal/controls/systems"],
     [/\b(?:aerospace|space|satellite|propulsion)\b.*\b(?:engineer|designer)\b|\b(?:engineer|designer)\b.*\b(?:aerospace|space|satellite|propulsion)\b/i, 22, "aerospace/space"],
+    [/\b(?:civil|structural|bridge|transportation)\s+engineer\b|\bengineer[-\s]?in[-\s]?training\b.*\b(?:civil|transportation|construction|bridge)\b/i, 22, "civil/infrastructure"],
+    [/\b(?:electrical|power)\s+engineer\b|\bengineer\b.*\b(?:power|electrical)\b/i, 20, "electrical/power"],
   ];
 
   for (const [pattern, points, label] of boosts) {
-    if (pattern.test(text)) {
+    if (pattern.test(t)) {
       score += points;
       reasons.push(`+${points} ${label}`);
       hasTargetTitle = true;
@@ -238,7 +246,7 @@ export function scoreTargetRole(title?: string | null, location?: string | null,
     }
   }
 
-  if (/\b(?:professional\s+engineer|p\.?e\.?|licensed\s+engineer|under\s+the\s+supervision|mentorship|fe\s+exam|abet)\b/i.test(text)) {
+  if (/\b(?:professional\s+engineer|p\.?e\.?|licensed\s+engineer|under\s+the\s+supervision|mentorship|fe\s+exam|abet)\b/i.test(contextText)) {
     score += 12;
     reasons.push("+12 PE path signal");
   }
@@ -270,6 +278,7 @@ export function isTodayTargetJob(job: {
   title?: string | null;
   companyname?: string | null;
   niche?: string | null;
+  location?: string | null;
   is_relevant?: boolean | null;
   job_url?: string | null;
   apply_url?: string | null;
@@ -283,5 +292,6 @@ export function isTodayTargetJob(job: {
     const url = job.job_url || job.apply_url || "";
     if (isGenericJobUrl(url)) return false;
   }
+  if (!scoreTargetRole(job.title, job.location).is_relevant) return false;
   return true;
 }

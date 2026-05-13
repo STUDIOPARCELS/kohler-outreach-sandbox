@@ -6,6 +6,34 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+const LIVE_JOB_FETCH_TIMEOUT_MS = 8000;
+const CLOSED_POSTING_TEXT = /\b(?:job is no longer available|position has been filled|posting has expired|job has expired|no longer accepting applications|this job is closed|page not found|404)\b/i;
+
+async function isLiveJobUrlActive(url: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), LIVE_JOB_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "user-agent": "Mozilla/5.0 Kohler Outreach job verifier",
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      cache: "no-store",
+    });
+    if (res.status < 200 || res.status >= 400) return false;
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("text/html")) return true;
+    const html = await res.text();
+    return !CLOSED_POSTING_TEXT.test(html);
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function POST(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
   const { companyname } = await req.json();
@@ -27,6 +55,7 @@ export async function POST(req: NextRequest) {
       job.reliable_url && isTodayTargetJob({
       title: job.title,
       companyname: job.companyname,
+      location: job.location,
       is_relevant: job.is_relevant,
       job_url: job.reliable_url,
     })
@@ -111,14 +140,15 @@ ONLY the JSON array.`,
             isTodayTargetJob({
               title: String(j.title),
               companyname,
+              location: String(j.location || ""),
               is_relevant: true,
               apply_url: String(j.apply_url || ""),
             })
           )
           .slice(0, 8)
           .map((j: Record<string, unknown>) => {
-            let url = String(j.apply_url || "");
-            let source = String(j.source || "");
+            const url = String(j.apply_url || "");
+            const source = String(j.source || "");
 
             return {
               title: String(j.title || ""),
@@ -129,6 +159,11 @@ ONLY the JSON array.`,
               source,
             };
           });
+        const checks = await Promise.all(jobs.map(async (job) => ({
+          job,
+          active: await isLiveJobUrlActive(job.apply_url),
+        })));
+        jobs = checks.filter((check) => check.active).map((check) => check.job);
       }
     } catch { /* parse failed */ }
 
