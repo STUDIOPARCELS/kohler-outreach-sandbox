@@ -15,7 +15,7 @@ const TARGET_NICHES = [
 
 const SENIORITY_BLOCK = /\b(?:senior|sr\.?|intermediate|lead|leader|principal|staff|manager|director|vp|vice president|chief|head|engineer\s*(?:ii|iii|iv|v|2|3|4|5)|(?:ii|iii|iv|v|2|3|4|5)\s*engineer|(?:i|ii)\s*[-/]\s*(?:ii|iii|iv|v))\b/i;
 const NON_ENGINEERING_BLOCK = /\b(?:technician|operator|assembler|machinist|mechanic|warehouse|forklift|picker|clerk|customer service|administrative|recruiter|sales|business development|coordinator|scheduler|estimator|drafter|architect|planner|interior designer|cadd?|consultant)\b/i;
-const TARGET_TITLE = /\b(?:mechanical|electrical|eit|engineer[-\s]?in[-\s]?training|hvac|mep|building systems|project engineer|manufacturing engineer|process engineer|quality engineer|test engineer|validation engineer|aerospace|space|robotics|mechatronics|electromechanical|thermal|controls? engineer|systems engineer|structural engineer|bridge engineer|environmental|water|civil)\b/i;
+const TARGET_TITLE = /\b(?:mechanical|electrical|eit|engineer[-\s]?in[-\s]?training|hvac|mep|building systems|project engineer|manufacturing engineer|process engineer|quality engineer|test engineer|validation engineer|aerospace|space|robotics|mechatronics|electromechanical|thermal|controls? engineer|systems engineer|optics? engineer|optical|structural engineer|bridge engineer|transportation engineer|environmental|water|civil)\b/i;
 const GENERIC_URL = [
   /indeed\.com\/jobs\?/i,
   /linkedin\.com\/jobs\/search/i,

@@ -1,5 +1,6 @@
 import { requireApiSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isCareerIngestTargetNiche, isExcludedStaffingCompany, normalizeNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 300; // 5 min for Vercel
@@ -8,17 +9,32 @@ export async function POST(req: NextRequest) {
   const authError = requireApiSecret(req); if (authError) return authError;
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "No OpenAI key" }, { status: 500 });
+  const body = await req.json().catch(() => ({}));
+  const limit = Math.min(Math.max(Number(body.limit || 20), 1), 50);
+  const includeAll = body.includeAll === true;
+  const companynames = Array.isArray(body.companynames)
+    ? body.companynames.filter((name: unknown) => typeof name === "string" && name.trim()).slice(0, limit)
+    : null;
 
   // Get companies missing careers_url
-  const { data: companies, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from("companies")
     .select("companyname, niche")
     .is("careers_url", null)
     .neq("niche", "TEST")
     .order("niche")
-    .limit(20); // batch of 20 at a time
+    .limit(companynames ? limit : Math.max(limit * 4, 60)); // fetch extra so target filtering still fills a batch
+
+  if (companynames) query = query.in("companyname", companynames);
+
+  const { data: rawCompanies, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const companies = (rawCompanies || []).filter((company) => {
+    if (includeAll) return true;
+    const niche = normalizeNiche(company.niche, company.companyname);
+    return isCareerIngestTargetNiche(niche) && !isExcludedStaffingCompany(company.companyname);
+  }).slice(0, limit);
   if (!companies || companies.length === 0) return NextResponse.json({ message: "All careers URLs populated", remaining: 0 });
 
   const results: { company: string; url: string | null; status: string }[] = [];
