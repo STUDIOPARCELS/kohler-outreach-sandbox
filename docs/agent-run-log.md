@@ -552,3 +552,50 @@
 3. Reply classification is a heuristic by design; the dashboard can
    later switch to an LLM-backed scorer using the same
    `classifyReply` shape so the call sites don't change.
+
+### Phase 10 — Metrics dashboard
+
+**Inspected**
+- All Phase 3-9 tables (`job_listings`, `role_fit_scores`,
+  `email_drafts`, `sent_messages`, `email_threads`, `email_messages`,
+  `applications`, `outreach_actions`) — confirmed counts can be done
+  with `head:true, count:exact` queries.
+
+**Changed**
+- `src/app/api/metrics/overview/route.ts` — single GET endpoint that
+  returns `headline` (15 KPI counts), `classifications` (inbound
+  reply breakdown), and `table_status` (per-table availability so the
+  UI can prompt for missing migrations). Each query is wrapped so
+  missing tables degrade to 0 rather than 500.
+- `src/app/dashboard/page.tsx` — KPI grid with 15 tiles plus an
+  inbound-classification table and migration-status checklist.
+- `src/components/Nav.tsx` — added Dashboard as the first nav link.
+
+**Tests / checks**
+- `npx tsc --noEmit` → clean (after refactoring the count helpers
+  to take typed `PromiseLike` thenables instead of trying to chain
+  filters through a generic helper).
+
+**Result**
+- `/dashboard` answers: companies tracked, companies w/ open roles,
+  high-fit jobs, jobs w/ PE signal, drafts in progress / approved,
+  emails sent or drafted, replies received, positive replies,
+  recruiter screens, follow-ups due, applications submitted, response
+  rate, positive response rate. Each tile is computed from real
+  Supabase counts.
+
+**Remaining work**
+- Per-company timelines (jobs found → contacts found → draft → sent →
+  reply → application → follow-up) are deferred — the data is in
+  place via `outreach_actions` + `email_threads`, but rendering them
+  is left as a Phase 13+ improvement.
+- An "auto-refresh" toggle would make the dashboard a true command
+  center; currently it fetches once on mount.
+
+**Assumptions made**
+1. `response_rate = inbound_total / sent_messages`. If `sent_messages`
+   is zero, both rates are zero.
+2. "Follow-ups due" sums `email_threads.needs_action=true` plus
+   inbound classifications equal to `needs_follow_up`.
+3. Migration-status checks treat "table exists with 0 rows" as
+   `applied`; only `does not exist` errors mark it `missing`.
