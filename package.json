@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:fit": "node --test scripts/kohler-fit-score.test.mjs",
+    "test:schema": "node --test scripts/schema-contract.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.46.0",

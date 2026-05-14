@@ -15,6 +15,7 @@ export const CAREER_INGEST_TARGET_NICHES = [
   "Manufacturing / Automation / Product Design",
   "Energy / Renewables / Power",
   "Water / Environmental / Geotech",
+  "Metals / Material Science",
 ] as const;
 
 const EXCLUDED_NICHE_PATTERNS = [
@@ -234,7 +235,7 @@ export function scoreTargetRole(title?: string | null, location?: string | null,
     [/\b(?:electromechanical|mechatronics|robotics)\b.*\bengineer\b|\bengineer\b.*\b(?:electromechanical|mechatronics|robotics)\b/i, 26, "electromechanical/robotics"],
     [/\b(?:thermal|fea|stress|systems|controls?|optics?|optical)\s+engineer\b/i, 22, "thermal/controls/systems"],
     [/\b(?:aerospace|space|satellite|propulsion)\b.*\b(?:engineer|designer)\b|\b(?:engineer|designer)\b.*\b(?:aerospace|space|satellite|propulsion)\b/i, 22, "aerospace/space"],
-    [/\b(?:civil|structural|bridge|transportation)\s+engineer\b|\bengineer[-\s]?in[-\s]?training\b.*\b(?:civil|transportation|construction|bridge)\b/i, 22, "civil/infrastructure"],
+    [/\b(?:civil|structural|bridge|transportation|geotechnical|geotech|environmental|water|wastewater|water\s+resources)\s+engineer\b|\bengineer[-\s]?in[-\s]?training\b.*\b(?:civil|transportation|construction|bridge|geotechnical|geotech|environmental|water|wastewater)\b/i, 22, "civil/water/geotech/infrastructure"],
     [/\b(?:electrical|power)\s+engineer\b|\bengineer\b.*\b(?:power|electrical)\b/i, 20, "electrical/power"],
   ];
 

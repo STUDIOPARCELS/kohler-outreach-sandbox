@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isDirectJobUrl } from "@/lib/jobLinks";
+import { finishSyncRun, startSyncRun } from "@/lib/syncRunStore";
 import { isCareerIngestTargetNiche, isExcludedStaffingCompany, normalizeNiche, scoreTargetRole } from "@/lib/targeting";
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
@@ -13,7 +14,7 @@ const MAX_COMPANY_LIMIT = 500;
 const COMPANY_FETCH_CONCURRENCY = 8;
 const CLOSED_POSTING_TEXT = /\b(?:job is no longer available|position has been filled|posting has expired|job has expired|no longer accepting applications|this job is closed|page not found|404)\b/i;
 
-type DirectCareerSource = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "workday" | "icims" | "jsonld" | "career_links";
+type DirectCareerSource = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "workday" | "oracle" | "icims" | "jsonld" | "career_links";
 type AggregateJobSource = "builtin_colorado" | "governmentjobs_direct" | "usajobs";
 type JobSource = DirectCareerSource | AggregateJobSource;
 
@@ -21,6 +22,12 @@ interface WorkdayToken {
   host: string;
   tenant: string;
   site: string;
+  publicBase: string;
+}
+
+interface OracleToken {
+  host: string;
+  siteNumber: string;
   publicBase: string;
 }
 
@@ -171,6 +178,7 @@ function detectBoardTokens(url: string, html: string): {
   smartrecruiters?: string;
   workable?: string;
   workday?: WorkdayToken;
+  oracle?: OracleToken;
   icims?: string;
 } {
   const combined = `${url}\n${html}`;
@@ -189,8 +197,16 @@ function detectBoardTokens(url: string, html: string): {
           tenant: workdayJobs[1].split(".")[0],
           site: workdayJobs[2],
           publicBase: `https://${workdayJobs[1]}/en-US/${workdayJobs[2]}`,
-        }
+      }
       : undefined;
+  const oracleMatch = combined.match(/https?:\/\/([^"'\s]+?\.oraclecloud\.com)\/hcmUI\/CandidateExperience\/(?:[^"'\s]+?\/)?sites\/(CX_\d+)/i);
+  const oracle = oracleMatch
+    ? {
+        host: oracleMatch[1],
+        siteNumber: oracleMatch[2],
+        publicBase: `https://${oracleMatch[1]}/hcmUI/CandidateExperience/en/sites/${oracleMatch[2]}/requisitions/preview`,
+      }
+    : undefined;
   return {
     greenhouse: combined.match(/boards(?:-api)?\.greenhouse\.io\/(?:v1\/boards\/)?([a-z0-9_-]+)/i)?.[1]
       || combined.match(/job-boards\.greenhouse\.io\/([a-z0-9_-]+)/i)?.[1],
@@ -201,7 +217,27 @@ function detectBoardTokens(url: string, html: string): {
       || combined.match(/api\.smartrecruiters\.com\/v1\/companies\/([a-z0-9_-]+)/i)?.[1],
     workable: combined.match(/apply\.workable\.com\/([a-z0-9_-]+)/i)?.[1],
     workday,
+    oracle,
     icims: combined.match(/https?:\/\/([^"'\s]+?\.icims\.com)\/jobs(?:\/search)?/i)?.[1],
+  };
+}
+
+function knownOracleTokenFor(company: CompanyRow): OracleToken | undefined {
+  if (!(/\bwsp\b/i.test(company.companyname) || /wsp\.com/i.test(company.careers_url || ""))) return undefined;
+  return {
+    host: "emit.fa.ca3.oraclecloud.com",
+    siteNumber: "CX_2001",
+    publicBase: "https://emit.fa.ca3.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_2001/requisitions/preview",
+  };
+}
+
+function knownWorkdayTokenFor(company: CompanyRow): WorkdayToken | undefined {
+  if (!(/\bcoorstek\b/i.test(company.companyname) || /coorstek\.com/i.test(company.careers_url || ""))) return undefined;
+  return {
+    host: "coorstek.wd1.myworkdayjobs.com",
+    tenant: "coorstek",
+    site: "CoorsTekCareers",
+    publicBase: "https://coorstek.wd1.myworkdayjobs.com/en-US/CoorsTekCareers",
   };
 }
 
@@ -288,14 +324,77 @@ async function fromWorkable(account: string, company: CompanyRow): Promise<Caree
   })).filter((job) => job.title && job.job_url);
 }
 
+interface WorkdayJobPosting {
+  title?: string;
+  locationsText?: string;
+  externalPath?: string;
+  bulletFields?: string[];
+  postedOn?: string;
+}
+
+const WORKDAY_SEARCH_TERMS = [
+  "engineer",
+  "mechanical",
+  "electrical",
+  "manufacturing",
+  "process",
+  "quality",
+  "test",
+  "systems",
+  "controls",
+  "automation",
+  "civil",
+  "environmental",
+  "water",
+  "associate",
+  "entry",
+];
+const WORKDAY_LIMIT = 20;
+
+async function fetchWorkdayPostings(endpoint: string): Promise<WorkdayJobPosting[]> {
+  const postings: WorkdayJobPosting[] = [];
+  const seen = new Set<string>();
+  const addPostings = (jobs: WorkdayJobPosting[] = []) => {
+    for (const job of jobs) {
+      const key = `${job.externalPath || ""}:${job.title || ""}`.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      postings.push(job);
+    }
+  };
+  let total = 0;
+
+  try {
+    const data = await fetchJsonPost<{ total?: number; jobPostings?: WorkdayJobPosting[] }>(
+      endpoint,
+      { appliedFacets: {}, limit: WORKDAY_LIMIT, offset: 0, searchText: "" }
+    );
+    total = Number(data.total || 0);
+    addPostings(data.jobPostings || []);
+  } catch { /* fall back to targeted searches */ }
+
+  if (postings.length === 0 || total > postings.length) {
+    for (const term of WORKDAY_SEARCH_TERMS) {
+      try {
+        const data = await fetchJsonPost<{ jobPostings?: WorkdayJobPosting[] }>(
+          endpoint,
+          { appliedFacets: {}, limit: WORKDAY_LIMIT, offset: 0, searchText: term }
+        );
+        addPostings(data.jobPostings || []);
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  return postings;
+}
+
 async function fromWorkday(token: WorkdayToken, company: CompanyRow): Promise<CareerJob[]> {
   const endpoint = `https://${token.host}/wday/cxs/${encodeURIComponent(token.tenant)}/${encodeURIComponent(token.site)}/jobs`;
-  const data = await fetchJsonPost<{ jobPostings?: Array<{ title?: string; locationsText?: string; externalPath?: string; bulletFields?: string[]; postedOn?: string }> }>(
-    endpoint,
-    { appliedFacets: {}, limit: 100, offset: 0, searchText: "" }
-  );
+  const postings = await fetchWorkdayPostings(endpoint);
 
-  return (data.jobPostings || []).map((job) => {
+  return postings.map((job) => {
     const url = job.externalPath
       ? `${token.publicBase}${job.externalPath.startsWith("/") ? job.externalPath : `/${job.externalPath}`}`
       : token.publicBase;
@@ -310,6 +409,79 @@ async function fromWorkday(token: WorkdayToken, company: CompanyRow): Promise<Ca
       raw: { postedOn: job.postedOn, tenant: token.tenant, site: token.site },
     };
   }).filter((job) => job.title && job.job_url);
+}
+
+const ORACLE_SEARCH_TERMS = [
+  "Denver",
+  "Lakewood",
+  "Colorado",
+  "early career engineer",
+  "entry level engineer",
+  "mechanical engineer",
+  "electrical engineer",
+  "civil engineer",
+  "geotechnical engineer",
+  "water engineer",
+  "environmental engineer",
+  "project engineer",
+];
+
+interface OracleSearchResponse {
+  items?: Array<{
+    requisitionList?: Array<{
+      Id?: string | number;
+      Title?: string;
+      PrimaryLocation?: string;
+      ShortDescriptionStr?: string;
+      ExternalDescriptionStr?: string;
+      secondaryLocations?: Array<{ Name?: string }>;
+    }>;
+  }>;
+}
+
+function oracleSearchUrl(token: OracleToken, term: string): string {
+  const finder = `findReqs;siteNumber=${token.siteNumber},limit=100,offset=0,keyword="${term.replace(/"/g, "")}"`;
+  const params = new URLSearchParams({
+    onlyData: "true",
+    expand: "requisitionList.secondaryLocations",
+    finder,
+  });
+  return `https://${token.host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?${params.toString()}`;
+}
+
+async function fromOracle(token: OracleToken, company: CompanyRow): Promise<CareerJob[]> {
+  const jobs: CareerJob[] = [];
+  const seen = new Set<string>();
+
+  for (const term of ORACLE_SEARCH_TERMS) {
+    let data: OracleSearchResponse;
+    try {
+      data = await fetchJson<OracleSearchResponse>(oracleSearchUrl(token, term));
+    } catch {
+      continue;
+    }
+    for (const item of data.items || []) {
+      for (const job of item.requisitionList || []) {
+        const id = String(job.Id || "");
+        if (!id || !job.Title || seen.has(id)) continue;
+        seen.add(id);
+        const secondary = (job.secondaryLocations || []).map((loc) => loc.Name).filter(Boolean) as string[];
+        const location = [job.PrimaryLocation, ...secondary].filter(Boolean).join(" | ") || company.city || "";
+        jobs.push({
+          title: job.Title,
+          companyname: company.companyname,
+          location,
+          job_url: `${token.publicBase}/${encodeURIComponent(id)}`,
+          source: "oracle" as const,
+          external_job_key: `oracle_${token.host}_${token.siteNumber}_${id}`,
+          description: stripHtml([job.ShortDescriptionStr, job.ExternalDescriptionStr].filter(Boolean).join(" ")),
+          raw: { id, siteNumber: token.siteNumber, searchTerm: term },
+        });
+      }
+    }
+  }
+
+  return jobs;
 }
 
 async function fromIcims(host: string, company: CompanyRow): Promise<CareerJob[]> {
@@ -645,15 +817,20 @@ async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]
   const sources: DirectCareerSource[] = [];
   const careersUrl = company.careers_url || "";
   if (!careersUrl) return { jobs: [], sources, warnings: ["no careers_url"] };
+  const knownOracle = knownOracleTokenFor(company);
+  const knownWorkday = knownWorkdayTokenFor(company);
 
   let html = "";
   try {
     html = await fetchText(careersUrl);
   } catch (err) {
-    return { jobs: [], sources, warnings: [`careers_url fetch failed: ${err instanceof Error ? err.message : String(err)}`] };
+    warnings.push(`careers_url fetch failed: ${err instanceof Error ? err.message : String(err)}`);
+    if (!knownOracle && !knownWorkday) return { jobs: [], sources, warnings };
   }
 
   const tokens = detectBoardTokens(careersUrl, html);
+  if (knownOracle && !tokens.oracle) tokens.oracle = knownOracle;
+  if (knownWorkday && !tokens.workday) tokens.workday = knownWorkday;
   const jobs: CareerJob[] = [];
 
   const attempts: Array<[DirectCareerSource, () => Promise<CareerJob[]>]> = [];
@@ -663,6 +840,7 @@ async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]
   if (tokens.smartrecruiters) attempts.push(["smartrecruiters", () => fromSmartRecruiters(tokens.smartrecruiters!, company)]);
   if (tokens.workable) attempts.push(["workable", () => fromWorkable(tokens.workable!, company)]);
   if (tokens.workday) attempts.push(["workday", () => fromWorkday(tokens.workday!, company)]);
+  if (tokens.oracle) attempts.push(["oracle", () => fromOracle(tokens.oracle!, company)]);
   if (tokens.icims) attempts.push(["icims", () => fromIcims(tokens.icims!, company)]);
 
   for (const [source, fetcher] of attempts) {
@@ -775,9 +953,12 @@ async function fetchAggregateJobs(): Promise<{ jobs: CareerJob[]; sources: JobSo
 
   const batches = [
     await fetchBuiltInColoradoJobs(),
-    await fetchGovernmentJobsDirect(),
-    await fetchUsaJobs(),
   ];
+  if (process.env.ENABLE_GOVERNMENT_JOB_SOURCES === "true") {
+    batches.push(await fetchGovernmentJobsDirect(), await fetchUsaJobs());
+  } else {
+    warnings.push("government aggregate job sources disabled; set ENABLE_GOVERNMENT_JOB_SOURCES=true to enable GovernmentJobs/USAJOBS polling");
+  }
 
   const seen = new Set<string>();
   for (const batch of batches) {
@@ -877,6 +1058,16 @@ function parseCompanyLimit(value: string | number | undefined): number {
 }
 
 async function runCareersIngest(options: { dryRun: boolean; limit: number; companyname?: string }) {
+  const syncRun = await startSyncRun({
+    provider: "careers",
+    sourceType: options.companyname ? "company_careers" : "careers_all",
+    companyname: options.companyname || null,
+    triggerType: options.dryRun ? "manual_dry_run" : "manual_or_cron",
+    dryRun: options.dryRun,
+    metadata: { limit: options.limit },
+  });
+
+  try {
   let query = supabaseAdmin
     .from("companies")
     .select("id, companyname, city, niche, careers_url")
@@ -1021,7 +1212,54 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     }
   }
 
-  return { success: true, summary, results };
+  const warningErrors = results
+    .flatMap((result) => result.warnings.map((warning) => ({ company: result.company, warning })))
+    .slice(0, 50);
+  await finishSyncRun(syncRun, {
+    status: warningErrors.length > 0 ? "completed_with_errors" : "completed",
+    companiesChecked: summary.companies_checked,
+    jobsFound: summary.jobs_found,
+    jobsRelevant: summary.jobs_relevant,
+    jobsInserted: summary.inserted,
+    jobsUpdated: summary.updated,
+    jobsSkipped: summary.skipped,
+    errors: warningErrors,
+    metadata: {
+      source_counts: summary.source_counts,
+      aggregate_sources_checked: summary.aggregate_sources_checked,
+      aggregate_companies_created: summary.aggregate_companies_created,
+      persistence: {
+        sync_run_id: syncRun.id,
+        persisted: syncRun.persisted,
+        disabled_reason: syncRun.disabledReason || null,
+      },
+    },
+  });
+
+  return {
+    success: true,
+    summary,
+    results,
+    sync_run: {
+      id: syncRun.id,
+      persisted: syncRun.persisted,
+      disabled_reason: syncRun.disabledReason || null,
+    },
+  };
+  } catch (err) {
+    await finishSyncRun(syncRun, {
+      status: "error",
+      errors: [{ message: err instanceof Error ? err.message : String(err) }],
+      metadata: {
+        persistence: {
+          sync_run_id: syncRun.id,
+          persisted: syncRun.persisted,
+          disabled_reason: syncRun.disabledReason || null,
+        },
+      },
+    });
+    throw err;
+  }
 }
 
 export async function GET(req: NextRequest) {

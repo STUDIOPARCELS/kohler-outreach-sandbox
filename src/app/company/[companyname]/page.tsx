@@ -40,7 +40,7 @@ interface Draft {
   body_final?: string;
 }
 
-const STATUS_OPTIONS = ["draft", "ready_to_print", "printed", "sent", "closed"];
+const STATUS_OPTIONS = ["draft", "human_approved", "ready_to_print", "printed", "sent", "closed"];
 
 export default function CompanyDetailPage() {
   const params = useParams();

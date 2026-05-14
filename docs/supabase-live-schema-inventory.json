@@ -1,0 +1,4659 @@
+{
+  "tables": [
+    {
+      "columns": [
+        {
+          "udt_name": "int8",
+          "data_type": "bigint",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('candidate_assets_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 64,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "profile_id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "asset_type",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "url",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "caption",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "sort_order",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 7,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "candidate_assets",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "1",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "full_name",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "email",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "phone",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "location",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "portfolio_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "headline",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "summary",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "proof_points",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "skills",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "cultural_hooks",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 12,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "candidate_profile",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('companies_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "tier",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "city",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "commutezone",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "workmodel",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "drugtest",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "activerole",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "false",
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "datatype",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "emails",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "culture_score",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 12,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "culture_tag",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 13,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "outdoor",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "false",
+          "ordinal_position": 14,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "music",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "false",
+          "ordinal_position": 15,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "prototyping",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "false",
+          "ordinal_position": 16,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "craftsmanship",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "false",
+          "ordinal_position": 17,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_key",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 18,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "culture_hook",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 19,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_about",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 20,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "careers_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 21,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_address1",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 22,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_address2",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 23,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_city",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 24,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_state",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 25,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_zip",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 26,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "niche",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 27,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "companies",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "tier",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "city",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "commutezone",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "workmodel",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "drugtest",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "activerole",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "datatype",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "emails",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "culture_score",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 12,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "culture_tag",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 13,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "outdoor",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 14,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "music",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 15,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "prototyping",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 16,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "craftsmanship",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 17,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_key",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 18,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "culture_hook",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 19,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_about",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 20,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "careers_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 21,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_address1",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 22,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_address2",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 23,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_city",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 24,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_state",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 25,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_zip",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 26,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "niche",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 27,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "companies_backup_20260304",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('contacts_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contactname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "email",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "linkedin",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "phone",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "email_searched",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "false",
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "contacts",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('env_vault_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "project",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "value",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": "Secure storage for environment variables across all Lisa Wood Studio projects. Claude reads from here when setting up new Vercel projects or sandboxes.",
+      "table_name": "env_vault",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "email",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "refresh_token",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "access_token",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "token_expires_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "label_name",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'ziprecruiter/mech-80226-30mi'::text",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "label_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "last_history_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "gmail_accounts",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "started_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "finished_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "messages_seen",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 4,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "jobs_extracted",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 5,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "companies_created",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 6,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'running'::text",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "error_text",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "job_ingest_runs",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('job_listings_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "salary",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "location",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "employment_type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "employer_type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "workplace_type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "summary",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "apply_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "posted_date",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "fetched_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 12,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'dice'::text",
+          "ordinal_position": 13,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "company_id",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 14,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "external_job_key",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 15,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "gmail_message_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 16,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "job_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 17,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "received_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 18,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "raw_payload",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 19,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "ingest_status",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'new'::text",
+          "ordinal_position": 20,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "parser_version",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": "1",
+          "ordinal_position": 21,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "first_seen_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 22,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "last_seen_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 23,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "times_seen",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": "1",
+          "ordinal_position": 24,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "is_relevant",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "true",
+          "ordinal_position": 25,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "match_score",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 26,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "relevance_reason",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 27,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "job_listings",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'ziprecruiter_email'::text",
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "external_job_key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "gmail_message_id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "company_id",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_name",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "location_text",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "job_url",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "salary_text",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "zip_code",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'80226'::text",
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "radius_miles",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "30",
+          "ordinal_position": 12,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "received_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 13,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "source_payload",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 14,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "parser_version",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "1",
+          "ordinal_position": 15,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "outreach_state",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'new'::text",
+          "ordinal_position": 16,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 17,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 18,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "job_positions",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source_type",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "provider",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "external_source_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "enabled",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "true",
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "config",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "last_sync_run_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "last_synced_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 12,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 13,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "job_sources",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('jobs_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_name",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "location",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "work_type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "salary",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "date",
+          "data_type": "date",
+          "column_name": "date_posted",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_key",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'manual'::text",
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "imported_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'new'::text",
+          "ordinal_position": 12,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "jobs",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "value",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "kv_store_1ab1f459",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "value",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "kv_store_2674f927",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "value",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "kv_store_2d4d87db",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "value",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "kv_store_6ce54832",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "value",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "kv_store_a035844b",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "key",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "value",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "kv_store_a1d84d39",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'task'::text",
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "message",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "project",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "metadata",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "mc_activities",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "name",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "local_path",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "project",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "thumbnail_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "metadata",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "mc_media",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "name",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "emoji",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'📁'::text",
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "color",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'#6366f1'::text",
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "mc_projects",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "content",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source_path",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "project",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "_text",
+          "data_type": "ARRAY",
+          "column_name": "tags",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "mc_research",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "description",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "project",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'todo'::text",
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "priority",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'medium'::text",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "date",
+          "data_type": "date",
+          "column_name": "due_date",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "_text",
+          "data_type": "ARRAY",
+          "column_name": "tags",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "attachments",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'[]'::jsonb",
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "mc_tasks",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "job_listing_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contact_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "campaign_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "action_type",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'pending'::text",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "priority",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 8,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "due_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "completed_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 12,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 13,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "metadata",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 14,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 15,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 16,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "outreach_actions",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "tier",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "location",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "work_type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "salary",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "date",
+          "data_type": "date",
+          "column_name": "date_posted",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "pile_a_relevant_jobs",
+      "table_type": "VIEW",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "tier",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "city",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int8",
+          "data_type": "bigint",
+          "column_name": "job_count",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": 64,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "pile_a_with_jobs",
+      "table_type": "VIEW",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "tier",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "city",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "pile_b_no_jobs",
+      "table_type": "VIEW",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int8",
+          "data_type": "bigint",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": 64,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "filename",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "chunk_index",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "content",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "token_count",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "vector",
+          "data_type": "USER-DEFINED",
+          "column_name": "embedding",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "policy_doc_chunks",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int8",
+          "data_type": "bigint",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('policy_documents_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 64,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "filename",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "chunk_index",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "content",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "vector",
+          "data_type": "USER-DEFINED",
+          "column_name": "embedding",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "metadata",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "tsvector",
+          "data_type": "tsvector",
+          "column_name": "fts",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "policy_documents",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contactname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contact_title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contact_email",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "custom_paragraph",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'draft'::text",
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "body_final",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "printed_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "sent_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 12,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "subject_final",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 13,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "emailed_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 14,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "job_title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 15,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "job_url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 16,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "job_skills_matched",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 17,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "followup2_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 18,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "reachout_company_inserts",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contactname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contact_title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contact_email",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "subject_final",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "body_final",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "reachout_final_letters",
+      "table_type": "VIEW",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "1",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "subject_template",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "body_template",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "reachout_template",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "company_name",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "location",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "work_type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "salary",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "url",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "date_posted",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "company_id",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "ingest_status",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "relevant_roles",
+      "table_type": "VIEW",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int8",
+          "data_type": "bigint",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": 64,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "link",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "price",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "'new'::text",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": "timezone('utc'::text, now())",
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "reno_deals",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "job_listing_id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "external_job_key",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "score_version",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'kohler-fit-v1'::text",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "skill_fit_score",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 7,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "entry_level_score",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 8,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "pe_track_score",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 9,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "niche_score",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 10,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "location_score",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 11,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "mines_signal_score",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 12,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "overall_score",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 13,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "recommended_action",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'monitor'::text",
+          "ordinal_position": 14,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "explanation_summary",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 15,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "explanation_json",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 16,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "scored_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 17,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 18,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 19,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "role_fit_scores",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "gen_random_uuid()",
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "uuid",
+          "data_type": "uuid",
+          "column_name": "job_source_id",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "provider",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "source_type",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'running'::text",
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "trigger_type",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "bool",
+          "data_type": "boolean",
+          "column_name": "dry_run",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "false",
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "started_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 9,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "finished_at",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 10,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "duration_ms",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 11,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "companies_checked",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 12,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "jobs_found",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 13,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "jobs_relevant",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 14,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "jobs_inserted",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 15,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "jobs_updated",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 16,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "jobs_skipped",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "0",
+          "ordinal_position": 17,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "errors",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'[]'::jsonb",
+          "ordinal_position": 18,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "jsonb",
+          "data_type": "jsonb",
+          "column_name": "metadata",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "'{}'::jsonb",
+          "ordinal_position": 19,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "created_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 20,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "updated_at",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": "now()",
+          "ordinal_position": 21,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "sync_runs",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int8",
+          "data_type": "bigint",
+          "column_name": "tier",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": 64,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "city",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "mailing_address",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contact_name",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "email",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "niche",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "temp_company_addresses",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 1,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "tier",
+          "is_nullable": "YES",
+          "numeric_scale": 0,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "contactname",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "title",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "email",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "linkedin",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "phone",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 8,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "tier_1_4_contacts",
+      "table_type": "VIEW",
+      "table_schema": "public",
+      "row_level_security": false
+    },
+    {
+      "columns": [
+        {
+          "udt_name": "int4",
+          "data_type": "integer",
+          "column_name": "id",
+          "is_nullable": "NO",
+          "numeric_scale": 0,
+          "column_default": "nextval('tracking_id_seq'::regclass)",
+          "ordinal_position": 1,
+          "numeric_precision": 32,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "companyname",
+          "is_nullable": "NO",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 2,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "status",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 3,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "timestamptz",
+          "data_type": "timestamp with time zone",
+          "column_name": "lastchecked",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 4,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "date",
+          "data_type": "date",
+          "column_name": "applieddate",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 5,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "date",
+          "data_type": "date",
+          "column_name": "followupdate",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 6,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        },
+        {
+          "udt_name": "text",
+          "data_type": "text",
+          "column_name": "notes",
+          "is_nullable": "YES",
+          "numeric_scale": null,
+          "column_default": null,
+          "ordinal_position": 7,
+          "numeric_precision": null,
+          "character_maximum_length": null
+        }
+      ],
+      "comment": null,
+      "table_name": "tracking",
+      "table_type": "BASE TABLE",
+      "table_schema": "public",
+      "row_level_security": true
+    }
+  ],
+  "queried_at": "2026-05-14T15:34:52.678894+00:00",
+  "project_ref": "acwgirrldntjpzrhqmdh",
+  "table_count": 39
+}

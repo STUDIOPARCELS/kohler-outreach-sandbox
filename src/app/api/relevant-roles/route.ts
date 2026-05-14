@@ -1,7 +1,8 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { getCommandCenterJobUrl, shouldShowJobInCommandCenter } from "@/lib/jobCommandCenter";
 import { getReliableJobUrl } from "@/lib/jobLinks";
+import { scoreJobForKohler } from "@/lib/kohlerFitScore";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { isTodayTargetJob } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from("job_listings")
-    .select("id, companyname, title, salary, location, employment_type, job_url, apply_url, received_at, source, ingest_status, is_relevant, first_seen_at, last_seen_at, times_seen")
+    .select("id, companyname, title, salary, location, employment_type, job_url, apply_url, received_at, source, ingest_status, is_relevant, match_score, relevance_reason, first_seen_at, last_seen_at, times_seen")
     .eq("is_relevant", true)
     .in("ingest_status", ["new", "open"]);
 
@@ -30,25 +31,48 @@ export async function GET(req: NextRequest) {
 
   const mapped = (data || [])
     .map((r) => ({ ...r, reliable_url: getReliableJobUrl(r) }))
-    .filter((r) => r.reliable_url && isTodayTargetJob({
-      title: r.title,
-      companyname: r.companyname,
-      location: r.location,
-      is_relevant: r.is_relevant,
-      job_url: r.reliable_url,
-    }))
-    .map((r) => ({
-    title: r.title,
-    location: r.location,
-    work_type: r.employment_type,
-    salary: r.salary,
-    url: r.reliable_url,
-    date_posted: r.received_at,
-    source: r.source,
-    first_seen: r.first_seen_at,
-    last_seen: r.last_seen_at,
-    times_seen: r.times_seen,
-  }));
+    .map((r) => {
+      const fit = scoreJobForKohler({
+        title: r.title,
+        companyname: r.companyname,
+        location: r.location,
+        source: r.source,
+        match_score: r.match_score,
+        is_relevant: r.is_relevant,
+        relevance_reason: r.relevance_reason,
+      });
+      const show = shouldShowJobInCommandCenter({
+        title: r.title,
+        companyname: r.companyname,
+        location: r.location,
+        source: r.source,
+        match_score: r.match_score,
+        is_relevant: r.is_relevant,
+        relevance_reason: r.relevance_reason,
+        job_url: r.job_url,
+        apply_url: r.apply_url,
+        reliable_url: r.reliable_url,
+      }, fit);
+      return {
+        show,
+        title: r.title,
+        location: r.location,
+        work_type: r.employment_type,
+        salary: r.salary,
+        url: getCommandCenterJobUrl(r),
+        date_posted: r.received_at,
+        source: r.source,
+        first_seen: r.first_seen_at,
+        last_seen: r.last_seen_at,
+        times_seen: r.times_seen,
+        fit_score: fit.overall_score,
+        pe_track_score: fit.pe_track_score,
+        recommended_action: fit.recommended_action,
+        explanation_summary: fit.explanation_summary,
+      };
+    })
+    .filter((r) => r.show)
+    .map(({ show, ...r }) => r);
 
   return NextResponse.json(mapped);
 }

@@ -31,6 +31,7 @@ const DIRECT_JOB_URL_PATTERNS = [
   /dayforcehcm\.com\/.+\/Posting\/View\//i,
   /recruiting\.paylocity\.com\/.+\/Jobs\/Details\//i,
   /oraclecloud\.com\/.+\/job\//i,
+  /oraclecloud\.com\/hcmUI\/CandidateExperience\/.+\/requisitions\/preview\/\d+/i,
   /successfactors\.[^/]+\/.+\/job\//i,
   /bamboohr\.com\/careers\/\d+/i,
   /breezy\.hr\/p\//i,

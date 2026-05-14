@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { isHumanApprovedDraftStatus, isLiveSendEnabled, liveSendDisabledMessage } from "@/lib/outreachSafety";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
@@ -16,10 +17,33 @@ export async function POST(req: NextRequest) {
     const { to, companyname, contactname, subject, body, letterId, attachments: requestedAttachments, job_title, job_url, job_skills_matched } =
       await req.json();
 
-    if (!to || !body) {
+    if (!to || !body || !letterId) {
       return NextResponse.json(
-        { error: "Missing required fields (to, body)" },
+        { error: "Missing required fields (to, body, letterId)" },
         { status: 400 }
+      );
+    }
+
+    if (!isLiveSendEnabled()) {
+      return NextResponse.json({ error: liveSendDisabledMessage() }, { status: 403 });
+    }
+
+    const { data: letter, error: letterError } = await supabaseAdmin
+      .from("reachout_company_inserts")
+      .select("id, status")
+      .eq("id", letterId)
+      .maybeSingle();
+
+    if (letterError) {
+      return NextResponse.json({ error: letterError.message }, { status: 500 });
+    }
+    if (!letter) {
+      return NextResponse.json({ error: "Draft not found for live send approval gate." }, { status: 404 });
+    }
+    if (!isHumanApprovedDraftStatus(letter.status)) {
+      return NextResponse.json(
+        { error: "Draft must be marked human_approved before live Gmail send." },
+        { status: 409 }
       );
     }
 

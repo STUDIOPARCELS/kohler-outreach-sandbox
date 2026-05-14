@@ -14,7 +14,7 @@ interface QueueRow {
   contactname?: string;
 }
 
-const STATUS_OPTIONS = ["", "draft", "ready_to_print", "printed", "sent", "closed"];
+const STATUS_OPTIONS = ["", "draft", "human_approved", "ready_to_print", "printed", "sent", "closed"];
 
 export default function QueuePage() {
   const toast = useToast();
@@ -91,6 +91,7 @@ export default function QueuePage() {
   const statusColor = (s: string) => {
     switch (s) {
       case "draft": return "bg-gray-100 text-gray-700";
+      case "human_approved": return "bg-emerald-100 text-emerald-800";
       case "ready_to_print": return "bg-yellow-100 text-yellow-800";
       case "printed": return "bg-blue-100 text-blue-800";
       case "sent": return "bg-green-100 text-green-800";

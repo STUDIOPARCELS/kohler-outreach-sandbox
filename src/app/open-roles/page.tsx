@@ -9,9 +9,20 @@ interface RoleRow {
   city?: string;
   niche?: string;
   roles: number;
+  contact_count?: number;
+  email_count?: number;
+  mines_alumni_count?: number;
+  pe_contact_count?: number;
   outreach_score?: number;
   score_label?: string;
   score_reasons?: string[];
+  best_role_title?: string | null;
+  best_overall_score?: number;
+  best_pe_track_score?: number;
+  best_source?: string | null;
+  best_last_seen_at?: string | null;
+  recommended_action?: string;
+  fit_summary?: string;
 }
 
 interface Stats {
@@ -37,6 +48,41 @@ interface Role {
   first_seen?: string;
   last_seen?: string;
   times_seen?: number;
+  fit_score?: number;
+  pe_track_score?: number;
+  recommended_action?: string;
+  explanation_summary?: string;
+}
+
+interface RuntimeDiagnostics {
+  runtime?: {
+    appEnvironment: string;
+    appEnvironmentSource: string;
+    vercelEnvironment: string | null;
+    supabaseHost: string | null;
+    supabaseProjectRef: string | null;
+    parserVersion: { ziprecruiter: string; careers: string; configured: string | null };
+    liveSendEnabled: boolean;
+    governmentJobSourcesEnabled: boolean;
+    contactEnrichmentEnabled: boolean;
+  };
+  jobs?: {
+    status: string;
+    latestJobCount?: number;
+    latestOpenRoleCompanyCount?: number;
+    latestJobSeenAt?: string | null;
+    latestParserVersion?: number | null;
+  };
+  latestSyncRun?: {
+    status: string;
+    run?: {
+      runStatus: string | null;
+      finishedAt: string | null;
+      jobsExtracted: number | null;
+    };
+  };
+  gmail?: { status: string; updatedAt?: string | null };
+  lastSuccessfulIngestAt?: string | null;
 }
 
 const SRC_LABELS: Record<string, string> = {
@@ -55,6 +101,7 @@ const SRC_LABELS: Record<string, string> = {
   smartrecruiters_careers: "SmartRecruiters",
   workable_careers: "Workable",
   workday_careers: "Workday",
+  oracle_careers: "Oracle Careers",
   icims_careers: "iCIMS",
   jsonld_careers: "Careers Page",
   career_links_careers: "Careers Page",
@@ -185,6 +232,30 @@ function roleLabel(count: number) {
   return count + " " + (count === 1 ? "job" : "jobs");
 }
 
+function actionLabel(action?: string) {
+  return (action || "monitor").replace(/_/g, " ");
+}
+
+function fitLabel(score?: number | null) {
+  const value = score ?? 0;
+  if (value >= 45) return "Strong fit";
+  if (value >= 35) return "Good fit";
+  if (value >= 25) return "Possible fit";
+  return "Low fit";
+}
+
+function fitTitle(row: Pick<RoleRow, "best_overall_score" | "fit_summary">) {
+  return `Kohler fit score ${row.best_overall_score ?? 0}. This is a ranking from visible job evidence, not a school-grade percent. Evidence: ${row.fit_summary || "limited explicit evidence"}`;
+}
+
+function roleFitTitle(score?: number | null, summary?: string) {
+  return `Kohler fit score ${score ?? 0}. This is a ranking from visible job evidence, not a school-grade percent. Evidence: ${summary || "limited explicit evidence"}`;
+}
+
+function pePathLabel(score?: number | null) {
+  return (score || 0) > 0 ? `PE path ${score}` : "No PE signal";
+}
+
 export default function OpenRolesPage() {
   const toast = useToast();
   const [rows, setRows] = useState<RoleRow[]>([]);
@@ -195,9 +266,11 @@ export default function OpenRolesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [nicheFilter, setNicheFilter] = useState("");
+  const [minFit, setMinFit] = useState("0");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [rolesLoading, setRolesLoading] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<RuntimeDiagnostics | null>(null);
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -213,6 +286,15 @@ export default function OpenRolesPage() {
   }, [toast]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    fetch("/api/runtime-diagnostics")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.error) setDiagnostics(d);
+      })
+      .catch(() => setDiagnostics(null));
+  }, []);
 
   const loadRoles = useCallback(async (companyname: string) => {
     if (expanded === companyname) {
@@ -246,6 +328,7 @@ export default function OpenRolesPage() {
   const filtered = rows.filter((r) => {
     if (search && !r.companyname.toLowerCase().includes(search.toLowerCase())) return false;
     if (nicheFilter && (r.niche || "Other") !== nicheFilter) return false;
+    if ((r.best_overall_score || 0) < Number(minFit || 0)) return false;
     return true;
   });
 
@@ -275,6 +358,21 @@ export default function OpenRolesPage() {
             <div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Open Roles</h1>
               <p className="text-xs sm:text-sm text-slate-300 mt-1">Entry-level BSME / EIT target queue</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-wide">
+                <span className={`rounded-full px-2 py-1 ${
+                  diagnostics?.runtime?.appEnvironment === "sandbox"
+                    ? "bg-emerald-400/20 text-emerald-100 border border-emerald-300/20"
+                    : "bg-amber-400/20 text-amber-100 border border-amber-300/20"
+                }`}>
+                  {diagnostics?.runtime?.appEnvironment || "environment unknown"}
+                </span>
+                <span className="rounded-full px-2 py-1 bg-white/10 text-slate-200 border border-white/10">
+                  Parser ZR {diagnostics?.runtime?.parserVersion.ziprecruiter || "?"} / Careers {diagnostics?.runtime?.parserVersion.careers || "?"}
+                </span>
+                <span className="rounded-full px-2 py-1 bg-white/10 text-slate-200 border border-white/10 normal-case">
+                  Supabase {diagnostics?.runtime?.supabaseProjectRef || diagnostics?.runtime?.supabaseHost || "unknown"}
+                </span>
+              </div>
             </div>
             <div className="grid grid-cols-2 sm:flex gap-2">
               <div className="px-3 py-2 rounded-xl bg-white/10 border border-white/10">
@@ -295,10 +393,35 @@ export default function OpenRolesPage() {
               </div>
             </div>
           </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 text-xs">
+            <div className="rounded-xl bg-white/10 border border-white/10 px-3 py-2">
+              <p className="text-slate-400">Latest sync</p>
+              <p className="font-semibold text-white">
+                {diagnostics?.latestSyncRun?.run?.runStatus || diagnostics?.latestSyncRun?.status || "unknown"}
+                {diagnostics?.latestSyncRun?.run?.finishedAt ? ` · ${relTime(diagnostics.latestSyncRun.run.finishedAt)}` : ""}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/10 border border-white/10 px-3 py-2">
+              <p className="text-slate-400">Tracked open jobs</p>
+              <p className="font-semibold text-white">
+                {diagnostics?.jobs?.latestJobCount ?? stats.totalRoles} jobs · {diagnostics?.jobs?.latestOpenRoleCompanyCount ?? stats.companies} companies
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/10 border border-white/10 px-3 py-2">
+              <p className="text-slate-400">Gmail cursor</p>
+              <p className="font-semibold text-white">{diagnostics?.gmail?.status?.replace(/_/g, " ") || "unknown"}</p>
+            </div>
+            <div className="rounded-xl bg-white/10 border border-white/10 px-3 py-2">
+              <p className="text-slate-400">Safety gates</p>
+              <p className="font-semibold text-white">
+                Live send {diagnostics?.runtime?.liveSendEnabled ? "on" : "off"} · Gov {diagnostics?.runtime?.governmentJobSourcesEnabled ? "on" : "off"} · Contacts {diagnostics?.runtime?.contactEnrichmentEnabled ? "on" : "off"}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-[minmax(220px,1fr)_minmax(240px,auto)] gap-2 mb-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-5">
         <input
           type="text"
           placeholder="Search company..."
@@ -306,6 +429,21 @@ export default function OpenRolesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 outline-none"
         />
+        <select
+          value={minFit}
+          onChange={(e) => {
+            setMinFit(e.target.value);
+            setExpanded(null);
+            setRoles([]);
+          }}
+          title="Minimum Kohler fit ranking from visible job evidence"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
+        >
+          <option value="0">Any Fit</option>
+          <option value="25">Possible+</option>
+          <option value="35">Good+</option>
+          <option value="45">Strong</option>
+        </select>
         <select
           value={nicheFilter}
           onChange={(e) => {
@@ -369,10 +507,33 @@ export default function OpenRolesPage() {
                             </span>
                             <div className="min-w-0">
                               <span className="font-semibold text-xs truncate block text-gray-800">{row.companyname}</span>
-                              <span className="text-xs truncate block text-gray-400">{row.city || "Denver metro"}</span>
+                            <span className="text-xs truncate block text-gray-400">{row.city || "Denver metro"}</span>
+                              {row.best_role_title && (
+                                <span className="text-[10px] truncate block text-gray-500 mt-0.5">
+                                  {row.best_role_title}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              title={fitTitle(row)}
+                              className="px-1.5 py-0.5 text-[9px] font-bold bg-blue-100 text-blue-700 rounded-full"
+                            >
+                              {fitLabel(row.best_overall_score)}
+                            </span>
+                            <span
+                              title="PE path score from job wording like EIT, licensed engineer supervision, design calculations, stamped drawings, MEP, civil, water, geotech, or field engineering. This is not a count of PE staff."
+                              className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-700 rounded-full"
+                            >
+                              {pePathLabel(row.best_pe_track_score)}
+                            </span>
+                            <span
+                              title="Known Colorado School of Mines alumni found in existing contact notes or LinkedIn fields. Zero means none captured yet."
+                              className="px-1.5 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-700 rounded-full"
+                            >
+                              Mines {row.mines_alumni_count ?? 0}
+                            </span>
                             <span
                               title={(row.score_reasons || []).join("; ")}
                               className="px-1.5 py-0.5 text-[9px] font-bold bg-emerald-100 text-emerald-700 rounded-full"
@@ -403,6 +564,12 @@ export default function OpenRolesPage() {
                               </div>
                             ) : (
                               <div className="rounded-xl border border-blue-100 bg-blue-50/30 overflow-hidden">
+                                <div className="px-4 py-2 bg-white/70 border-b border-blue-100/70 text-[10px] text-gray-500 flex flex-wrap gap-2">
+                                  <span>{actionLabel(row.recommended_action)}</span>
+                                  {row.best_source && <span>{srcLabel(row.best_source)}</span>}
+                                  {row.best_last_seen_at && <span>seen {relTime(row.best_last_seen_at)}</span>}
+                                  <span>{row.contact_count || 0} contacts · {row.email_count || 0} emails · {row.mines_alumni_count || 0} Mines alumni known</span>
+                                </div>
                                 {displayedRoles.map((role, index) => (
                                   <div key={index} className="px-4 py-3 border-b border-blue-100/70 last:border-b-0">
                                     <div className="flex items-start justify-between gap-3">
@@ -413,6 +580,22 @@ export default function OpenRolesPage() {
                                           {role.salary ? " - " + role.salary : ""}
                                         </p>
                                         <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                          {typeof role.fit_score === "number" && (
+                                            <span
+                                              title={roleFitTitle(role.fit_score, role.explanation_summary)}
+                                              className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white"
+                                            >
+                                              {fitLabel(role.fit_score)}
+                                            </span>
+                                          )}
+                                          {typeof role.pe_track_score === "number" && (
+                                            <span
+                                              title="PE path score from job wording, not a count of PE staff."
+                                              className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100"
+                                            >
+                                              {pePathLabel(role.pe_track_score)}
+                                            </span>
+                                          )}
                                           {role.source && (
                                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-white text-blue-600 border border-blue-100">
                                               {srcLabel(role.source)}
@@ -423,6 +606,9 @@ export default function OpenRolesPage() {
                                           )}
                                           {role.times_seen && role.times_seen > 1 && (
                                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">seen {role.times_seen}x</span>
+                                          )}
+                                          {role.recommended_action && (
+                                            <span className="text-[10px] text-gray-500">{actionLabel(role.recommended_action)}</span>
                                           )}
                                         </div>
                                       </div>

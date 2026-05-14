@@ -221,6 +221,20 @@ async function searchAndSave(companyname: string): Promise<{
 export async function GET(req: NextRequest) {
   const authError = requireCronSecret(req); if (authError) return authError;
 
+  if (process.env.ENABLE_CONTACT_ENRICHMENT !== "true") {
+    return NextResponse.json({
+      skipped: true,
+      reason: "contact enrichment cron disabled; set ENABLE_CONTACT_ENRICHMENT=true to enable RocketReach polling",
+    });
+  }
+
+  if (!RR_API_KEY) {
+    return NextResponse.json(
+      { error: "ROCKETREACH_API_KEY not configured" },
+      { status: 503 }
+    );
+  }
+
   // Get companies that have NO contacts yet
   const { data: allCompanies } = await supabaseAdmin
     .from("companies")

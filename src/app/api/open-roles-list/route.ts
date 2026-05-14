@@ -1,8 +1,10 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { shouldShowJobInCommandCenter } from "@/lib/jobCommandCenter";
 import { getReliableJobUrl } from "@/lib/jobLinks";
+import { scoreJobForKohler } from "@/lib/kohlerFitScore";
 import { computeOutreachScore } from "@/lib/outreachScore";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { isTodayTargetJob, normalizeNiche } from "@/lib/targeting";
+import { normalizeNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -11,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from("job_listings")
-    .select("companyname, company_id, title, location, job_url, apply_url, source, ingest_status, is_relevant, first_seen_at, last_seen_at, times_seen")
+    .select("companyname, company_id, title, location, job_url, apply_url, source, ingest_status, is_relevant, match_score, relevance_reason, first_seen_at, last_seen_at, times_seen")
     .in("ingest_status", ["new", "open"])
     .eq("is_relevant", true);
 
@@ -28,17 +30,7 @@ export async function GET(req: NextRequest) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const prelimJobs = (allJobs || [])
-    .map((job) => ({ ...job, reliable_url: getReliableJobUrl(job) }))
-    .filter((job) =>
-      job.reliable_url && isTodayTargetJob({
-      title: job.title,
-      companyname: job.companyname,
-      location: job.location,
-      is_relevant: job.is_relevant,
-      job_url: job.reliable_url,
-    })
-  );
+  const prelimJobs = (allJobs || []).map((job) => ({ ...job, reliable_url: getReliableJobUrl(job) }));
 
   // Enrich with companies table data where available, then apply niche exclusions.
   const namesForDetails = Array.from(new Set(prelimJobs.map((job) => job.companyname).filter(Boolean)));
@@ -57,16 +49,38 @@ export async function GET(req: NextRequest) {
   const { data: contacts } = namesForDetails.length > 0
     ? await supabaseAdmin
         .from("contacts")
-        .select("companyname, contactname, email")
+        .select("companyname, contactname, title, email, linkedin, notes")
         .in("companyname", namesForDetails)
     : { data: [] };
 
-  const contactMap = new Map<string, { contact_count: number; email_count: number }>();
+  const contactMap = new Map<string, {
+    contact_count: number;
+    email_count: number;
+    mines_alumni_count: number;
+    pe_contact_count: number;
+  }>();
   for (const contact of contacts || []) {
     if (!contact.contactname || contact.contactname === "(no results)") continue;
-    const entry = contactMap.get(contact.companyname) || { contact_count: 0, email_count: 0 };
+    const entry = contactMap.get(contact.companyname) || {
+      contact_count: 0,
+      email_count: 0,
+      mines_alumni_count: 0,
+      pe_contact_count: 0,
+    };
+    const contactText = [
+      contact.contactname,
+      contact.title,
+      contact.linkedin,
+      contact.notes,
+    ].filter(Boolean).join(" ");
     entry.contact_count++;
     if (contact.email) entry.email_count++;
+    if (/\bcolorado\s+school\s+of\s+mines\b|\bmines\s+grad\b|\bmines\s+alum(?:ni|nus|na)?\b/i.test(contactText)) {
+      entry.mines_alumni_count++;
+    }
+    if (/\bprofessional\s+engineer\b|\bp\.?\s*e\.?\b|\blicensed\s+engineer\b/i.test(contactText)) {
+      entry.pe_contact_count++;
+    }
     contactMap.set(contact.companyname, entry);
   }
 
@@ -77,16 +91,39 @@ export async function GET(req: NextRequest) {
     titleMap.set(job.companyname, titles);
   }
 
-  const jobs = prelimJobs.filter((job) =>
-    isTodayTargetJob({
+  const jobs = prelimJobs.filter((job) => {
+    const niche = normalizeNiche(detailMap.get(job.companyname)?.niche, job.companyname, titleMap.get(job.companyname)?.join(" "));
+    const fit = scoreJobForKohler({
       title: job.title,
       companyname: job.companyname,
-      niche: normalizeNiche(detailMap.get(job.companyname)?.niche, job.companyname, titleMap.get(job.companyname)?.join(" ")),
       location: job.location,
+      source: job.source,
+      match_score: job.match_score,
       is_relevant: job.is_relevant,
-      job_url: job.reliable_url,
-    })
-  );
+      relevance_reason: job.relevance_reason,
+    });
+
+    return shouldShowJobInCommandCenter({
+      title: job.title,
+      companyname: job.companyname,
+      niche,
+      location: job.location,
+      source: job.source,
+      match_score: job.match_score,
+      is_relevant: job.is_relevant,
+      relevance_reason: job.relevance_reason,
+      job_url: job.job_url,
+      apply_url: job.apply_url,
+      reliable_url: job.reliable_url,
+    }, fit);
+  });
+
+  const jobsByCompany = new Map<string, typeof jobs>();
+  for (const job of jobs) {
+    const existing = jobsByCompany.get(job.companyname) || [];
+    existing.push(job);
+    jobsByCompany.set(job.companyname, existing);
+  }
 
   const now = new Date();
   const h24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -130,7 +167,12 @@ export async function GET(req: NextRequest) {
     const entry = companyMap.get(name)!;
     const detail = detailMap.get(name);
     const niche = normalizeNiche(detail?.niche, name, titleMap.get(name)?.join(" "));
-    const contactCounts = contactMap.get(name) || { contact_count: 0, email_count: 0 };
+    const contactCounts = contactMap.get(name) || {
+      contact_count: 0,
+      email_count: 0,
+      mines_alumni_count: 0,
+      pe_contact_count: 0,
+    };
     const score = computeOutreachScore({
       tier: detail?.tier,
       niche,
@@ -140,7 +182,23 @@ export async function GET(req: NextRequest) {
       roles: entry.roles,
       contact_count: contactCounts.contact_count,
       email_count: contactCounts.email_count,
+      mines_alumni_count: contactCounts.mines_alumni_count,
     });
+    const scoredJobs = (jobsByCompany.get(name) || []).map((job) => ({
+      job,
+      fit: scoreJobForKohler({
+        title: job.title,
+        companyname: job.companyname,
+        location: job.location,
+        source: job.source,
+        match_score: job.match_score,
+        is_relevant: job.is_relevant,
+        relevance_reason: job.relevance_reason,
+        contact_count: contactCounts.contact_count,
+        email_count: contactCounts.email_count,
+      }),
+    })).sort((a, b) => b.fit.overall_score - a.fit.overall_score);
+    const best = scoredJobs[0];
     return {
       companyname: name,
       tier: detail?.tier || 5,
@@ -149,9 +207,18 @@ export async function GET(req: NextRequest) {
       roles: entry.roles,
       contact_count: contactCounts.contact_count,
       email_count: contactCounts.email_count,
+      mines_alumni_count: contactCounts.mines_alumni_count,
+      pe_contact_count: contactCounts.pe_contact_count,
+      best_role_title: best?.job.title || null,
+      best_overall_score: best?.fit.overall_score || 0,
+      best_pe_track_score: best?.fit.pe_track_score || 0,
+      best_source: best?.job.source || null,
+      best_last_seen_at: best?.job.last_seen_at || best?.job.first_seen_at || null,
+      recommended_action: best?.fit.recommended_action || "monitor",
+      fit_summary: best?.fit.explanation_summary || "",
       ...score,
     };
-  }).sort((a, b) => b.outreach_score - a.outreach_score || b.roles - a.roles || a.companyname.localeCompare(b.companyname));
+  }).sort((a, b) => b.best_overall_score - a.best_overall_score || b.outreach_score - a.outreach_score || b.roles - a.roles || a.companyname.localeCompare(b.companyname));
 
   return NextResponse.json({
     stats: {
