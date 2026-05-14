@@ -31,7 +31,7 @@ All seven tables have Row Level Security enabled and are intended for server-sid
 
 True sandbox backfill completed for `role_fit_scores` with 185 current relevant open jobs.
 
-True sandbox Gmail response tables are present. `sent_messages` contains 33 historical outbound records; `email_threads` and `email_messages` remain empty. Real reply and bounce backfill is blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected through Gmail OAuth.
+True sandbox Gmail response tables are present. `sent_messages` contains 33 historical outbound records; IMAP backfill imported 4 bounced messages into `email_threads` and `email_messages`. OAuth reply backfill is still blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected through Gmail OAuth.
 
 Still proposed for later approval:
 

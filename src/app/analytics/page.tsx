@@ -74,9 +74,15 @@ export default function AnalyticsPage() {
             <Metric label="Letters sent" value={cards.lettersSent} sub="printed/sent letters" />
           </div>
 
-          {cards.repliesReceived === 0 && (
+          {cards.repliesReceived === 0 && cards.bounces === 0 && (
             <div className="mb-5 rounded-2xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm text-amber-900">
               Outbound records are synced, but no matching Gmail replies are imported yet. The current readable Gmail connection is not Kohler's `kwood12802@gmail.com` or `akwood1@mines.edu`; reconnect those mailboxes to populate reply and bounce metrics.
+            </div>
+          )}
+
+          {cards.repliesReceived === 0 && cards.bounces > 0 && (
+            <div className="mb-5 rounded-2xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+              Backfill found bounced emails but no human replies yet. These bounces should be cleaned before more outreach is sent.
             </div>
           )}
 
