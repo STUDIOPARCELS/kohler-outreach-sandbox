@@ -231,3 +231,56 @@
 3. The sync-all route deliberately excludes email/manual sources because
    their existing routes are already wired into cron and the prompt asked
    for additive work.
+
+### Phase 5 — Kohler fit scoring
+
+**Inspected**
+- `src/lib/targeting.ts` (existing `scoreTargetRole`) — a single-number
+  score with reasons; doesn't separate skill/PE/niche/location/Mines.
+
+**Changed**
+- `src/lib/kohlerFitScore.ts` — `scoreJobForKohler(job, profile?)` returns
+  six sub-scores plus `overall_score`, `recommended_action`, and a
+  structured `explanation_json` (`matched_skills`, `pe_signals`,
+  `location_band`, `niche_match`, `seniority_flag`, `notes`). Defaults
+  encode Kohler's profile (BSME / EIT, Mines alumnus, Lakewood ZIP,
+  the SolidWorks / FEA / CFD / CNC / DFM / FMEA / MEP skill list).
+- `supabase/migrations/0002_role_fit_scores.sql` — new
+  `role_fit_scores` table with sub-score columns, `recommended_action`,
+  `explanation_json`, `unique (job_id, candidate_profile_id)`, plus
+  three indexes (overall desc, action, pe desc). Also defensively seeds
+  `candidate_profile.id = 1` if the table is present.
+- `src/app/api/jobs/rescore/route.ts` — POST `{ job_id | job_ids[] |
+  all_relevant }` that scores in-memory and upserts into
+  `role_fit_scores`. Degrades to a useful response if the table is
+  missing, so it works pre-migration too.
+- `scripts/kohler-fit-score.test.mjs` — 10 cases covering:
+  entry-level Denver MEP, senior out-of-state, mid-tier manufacturing,
+  Mines explicit mention, remote location band, and manager title.
+
+**Tests / checks**
+- `node scripts/kohler-fit-score.test.mjs` → 10 passed, 0 failed.
+- `npx tsc --noEmit` → clean.
+
+**Result**
+- Every job in `job_listings` can be scored on demand. `role_fit_scores`
+  is upserted by `(job_id, candidate_profile_id)` so re-runs are safe.
+- Recommended actions enumerate the eight values requested in the
+  prompt: `apply_now`, `email_engineering_manager`, `email_recruiter`,
+  `alumni_outreach`, `pe_track_outreach`, `physical_letter`, `monitor`,
+  `skip`.
+
+**Remaining work**
+- Phase 6 wires `role_fit_scores` into the Open Roles UI for sort,
+  filter, recommended-action button, and explanation tooltip.
+- Phase 8 templates will read `recommended_action` to pick the right
+  outreach copy.
+
+**Assumptions made**
+1. PE-track signals are detected on the lower-cased combined corpus
+   (title + body + description). False positives like " p.e. " are
+   intentional — Kohler's pipeline favors recall over precision here.
+2. The default skill list mirrors the prompt verbatim. Real candidate
+   profile rows can override `skills`, `pe_track`, `is_mines_alumni`.
+3. `recommended_action="skip"` is set for senior_only roles below
+   overall=60; everything else falls through to a softer recommendation.
