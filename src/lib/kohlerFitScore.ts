@@ -5,6 +5,13 @@
 // scoring logic is exported so callers can score in-memory rows (e.g. on
 // the Open Roles page) without writing to `role_fit_scores`.
 
+// Bump on every algorithm change. Old rows are preserved as historical
+// record (UNIQUE on (job_listing_id, score_version) keeps them safe).
+// v1: original Phase 5 algorithm (273 rows in production from 2026-05-14).
+// v2: same algorithm, ships via the rescore route; lays groundwork for
+//     future tuning passes (v3, v4) without touching v1 history.
+export const SCORE_VERSION = "kohler-fit-v2";
+
 export type RecommendedAction =
   | "apply_now"
   | "email_engineering_manager"
@@ -163,13 +170,33 @@ function corpus(job: JobInputForScoring): string {
     .toLowerCase();
 }
 
+function escapeRegex(s: string): string {
+  // Standard regex-metacharacter escape. Earlier implementation had a
+  // malformed character class that crashed on "c++" → "/\bc++\b/" is
+  // invalid because + is unescaped.
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function matchedSkills(skills: string[], text: string): string[] {
   const found: string[] = [];
   for (const skill of skills) {
-    const needle = skill.toLowerCase();
+    const needle = skill.toLowerCase().trim();
     if (!needle) continue;
-    const re = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b`, "i");
-    if (re.test(text)) found.push(skill);
+    const escaped = escapeRegex(needle);
+    // \b only sits between a word char and a non-word char, so skills
+    // that begin/end with non-word characters (c++, .net, etc.) need
+    // lookarounds against word chars instead of \b.
+    const startsWithWord = /^[\w]/.test(needle);
+    const endsWithWord = /[\w]$/.test(needle);
+    const prefix = startsWithWord ? "\\b" : "(?<![\\w])";
+    const suffix = endsWithWord ? "\\b" : "(?![\\w])";
+    try {
+      const re = new RegExp(`${prefix}${escaped}${suffix}`, "i");
+      if (re.test(text)) found.push(skill);
+    } catch {
+      // Any pattern that still won't compile gets silently skipped —
+      // skill match is best-effort, not a correctness requirement.
+    }
   }
   return found;
 }

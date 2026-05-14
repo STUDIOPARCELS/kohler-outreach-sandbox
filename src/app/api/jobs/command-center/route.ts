@@ -11,6 +11,7 @@ import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   scoreJobForKohler,
+  SCORE_VERSION,
   type RoleFitScore,
 } from "@/lib/kohlerFitScore";
 
@@ -23,19 +24,22 @@ interface JobRow {
   title: string;
   location: string | null;
   source: string | null;
-  niche: string | null;
-  body_text: string | null;
-  description: string | null;
+  summary: string | null; // long-form text (was body_text/description)
+  niche?: string | null; // hydrated from companies after the query
   job_url: string | null;
   apply_url: string | null;
-  source_url: string | null;
   match_score: number | null;
   is_relevant: boolean | null;
   relevance_reason: string | null;
   first_seen_at: string | null;
   last_seen_at: string | null;
   ingest_status: string | null;
-  closed_at: string | null;
+  // Compatibility shims for downstream code that still expects the old
+  // names — both alias to summary so downstream score calls work.
+  body_text?: string | null;
+  description?: string | null;
+  source_url?: string | null;
+  closed_at?: string | null;
 }
 
 interface CompanyRow {
@@ -47,7 +51,7 @@ interface CompanyRow {
 }
 
 interface FitRow {
-  job_id: number;
+  job_listing_id: string;
   skill_fit_score: number;
   entry_level_score: number;
   pe_track_score: number;
@@ -93,15 +97,21 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 250), 1000);
   const sortParam = (url.searchParams.get("sort") ?? "overall").toLowerCase();
 
+  // Only request columns that actually exist on live job_listings.
+  // Niche lives on companies (hydrated below). Long-form text is in
+  // `summary`, not body_text/description. source_url and closed_at
+  // are not yet on this table (Session D adds them).
   const jobs = await selectMaybe<JobRow>(
     supabaseAdmin
       .from("job_listings")
       .select(
-        "id, companyname, company_id, title, location, source, niche, body_text, description, job_url, apply_url, source_url, match_score, is_relevant, relevance_reason, first_seen_at, last_seen_at, ingest_status, closed_at"
+        "id, companyname, company_id, title, location, source, summary, job_url, apply_url, match_score, is_relevant, relevance_reason, first_seen_at, last_seen_at, ingest_status"
       )
       .eq("is_relevant", true)
       .neq("ingest_status", "closed")
-      .order("created_at", { ascending: false })
+      // job_listings has no `created_at` — use received_at as the
+      // chronological proxy.
+      .order("received_at", { ascending: false, nullsFirst: false })
       .limit(limit)
   );
 
@@ -122,21 +132,28 @@ export async function GET(req: NextRequest) {
 
   const companyById = new Map<number, CompanyRow>(companies.map((c) => [c.id, c]));
 
-  const jobIds = jobs.map((j) => j.id);
+  // Live role_fit_scores has job_listing_id (text), NOT job_id (int).
+  // Filter by current score_version so v1 historical rows don't compete
+  // with the v2 production scores.
+  const jobIdStrings = jobs.map((j) => String(j.id));
   const fitScores =
-    jobIds.length > 0
+    jobIdStrings.length > 0
       ? await selectMaybe<FitRow>(
           supabaseAdmin
             .from("role_fit_scores")
             .select(
-              "job_id, skill_fit_score, entry_level_score, pe_track_score, niche_score, location_score, mines_signal_score, overall_score, recommended_action, explanation_json"
+              "job_listing_id, skill_fit_score, entry_level_score, pe_track_score, niche_score, location_score, mines_signal_score, overall_score, recommended_action, explanation_json"
             )
-            .in("job_id", jobIds)
+            .eq("score_version", SCORE_VERSION)
+            .in("job_listing_id", jobIdStrings)
         )
       : [];
-  const fitByJob = new Map<number, FitRow>(
-    fitScores.map((row) => [row.job_id, row])
-  );
+  // Build lookup by integer job id for the rest of the route's logic.
+  const fitByJob = new Map<number, FitRow>();
+  for (const row of fitScores) {
+    const id = Number((row as unknown as { job_listing_id: string }).job_listing_id);
+    if (Number.isFinite(id)) fitByJob.set(id, row);
+  }
 
   const contacts = companyNames.length > 0
     ? await selectMaybe<{ companyname: string; full_name: string | null; title: string | null; email: string | null }>(
@@ -285,7 +302,7 @@ export async function GET(req: NextRequest) {
       companyRollups.set(key, {
         companyname: row.job.companyname,
         city: row.company?.city ?? null,
-        niche: row.company?.niche ?? row.job.niche,
+        niche: row.company?.niche ?? row.job.niche ?? null,
         careers_url: row.company?.careers_url ?? null,
         total_open_roles: 1,
         best_overall_score: overall,
