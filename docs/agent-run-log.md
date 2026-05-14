@@ -478,3 +478,77 @@
 3. `applications` rows mark the linked outreach action as 'sent' to
    keep the funnel coherent — adjustable later if Kohler wants
    "applied without outreach" tracked separately.
+
+### Phase 9 — Gmail send/draft + reply backfill
+
+**Inspected**
+- `src/lib/googleAuth.ts` — `getAuthedGmailClient()` already loads the
+  Gmail account row, refreshes the access token, and returns a
+  `googleapis` Gmail client. Phase 9 wraps it for both draft creation
+  and reply backfill.
+- `src/app/api/ingest/ziprecruiter/route.ts` — confirmed the same
+  Gmail client style is used for inbound history sync.
+
+**Changed**
+- `supabase/migrations/0005_email_messages.sql` — additive tables
+  `sent_messages`, `email_threads`, `email_messages` plus indexes on
+  thread_id, contact_email, classification, direction.
+- `src/lib/gmail/replies.ts` — `classifyReply({subject, snippet,
+  body_text, from_email})` returns
+  `{classification, confidence, signals}` over nine categories
+  (positive_reply, recruiter_screen, apply_online, referral,
+  needs_follow_up, rejection, bounce, out_of_office, auto_reply,
+  unknown). Sender-domain hints add weight for ATS / no-reply senders.
+- `src/lib/gmail/draft.ts` — `dispatchGmailMessage({message, mode})`
+  handles `draft` / `send` / `dry_run` modes. `pickSendMode` returns
+  `send` only when explicit + draft is `human_approved` AND
+  `ENABLE_LIVE_SEND === "true"`. Builds proper multipart MIME with
+  RFC 2047-encoded subject and base64url payload.
+- `src/app/api/gmail/create-draft/route.ts` — POST `{ draft_id, mode? }`
+  pulls the draft row, dispatches via Gmail API, updates
+  `email_drafts.status` (`gmail_drafted` or `sent`), and inserts a
+  `sent_messages` row. Updates the linked outreach action to `sent`
+  on a real send.
+- `src/app/api/gmail/send-approved/route.ts` — convenience wrapper
+  that hard-fails with 403 unless `ENABLE_LIVE_SEND=true`.
+- `src/app/api/gmail/backfill-responses/route.ts` — POST `{ start_date,
+  end_date, candidate_email, query, max_messages, dry_run }` runs the
+  Gmail message search, dedupes by `gmail_message_id`, classifies each
+  message, links replies to existing `email_drafts.gmail_thread_id`,
+  and writes `email_threads` + `email_messages`. Marks threads
+  `needs_action=true` for positive_reply / recruiter_screen /
+  needs_follow_up / referral.
+- `src/app/api/gmail/sync-incremental/route.ts` — cron-friendly
+  wrapper that calls backfill-responses with `newer_than:7d` and
+  `max_messages=50`.
+- `scripts/reply-classification.test.mjs` — 11 cases across all
+  categories.
+
+**Tests / checks**
+- `node scripts/reply-classification.test.mjs` → 11 passed, 0 failed.
+- `npx tsc --noEmit` → clean.
+
+**Result**
+- Drafts created via `/api/outreach/create-draft` can now be promoted
+  to Gmail drafts in one POST. Live send is blocked unless the
+  ENABLE_LIVE_SEND gate is set AND the draft is human_approved.
+- Historical Gmail traffic can be backfilled into `email_threads` /
+  `email_messages` with classifications, so the response-rate
+  dashboard (Phase 10) has data to render.
+
+**Remaining work**
+- A future polish: store the full body (not just snippet) when
+  classification confidence is below a threshold so a human reviewer
+  can re-read the message. Out of scope for this commit.
+- A scheduled cron entry in `vercel.json` can call
+  `/api/gmail/sync-incremental` once a day; left for the production
+  promotion plan to add.
+
+**Assumptions made**
+1. `ENABLE_LIVE_SEND` is treated as case-insensitive `"true"` — any
+   other value (including `"True"` is fine, but `"1"` is not).
+2. `email_threads.gmail_thread_id` is unique. Re-runs of the backfill
+   route therefore update the existing row instead of inserting.
+3. Reply classification is a heuristic by design; the dashboard can
+   later switch to an LLM-backed scorer using the same
+   `classifyReply` shape so the call sites don't change.
