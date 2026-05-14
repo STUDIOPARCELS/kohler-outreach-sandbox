@@ -342,3 +342,70 @@
    the UI snappy; the route caps results at 1000 jobs.
 3. "Rescore all" runs in-memory + persistence under one button; if
    `role_fit_scores` is missing the route degrades gracefully.
+
+### Phase 7 — RocketReach contact intelligence
+
+**Inspected**
+- Existing routes that call RocketReach directly: `find-email`,
+  `find-leads`, `backfill-emails`, `batch-research`, `research-contacts`,
+  `cron/research`. Each builds its own request and parses its own
+  response. The Phase 7 work adds a typed adapter without touching
+  these legacy paths.
+
+**Changed**
+- `src/lib/contactProviders/types.ts` — `NormalizedContact`,
+  `ContactProvider`, `ContactSearchInput`, `ContactSearchResult`.
+  Enumerates `ContactRoleType` and `ContactSeniority`.
+- `src/lib/contactProviders/heuristics.ts` — `categorizeRoleType`,
+  `categorizeSeniority`, `detectMinesAlumni`, `detectPossiblePE`,
+  `emailConfidenceFromGrade`, `emailConfidenceFromValidation`.
+- `src/lib/contactProviders/rocketreach.ts` — RocketReach v2 search
+  adapter that builds the `current_employer` + `current_title` query
+  for the prompt's target titles, then runs the heuristics on each
+  profile. Returns `[]` with a clean error when the API key is missing.
+- `src/lib/contactProviders/mock.ts` — deterministic 4-person seed
+  (mix of EM/Director/Principal/Recruiter, mix of Mines/PE flags) for
+  use in tests and pre-credentials environments.
+- `src/lib/contactProviders/registry.ts` — `getContactProvider()`
+  prefers RocketReach when configured; falls back to mock.
+- `supabase/migrations/0003_contacts_enrichment.sql` — additive
+  columns on `contacts`: `role_type`, `seniority`, `department`,
+  `is_mines_alumni`, `is_possible_pe`, `email_confidence`,
+  `linkedin_url`, `provider_person_id`, `provider_source`,
+  `verified_at`, `last_enriched_at`. Plus indexes.
+- `src/app/api/contacts/enrich-company/route.ts` — POST `{
+  companyname | company_id, domain?, role_targets?, limit?, dry_run?,
+  prefer_provider? }` that runs the active provider, dedupes by
+  `provider_person_id` → `(companyname, email)` → `(companyname,
+  full_name)`, and upserts.
+- `scripts/contact-heuristics.test.mjs` — 21 cases for role,
+  seniority, Mines, and PE detection.
+
+**Tests / checks**
+- `node scripts/contact-heuristics.test.mjs` → 21 passed, 0 failed.
+- `npx tsc --noEmit` → clean (after extracting `CompanyRow` type for
+  the same widening issue Phase 4 ran into).
+
+**Result**
+- Any company in the sandbox can now be enriched through one route.
+  Without RocketReach credentials the mock fills in deterministic
+  seed contacts so Phases 8 and 10 always have something to render.
+- The existing direct-RocketReach routes remain untouched and
+  authoritative for their flows.
+
+**Remaining work**
+- Phase 8 templates pick the best contact per recommended action
+  using `role_type`, `is_mines_alumni`, and `is_possible_pe`.
+- A future cleanup can migrate the legacy RocketReach calls onto the
+  new adapter so they share the heuristics, but that's out of scope
+  here.
+
+**Assumptions made**
+1. RocketReach Person Search v2 endpoint shape (`POST /api/search`
+   with `query.current_employer/current_title`, `page_size`) is
+   stable. The existing routes call it the same way.
+2. "Best email" is the one with the highest grade (verified > A > B
+   > C > D > F), matching how the existing routes treat grades.
+3. PE detection is intentionally lenient — a title like "John, P.E."
+   is enough; the UI labels these `is_possible_pe` rather than
+   `is_pe` to acknowledge the recall/precision tradeoff.
