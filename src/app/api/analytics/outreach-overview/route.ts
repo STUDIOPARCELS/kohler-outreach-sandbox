@@ -161,9 +161,22 @@ export async function GET(req: NextRequest) {
       });
 
       // Domain match for less-confident attribution (e.g. someone other
-      // than the original contact replies from same domain).
+      // than the original contact replies from same domain). Skip
+      // personal-email domains — too generic to attribute reliably.
       const domain = contactKey.split("@")[1];
-      if (domain) {
+      const PERSONAL_DOMAINS = new Set([
+        "gmail.com",
+        "yahoo.com",
+        "hotmail.com",
+        "outlook.com",
+        "aol.com",
+        "icloud.com",
+        "me.com",
+        "msn.com",
+        "live.com",
+        "mac.com",
+      ]);
+      if (domain && !PERSONAL_DOMAINS.has(domain)) {
         for (const [k, msgs] of Array.from(inboundByEmail.entries())) {
           if (k === contactKey) continue;
           if (k.split("@")[1] !== domain) continue;

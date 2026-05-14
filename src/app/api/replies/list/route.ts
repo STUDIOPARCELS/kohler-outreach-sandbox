@@ -20,6 +20,64 @@ export async function GET(req: NextRequest) {
   const needsActionOnly = url.searchParams.get("needs_action_only") === "true";
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 100), 500);
 
+  const showNoise = url.searchParams.get("include_noise") === "true";
+
+  // Common noise patterns: marketing/notification/job-board senders
+  // that are not real outreach responses. Default-hidden; pass
+  // ?include_noise=true to see them.
+  // Sender patterns that almost always indicate non-outreach noise
+  // (marketing, automation, transactional). Conservative — false
+  // negatives (real reply hidden) are worse than false positives
+  // (noise leaking through), so each pattern targets known offenders.
+  const NOISE_PATTERNS = [
+    // Standard automation prefixes
+    "noreply@",
+    "no-reply@",
+    "donotreply@",
+    "do-not-reply@",
+    "postmaster@",
+    "mailer-daemon@",
+    "alerts@",
+    "newsletter@",
+    "marketing@",
+    "info@hire",
+    "reply_ok@",
+    // ATS / job-board automation
+    "@linkedin.com",
+    "@indeed.com",
+    "@glassdoor.com",
+    "@dice.com",
+    "@ziprecruiter.com",
+    "@email.ihire.com",
+    "@alerts.jobot.com",
+    "@echo.newtonsoftware.com",
+    "@notify.greenhouse.io",
+    "@notify.lever.co",
+    "@accounts.google.com",
+    // Marketing email subdomains
+    "@em.",
+    "@email.",
+    "@mail.",
+    "@e.",
+    "@notification.",
+    "@notifications.",
+    "@mg.",
+    "@updates.",
+    "@news.",
+    // Specific retail / consumer noise observed in inbox
+    "@robinhood.com",
+    "@officedepot.com",
+    "@worldmarket.com",
+    "@nordstrom.com",
+    "@christysports.com",
+    "@uber.com",
+    "@walgreens.com",
+    "@imdb.com",
+    "@redditmail.com",
+    "@notification.capitalone.com",
+    "@em.officedepot.com",
+  ];
+
   let messagesQuery = supabaseAdmin
     .from("email_messages")
     .select(
@@ -27,7 +85,7 @@ export async function GET(req: NextRequest) {
     )
     .eq("direction", "inbound")
     .order("internal_date", { ascending: false, nullsFirst: false })
-    .limit(limit);
+    .limit(showNoise ? limit : Math.min(limit * 5, 1000));
 
   if (classification) {
     messagesQuery = messagesQuery.eq("classification", classification);
@@ -98,12 +156,71 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  function isNoise(fromEmail: string | null): boolean {
+    if (!fromEmail) return false;
+    const lower = fromEmail.toLowerCase();
+    return NOISE_PATTERNS.some((p) => lower.includes(p));
+  }
+
+  // Sender domains that scream "marketing list" — hide ALWAYS, even
+  // when the classifier mislabels them as bounce/rejection.
+  const HARD_NOISE_DOMAIN_FRAGMENTS = [
+    "@e.",
+    "@em.",
+    "@email.",
+    "@mail.",
+    "@news.",
+    "@updates.",
+    "@notifications.",
+    "@notification.",
+    "@em",
+    "@redditmail.com",
+    "@robinhood.com",
+    "@uber.com",
+    "@walgreens.com",
+    "@imdb.com",
+    "@officedepot.com",
+    "@worldmarket.com",
+    "@nordstrom.com",
+    "@christysports.com",
+    "@invitations.linkedin.com",
+    "@linkedin.com",
+    "@accounts.google.com",
+  ];
+  function isHardNoise(fromEmail: string | null): boolean {
+    if (!fromEmail) return false;
+    const lower = fromEmail.toLowerCase();
+    return HARD_NOISE_DOMAIN_FRAGMENTS.some((p) => lower.includes(p));
+  }
+
+  // Classifications where the sender's automation status doesn't matter
+  // (a real bounce IS a bounce regardless of being from postmaster@) —
+  // BUT marketing-list senders are still always hidden via isHardNoise.
+  const ALWAYS_SHOW_UNLESS_HARD_NOISE = new Set([
+    "bounce",
+    "rejection",
+    "out_of_office",
+    "auto_reply",
+  ]);
+
   const enriched = rows
     .map((r) => ({
       ...r,
+      is_noise: isNoise(r.from_email),
       thread: r.email_thread_id ? threadMap.get(r.email_thread_id) ?? null : null,
     }))
-    .filter((r) => (needsActionOnly ? r.thread?.needs_action : true));
+    .filter((r) => {
+      const cls = r.classification ?? "unknown";
+      const hardNoise = isHardNoise(r.from_email);
+      const exemptFromSoftNoise = ALWAYS_SHOW_UNLESS_HARD_NOISE.has(cls);
+      // Hard noise is always filtered (unless include_noise=true)
+      if (!showNoise && hardNoise) return false;
+      // Soft noise is filtered EXCEPT for the always-show classifications
+      if (!showNoise && r.is_noise && !exemptFromSoftNoise) return false;
+      if (needsActionOnly && !r.thread?.needs_action) return false;
+      return true;
+    })
+    .slice(0, limit);
 
   // Classification breakdown (across the unfiltered set) so the page can
   // render a tab-bar with counts per category.
