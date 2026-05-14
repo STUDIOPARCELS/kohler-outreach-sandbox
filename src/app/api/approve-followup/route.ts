@@ -114,10 +114,14 @@ export async function POST(req: NextRequest) {
       auth: { user: gmailUser, pass: gmailPass },
     });
 
+    // BCC Kohler's own Gmail so the IMAP backfill captures the
+    // outbound (provenance, body, attachments). Recipient never sees
+    // the BCC; replies still go to Reply-To.
     const info = await transporter.sendMail({
       from: `"Kohler Wood" <${gmailUser}>`,
       replyTo: `"Kohler Wood" <${replyTo}>`,
       to,
+      bcc: gmailUser,
       subject: subject || "Following up — Mechanical Engineer, EIT",
       html: htmlBody,
       attachments,

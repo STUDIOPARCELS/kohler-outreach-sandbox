@@ -157,10 +157,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // BCC Kohler's own Gmail on every send so the IMAP backfill
+    // captures a complete record of every outbound message
+    // (provenance, body, attachments, timestamp). The recipient
+    // never sees the BCC. Replies still go to Reply-To.
     const info = await transporter.sendMail({
       from: `"Kohler Wood" <${gmailUser}>`,
       replyTo: `"Kohler Wood" <${replyTo}>`,
       to,
+      bcc: gmailUser,
       subject: subject || "Mechanical Engineer — Colorado School of Mines, EIT",
       html: htmlBody,
       attachments,
