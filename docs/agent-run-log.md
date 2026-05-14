@@ -599,3 +599,117 @@
    inbound classifications equal to `needs_follow_up`.
 3. Migration-status checks treat "table exists with 0 rows" as
    `applied`; only `does not exist` errors mark it `missing`.
+
+### Phase 11 — Verification & self-evaluation
+
+**Inspected**
+- All test scripts under `scripts/*.test.mjs`.
+- Output of `npx tsc --noEmit`.
+- Each Phase 2-10 commit's deliverables against the prompt's
+  acceptance criteria.
+
+**Changed**
+- `docs/verification-report.md` — full report. Q1/Q2/Q3 working,
+  Q4/Q5 partial. Includes the next-improvement column and the
+  migration/env requirements for promoting "partial" → "working".
+
+**Tests / checks**
+- All seven test suites: 94 passes / 0 failures (10 + 19 + 14 + 10 +
+  21 + 9 + 11).
+- `npx tsc --noEmit` → clean.
+- `next build` deliberately not run — requires real Supabase env
+  vars not set in this sandbox.
+
+**Result**
+- Sandbox has end-to-end paths from job ingest → fit scoring → contact
+  enrichment → draft → Gmail draft → reply backfill → metrics.
+- Three of five product questions are fully answered today; the
+  remaining two are partial because (a) legacy contact routes still
+  write the old contact shape and (b) one-click "create draft" from
+  the command-center isn't wired in the UI yet.
+
+### Phase 12 — Production promotion plan
+
+**Inspected**
+- All five new migrations to confirm they're additive.
+- All new env vars referenced by the new code.
+- All new and modified routes / pages.
+
+**Changed**
+- `docs/production-promotion-plan.md` — full release path. Includes
+  per-commit table, migration order, env-var requirements, smoke-test
+  checklist, data-validation queries, rollback path, and the open
+  follow-ups for the next agent run.
+
+**Result**
+- A release manager can apply migrations 0001-0005, set the new env
+  vars (none required), deploy, run the eight-step smoke checklist,
+  then choose when (if at all) to flip `ENABLE_LIVE_SEND=true`.
+- All work is reversible without data loss.
+
+### Final session summary
+
+**Completed work**
+- 11 commits across Phases 1-12 (Phase 1+2 combined).
+- 5 additive Supabase migrations.
+- 15 new API routes.
+- 2 new pages (`/command-center`, `/dashboard`) plus global Nav mount.
+- Job-source adapter framework (Greenhouse, Lever, Ashby + manual,
+  mock).
+- Contact provider framework (RocketReach + mock).
+- Gmail draft / send / backfill / classification.
+- 7 test suites, 94 cases, all passing.
+- `getRuntimeEnvironment()` + diagnostics route + always-on env
+  badge.
+
+**Files changed**
+- 23 new TypeScript files, 5 new SQL migrations, 7 new test scripts,
+  5 docs (`sandbox-current-state`, `architecture`, `agent-run-log`,
+  `verification-report`, `production-promotion-plan`).
+- Modified: `package.json` (typecheck/test scripts), `src/app/layout.tsx`
+  (mounted Nav + EnvironmentBadge), `src/components/Nav.tsx` (added
+  Dashboard + Command-center links).
+
+**Checks run**
+- `npx tsc --noEmit` (clean).
+- All 7 `.test.mjs` suites (94/94 passing).
+
+**Remaining gaps (handed off to next session)**
+- Migrate legacy `/api/find-email`, `/api/research-contacts`,
+  `/api/cron/research` onto `getContactProvider()`.
+- Wire one-click "Create draft" buttons in command-center rows.
+- Add per-company funnel timeline to dashboard.
+- Hook `persistNormalizedJobs` to score jobs on insert.
+- Add `vercel.json` cron entry for `/api/gmail/sync-incremental`.
+
+**Next Codex prompt**
+
+```text
+Continue Phase 13+ work on kohler-outreach-claude-sandbox. Specifically:
+
+1. Migrate the three legacy RocketReach call sites to use
+   `getContactProvider()` from src/lib/contactProviders/registry.ts so
+   role_type / is_mines_alumni / is_possible_pe get populated everywhere.
+   Files to touch: src/app/api/find-email/route.ts,
+   src/app/api/research-contacts/route.ts, src/app/api/cron/research/route.ts.
+
+2. Add a per-company panel that lists scored jobs, surfaces recommended
+   action, and offers one-click "Find contacts" / "Create draft" buttons
+   that call /api/contacts/enrich-company and /api/outreach/create-draft.
+   Land it on src/app/company/[companyname]/page.tsx alongside the
+   existing letter draft.
+
+3. Hook src/lib/jobIngest/persist.ts to upsert role_fit_scores for every
+   new job_listings insert, so the command-center always has fresh
+   scores without a manual rescore.
+
+4. Add vercel.json cron entry for /api/gmail/sync-incremental at
+   "30 13 * * *" (7:30 AM MDT) once Phase 9 backfill confirms
+   classification quality on real mail.
+
+5. Add the per-company funnel timeline to /dashboard
+   (jobs → contacts → drafts → sent → reply → application).
+
+Keep everything additive. Maintain docs/agent-run-log.md, the
+verification report, and the production promotion plan as you go.
+```
