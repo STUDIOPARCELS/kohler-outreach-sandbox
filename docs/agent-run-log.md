@@ -284,3 +284,61 @@
    profile rows can override `skills`, `pe_track`, `is_mines_alumni`.
 3. `recommended_action="skip"` is set for senior_only roles below
    overall=60; everything else falls through to a softer recommendation.
+
+### Phase 6 — Open Roles command center UI
+
+**Inspected**
+- `src/app/open-roles/page.tsx` — large existing page with its own state
+  shape; touching it directly would risk regressions, so the command
+  center ships as a *new* page at `/command-center` with a Nav link.
+- `src/components/Nav.tsx` — existed but wasn't mounted by the layout.
+
+**Changed**
+- `src/app/api/jobs/command-center/route.ts` — server route returning
+  per-company roll-ups + per-job rows, joined with `role_fit_scores`,
+  `contacts`, and `reachout_company_inserts`. Inline-scores any job
+  missing a persisted fit row so the page works pre-Phase-5 migration.
+  Sort modes: `overall`, `pe`, `recent`.
+- `src/app/command-center/page.tsx` — client page with:
+  - four KPI tiles (open roles, companies, PE-track signals,
+    persisted fit coverage);
+  - sort + recommended-action filter + companies/jobs view toggle;
+  - per-company cards showing best role, recommended action,
+    overall + PE scores, contacts (count + email count + best),
+    outreach status (drafts/printed/sent), last-seen date, and
+    quick links to `/company/[name]` and the careers URL;
+  - per-job table with title, company, location, source, scores,
+    explanation notes, and an external open link;
+  - "Rescore all" button that POSTs to `/api/jobs/rescore` and
+    refreshes the data.
+- `src/components/Nav.tsx` — added Command center link as the first
+  entry; reordered remaining links.
+- `src/app/layout.tsx` — mounted `<Nav />` so the new page (and the
+  existing pages) are now navigable from anywhere.
+
+**Tests / checks**
+- `npx tsc --noEmit` → clean. Fixed a Supabase `.from(...).select(...)`
+  thenable type issue by widening the helper to `PromiseLike<...>`.
+
+**Result**
+- `/command-center` answers the five product questions on one screen:
+  - which target companies have new roles (per-company roll-up);
+  - which roles fit Kohler best (overall + PE sort);
+  - which roles support PE-track (PE filter + score column);
+  - who is the best person to contact (contact summary on each card);
+  - what is the next best action (recommended-action pill).
+
+**Remaining work**
+- The command-center action buttons currently link out — the
+  "Find contacts" / "Create draft" actions become real in Phases 7-8.
+- The existing `/open-roles` page is unchanged; it can be retired once
+  Kohler confirms the new page covers his daily flow.
+
+**Assumptions made**
+1. Mounting Nav globally is desirable. Existing pages were rendering
+   without it, so they pick up a header for the first time. That is a
+   visible change and worth flagging in the production promotion plan.
+2. Sorting/filtering happens client-side over the same payload to keep
+   the UI snappy; the route caps results at 1000 jobs.
+3. "Rescore all" runs in-memory + persistence under one button; if
+   `role_fit_scores` is missing the route degrades gracefully.

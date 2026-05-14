@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const links = [
+  { href: "/command-center", label: "Command center" },
+  { href: "/open-roles", label: "Open Roles" },
   { href: "/outreach-list", label: "Outreach List" },
   { href: "/queue", label: "Queue" },
   { href: "/template", label: "Template" },
-  { href: "/open-roles", label: "Open Roles" },
 ];
 
 export default function Nav() {

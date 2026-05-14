@@ -3,6 +3,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { DarkModeProvider, DarkModeToggle } from "@/components/DarkMode";
 import EnvironmentBadge from "@/components/EnvironmentBadge";
+import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
   title: "Kohler Wood — Outreach Engine",
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <DarkModeProvider>
           <ToastProvider>
+            <Nav />
             <main className="mx-auto px-3 sm:px-8 lg:px-16 py-4 sm:py-6">{children}</main>
             <DarkModeToggle />
             <EnvironmentBadge />
