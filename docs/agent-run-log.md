@@ -100,3 +100,66 @@
    aliases; documented in production-promotion-plan.md.
 3. The badge can rely on `fetch("/api/runtime-diagnostics")` since the route
    is same-origin and wide open by design (read-only, no secrets returned).
+
+### Phase 3 — Stabilize job ingestion + provenance
+
+**Inspected**
+- `src/app/api/ingest/ziprecruiter/route.ts` (parser v5, body-based) —
+  found that `job_listings` already carries `source`, `external_job_key`,
+  `gmail_message_id`, `received_at`, `first_seen_at`, `last_seen_at`,
+  `times_seen`, `is_relevant`, `match_score`, `relevance_reason`,
+  `raw_payload`, `ingest_status`, and `parser_version`.
+- `src/app/api/ingest/careers/route.ts` (parser v1, careers/USAJOBS/Built In)
+  — same set of columns, plus `closeExistingJob` that flips
+  `ingest_status` to `closed` without a timestamp.
+
+**Changed**
+- Created `supabase/migrations/0001_provenance.sql` (additive only):
+  - new `job_sources` registry table seeded with the 18 source_types in
+    use (ziprecruiter_email, governmentjobs_*, builtin_colorado, usajobs,
+    manual_seed, greenhouse/lever/ashby/workday/icims/smartrecruiters/
+    workable/jsonld/career_links, dice/blueorigin/ball);
+  - new `sync_runs` table that supersedes `job_ingest_runs` for adapter
+    use (job_ingest_runs preserved untouched);
+  - additive columns on `job_listings`: `source_url`, `apply_url`,
+    `normalized_hash`, `closed_at`;
+  - additive indexes on `(source, external_job_key)`, `normalized_hash`,
+    `closed_at`;
+  - one-time backfill that copies `job_url` into `apply_url` where null.
+- Created `src/lib/jobIngest/normalization.ts` — exported
+  `normalizeCompanyName`, `slugify`, `buildZipRecruiterContentKey`,
+  `buildGovJobKey`, `canonicalizeUrl`, `normalizedHash`,
+  `buildExternalJobKey`. These are 1:1 with the in-route helpers, so future
+  Phase 4 adapters can reuse them and a refactor of the ingest routes can
+  delete the duplicates without behavior change.
+- Created `src/lib/syncRuns.ts` — `startSyncRun`, `finishSyncRun`,
+  `errorSyncRun`. Falls back to a one-time warning when the
+  `sync_runs` table doesn't exist yet, so adapters keep working in
+  pre-migration environments.
+- Created `scripts/normalization.test.mjs` — 19 cases covering company
+  normalization, slugify, ZipRecruiter content keys, URL canonicalization,
+  normalized hash stability, and external-key fallback.
+
+**Tests / checks**
+- `node scripts/normalization.test.mjs` → 19 passed, 0 failed.
+- `npx tsc --noEmit` → exit 0, no errors.
+
+**Result**
+- Migration ready. Once applied, `sync_runs` becomes available for
+  Phase 4 adapters and the diagnostics route auto-switches to it.
+- All future adapter code can call `startSyncRun` / `finishSyncRun`
+  without depending on the legacy `job_ingest_runs` shape.
+
+**Remaining work**
+- The existing ZipRecruiter route still writes to `job_ingest_runs`. That
+  is intentional — Phase 12 will document the swap once the migration
+  has shipped to production. New Phase 4 adapters use `sync_runs` from
+  the start.
+
+**Assumptions made**
+1. Migration is additive and safe to apply to production. It uses
+   `IF NOT EXISTS` everywhere and `ON CONFLICT DO NOTHING` on the seed.
+2. `apply_url` and `job_url` are kept distinct so adapters that know an
+   ATS-style apply link different from the source URL can record both.
+3. `normalized_hash` is informational for now (no UNIQUE constraint) so
+   migration cannot fail on existing duplicate content.
