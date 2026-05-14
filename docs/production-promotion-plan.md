@@ -12,7 +12,10 @@ Date: 2026-05-14
 
 ## Migrations Required Before Full Promotion
 
-Applied in the true sandbox Supabase project `nwsjgppkfducaikxsyvk`: `supabase/migrations/202605140001_job_intelligence_spine.sql`.
+Applied in the true sandbox Supabase project `nwsjgppkfducaikxsyvk`:
+
+- `supabase/migrations/202605140001_job_intelligence_spine.sql`
+- `supabase/migrations/202605140002_gmail_response_backfill.sql`
 
 The same additive migration was also applied to production-style project `acwgirrldntjpzrhqmdh` earlier in the run before the separate true-sandbox project was discovered. Verify production migration history before promotion rather than assuming it needs to be re-applied.
 
@@ -20,19 +23,21 @@ The same additive migration was also applied to production-style project `acwgir
 - `sync_runs`
 - `role_fit_scores`
 - `outreach_actions`
+- `sent_messages`
+- `email_threads`
+- `email_messages`
 
-All four tables have Row Level Security enabled and are intended for server-side access through service-role routes.
+All seven tables have Row Level Security enabled and are intended for server-side access through service-role routes.
 
 True sandbox backfill completed for `role_fit_scores` with 185 current relevant open jobs.
+
+True sandbox Gmail response tables are present but empty. Real reply backfill is blocked until Gmail OAuth is reconnected because the existing `gmail_accounts` refresh token returns `invalid_grant`.
 
 Still proposed for later approval:
 
 - `contact_affiliations`
 - `outreach_campaigns`
 - `email_drafts`
-- `sent_messages`
-- `email_threads`
-- `email_messages`
 - `applications`
 - `letters`
 
@@ -66,6 +71,7 @@ Sandbox Vercel env check on 2026-05-14:
 - `/api/runtime-diagnostics`
 - `/api/send-email`
 - `/api/approve-followup`
+- `/api/gmail/backfill-responses`
 - `/api/ingest/careers`
 
 ## Rollback Path
@@ -84,6 +90,7 @@ Sandbox Vercel env check on 2026-05-14:
 - Try live send with `ENABLE_LIVE_SEND` unset; confirm 403.
 - Try live send with non-`human_approved` status; confirm 409.
 - Run careers ingest in dry-run mode before enabling production cron behavior.
+- Reconnect Gmail through `/api/google/connect`; run `POST /api/gmail/backfill-responses` with `dry_run=true` before any real response backfill.
 
 ## Data Validation Queries
 
@@ -105,6 +112,11 @@ select status, count(*)
 from reachout_company_inserts
 group by status
 order by count(*) desc;
+
+select classification, count(*)
+from email_messages
+group by classification
+order by count(*) desc;
 ```
 
 ## Recommended Release Order
@@ -113,7 +125,7 @@ order by count(*) desc;
 2. Promote fit scoring display.
 3. Confirm production migration history against `acwgirrldntjpzrhqmdh` before applying anything to production.
 4. Backfill fit scores from current production `job_listings` with `POST /api/jobs/rescore` and `dryRun=false` only after promotion approval.
-5. Enable Gmail draft creation and reply backfill.
+5. Reconnect Gmail, run response backfill dry-run, then run the 90-day real backfill if counts look sane.
 6. Enable contact-provider interface and RocketReach normalization.
 7. Enable government aggregate polling only after security review.
 8. Enable live send only after a human approval workflow is verified.

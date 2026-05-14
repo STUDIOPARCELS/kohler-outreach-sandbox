@@ -12,7 +12,7 @@ Date: 2026-05-14
 - Framework/runtime: Next.js 14 App Router, React 18, TypeScript, Tailwind CSS
 - Database/client: Supabase service-role client in `src/lib/supabaseAdmin.ts`
 - External services referenced: Gmail OAuth/SMTP, RocketReach, Google Places, OpenAI, Anthropic, USAJOBS
-- Package scripts: `dev`, `build`, `start`, `lint`, `test:fit`, `test:schema`
+- Package scripts: `dev`, `build`, `start`, `lint`, `test:fit`, `test:gmail`, `test:schema`
 
 ## Pages
 
@@ -29,7 +29,7 @@ Date: 2026-05-14
 ## API Routes
 
 - Company/contact/data: `/api/company`, `/api/contacts`, `/api/research-contacts`, `/api/alt-contacts`, `/api/find-email`, `/api/find-leads`, `/api/search-places`, `/api/company-descriptions`, `/api/backfill-addresses`, `/api/backfill-emails`, `/api/clean-emails`, `/api/merge-data`, `/api/data-audit`, `/api/delete-company`, `/api/restore-company`
-- Outreach/queue/email: `/api/draft`, `/api/template`, `/api/queue`, `/api/batch-status`, `/api/send-email`, `/api/approve-followup`, `/api/update-followup-email`, `/api/followup-candidates`, `/api/save-signature`
+- Outreach/queue/email: `/api/draft`, `/api/template`, `/api/queue`, `/api/batch-status`, `/api/send-email`, `/api/approve-followup`, `/api/update-followup-email`, `/api/followup-candidates`, `/api/save-signature`, `/api/gmail/backfill-responses`
 - Job intelligence: `/api/open-roles-list`, `/api/relevant-roles`, `/api/search-jobs`, `/api/import-ziprecruiter`, `/api/ingest/ziprecruiter`, `/api/ingest/careers`, `/api/jobs/rescore`
 - Auth/health/cron: `/api/google/connect`, `/api/google/callback`, `/api/health`, `/api/runtime-diagnostics`, `/api/cron/research`
 
@@ -59,6 +59,9 @@ True sandbox live schema source of truth:
 - Additive migration applied to true sandbox project `nwsjgppkfducaikxsyvk`: `supabase/migrations/202605140001_job_intelligence_spine.sql`.
 - Live-confirmed true-sandbox server-only tables with RLS enabled: `job_sources`, `sync_runs`, `role_fit_scores`, `outreach_actions`.
 - Current true-sandbox counts after backfill: `role_fit_scores` 185, `job_sources` 0, `sync_runs` 0, `outreach_actions` 0.
+- Additive Gmail analytics migration applied to true sandbox project `nwsjgppkfducaikxsyvk`: `supabase/migrations/202605140002_gmail_response_backfill.sql`.
+- Live-confirmed true-sandbox server-only Gmail analytics tables with RLS enabled: `sent_messages`, `email_threads`, `email_messages`.
+- Current true-sandbox Gmail analytics counts after migration: `sent_messages` 0, `email_threads` 0, `email_messages` 0.
 
 ## Open Roles Data Path
 
@@ -81,9 +84,11 @@ True sandbox live schema source of truth:
 
 - OAuth connection: `/api/google/connect` and `/api/google/callback`; token/cursor storage in `gmail_accounts`.
 - Job ingest from Gmail: `/api/ingest/ziprecruiter`.
+- Reply analytics: `/api/gmail/backfill-responses` is protected by `API_SECRET`, defaults to `dry_run=true`, scans known outreach contact emails, classifies reply metadata, and writes only to `sent_messages`, `email_threads`, and `email_messages` when `dry_run=false`.
 - Live SMTP routes: `/api/send-email` and `/api/approve-followup`.
 - Safety gate added: live send now requires `ENABLE_LIVE_SEND=true` and the draft row status `human_approved`.
-- Missing: Gmail draft creation route, reply backfill/classification tables, response dashboard.
+- Current OAuth status: the existing `gmail_accounts` row is present, but Google token refresh returns `invalid_grant` as of 2026-05-14. Historical Gmail backfill is blocked until Gmail is reconnected through `/api/google/connect`.
+- Missing: Gmail draft creation route and response dashboard UI.
 
 ## Scheduler/Cron Assumptions
 
@@ -119,12 +124,12 @@ Observed key names only, values intentionally redacted:
 ## Gaps To Goal State
 
 - Additive migration now exists and has been applied to the true sandbox for `job_sources`, `sync_runs`, `role_fit_scores`, and `outreach_actions`; all four tables have RLS enabled.
-- No migrations yet for `contact_affiliations`, `outreach_campaigns`, `email_drafts`, `sent_messages`, `email_threads`, `email_messages`, `applications`, or `letters`.
+- No migrations yet for `contact_affiliations`, `outreach_campaigns`, `email_drafts`, `applications`, or `letters`.
 - Runtime diagnostics exist and careers sync now attempts optional `sync_runs` persistence.
 - Fit scoring exists as a server utility and Open Roles response enrichment. `POST /api/jobs/rescore` defaults to dry-run and has successfully persisted 185 true-sandbox rows into `role_fit_scores`.
 - Open Roles now displays 161 screened jobs across 105 companies from 185 tracked relevant/open sandbox jobs, but still lacks direct actions for find contacts, create draft, mark applied, and monitor.
 - RocketReach flow exists as direct routes, not yet behind a provider interface.
-- Gmail reply backfill/classification is missing.
+- Gmail reply backfill/classification route and storage exist, but live backfill is blocked by expired/revoked Gmail OAuth permission until reconnect.
 - Metrics dashboard is still partial and spread across existing pages.
 - Production promotion requires schema decisions and environment review.
 

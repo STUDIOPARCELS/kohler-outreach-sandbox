@@ -6,6 +6,10 @@ const migration = await readFile(
   new URL("../supabase/migrations/202605140001_job_intelligence_spine.sql", import.meta.url),
   "utf8"
 );
+const gmailMigration = await readFile(
+  new URL("../supabase/migrations/202605140002_gmail_response_backfill.sql", import.meta.url),
+  "utf8"
+);
 
 test("job intelligence migration creates the approved additive tables", () => {
   for (const table of ["job_sources", "sync_runs", "role_fit_scores", "outreach_actions"]) {
@@ -43,6 +47,30 @@ test("new job-intelligence tables are server-only by default", () => {
   for (const table of ["job_sources", "sync_runs", "role_fit_scores", "outreach_actions"]) {
     assert.match(
       migration,
+      new RegExp(`alter\\s+table\\s+public\\.${table}\\s+enable\\s+row\\s+level\\s+security`, "i"),
+      `${table} must enable RLS`
+    );
+  }
+});
+
+test("gmail analytics migration creates response tracking tables", () => {
+  for (const table of ["sent_messages", "email_threads", "email_messages"]) {
+    assert.match(
+      gmailMigration,
+      new RegExp(`create\\s+table\\s+if\\s+not\\s+exists\\s+public\\.${table}`, "i"),
+      `${table} table is missing`
+    );
+  }
+});
+
+test("gmail analytics migration stays additive and server-only", () => {
+  assert.doesNotMatch(gmailMigration, /\bdrop\s+table\b/i);
+  assert.doesNotMatch(gmailMigration, /\btruncate\s+table\b/i);
+  assert.doesNotMatch(gmailMigration, /\balter\s+table\s+public\.(companies|contacts|job_listings|reachout_company_inserts|tracking)\b/i);
+
+  for (const table of ["sent_messages", "email_threads", "email_messages"]) {
+    assert.match(
+      gmailMigration,
       new RegExp(`alter\\s+table\\s+public\\.${table}\\s+enable\\s+row\\s+level\\s+security`, "i"),
       `${table} must enable RLS`
     );

@@ -42,6 +42,7 @@ Company targets
 - `src/lib/jobLinks.ts`: reliable/direct job URL checks.
 - `src/lib/runtimeEnvironment.ts`: server-safe environment detection and parser/safety metadata.
 - `src/lib/kohlerFitScore.ts`: Kohler-specific job fit scoring and recommended next action.
+- `src/lib/gmailResponseBackfill.ts`: Gmail reply classification, email normalization, and outreach matching helpers.
 - `src/lib/outreachSafety.ts`: live-send approval gates.
 - `src/lib/roleFitScoreStore.ts`: persistence for Kohler fit scores in `role_fit_scores`, with graceful missing-table fallback.
 - `src/lib/syncRunStore.ts`: persistence for ingest attempts in `sync_runs`, with graceful missing-table fallback.
@@ -54,6 +55,7 @@ Company targets
 - Current outreach rows depend on `reachout_company_inserts` fields including `companyname`, `contactname`, `contact_title`, `contact_email`, `subject_final`, `body_final`, `status`, `printed_at`, `sent_at`, `emailed_at`, `followup2_at`, and job context fields where present.
 - Current contacts depend on name/title/email/company fields. Contact confidence/source/role-type fields are not yet guaranteed by schema.
 - Applied sandbox migration `supabase/migrations/202605140001_job_intelligence_spine.sql` adds `job_sources`, `sync_runs`, `role_fit_scores`, and `outreach_actions` without changing legacy tables. RLS is enabled on all four tables.
+- Applied sandbox migration `supabase/migrations/202605140002_gmail_response_backfill.sql` adds `sent_messages`, `email_threads`, and `email_messages` without changing legacy tables. RLS is enabled on all three tables.
 
 ## Provider Boundaries
 
@@ -61,6 +63,7 @@ Company targets
 - Contact providers are currently route-local RocketReach calls. They should be moved behind a people-provider interface before adding more providers.
 - Gmail send is currently SMTP. Draft creation and reply sync should use Gmail API routes with explicit human approval state.
 - `POST /api/jobs/rescore` is protected by `API_SECRET` and defaults to dry-run. It scores current `job_listings` and persists only when `dryRun=false`.
+- `POST /api/gmail/backfill-responses` is protected by `API_SECRET` and defaults to dry-run. It matches Gmail replies to `reachout_company_inserts` by contact email and stores analytics only when `dry_run=false`.
 
 ## Safety Defaults
 
