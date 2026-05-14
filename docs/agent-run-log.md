@@ -409,3 +409,72 @@
 3. PE detection is intentionally lenient — a title like "John, P.E."
    is enough; the UI labels these `is_possible_pe` rather than
    `is_pe` to acknowledge the recall/precision tradeoff.
+
+### Phase 8 — Outreach drafts and action queue
+
+**Inspected**
+- Existing letter draft flow on `reachout_company_inserts` — left
+  untouched. The new tables sit alongside it and Phase 8/9 work writes
+  to them so the legacy flow keeps printing.
+- `runtimeEnvironment.portfolioUrl` (defaults to
+  `https://kohler.solokit.app`) and `resumeUrl` (env-driven).
+
+**Changed**
+- `supabase/migrations/0004_outreach_workflow.sql` — additive tables
+  `outreach_campaigns`, `outreach_actions`, `email_drafts`, `letters`,
+  `applications`, plus indexes on status / company / job / thread.
+- `src/lib/outreach/templates.ts` — six template renderers with a
+  shared `OutreachContext`:
+    1. `active_job_em` — engineering manager intro for an active job
+    2. `active_job_recruiter` — recruiter follow-up after applying
+    3. `company_intro` — exploratory note when no current job
+    4. `mines_alumni` — Mines-to-Mines intro
+    5. `pe_track` — EIT/PE-track intro
+    6. `physical_letter` — formal printed letter
+  Each renders subject + body_text + body_html with the candidate
+  signature, portfolio URL, and résumé link. Fit summary and matched
+  skills are spliced in when available. `pickTemplate(...)` maps
+  `recommended_action` → `TemplateKey`.
+- `src/app/api/outreach/create-draft/route.ts` — POST that resolves
+  company / contact / job, picks the best template, renders, and
+  inserts into `outreach_actions` (+ `email_drafts` or `letters`).
+- `src/app/api/outreach/approve-draft/route.ts` — sets
+  `email_drafts.status = 'human_approved'` and
+  `outreach_actions.status = 'human_approved'`. Optionally accepts
+  edited subject/body so the human edit lands in the same row.
+- `src/app/api/outreach/actions/route.ts` — GET list of outreach
+  actions with status/companyname filters.
+- `src/app/api/applications/mark-applied/route.ts` — POST that writes
+  to `applications` and updates the linked outreach action to 'sent'.
+- `scripts/templates.test.mjs` — 9 cases for `pickTemplate` routing.
+
+**Tests / checks**
+- `node scripts/templates.test.mjs` → 9 passed, 0 failed.
+- `npx tsc --noEmit` → clean (after extracting `ContactRow` and
+  `JobRow` named types — same widening fix as Phases 4 and 7).
+
+**Result**
+- A draft can be created from any (company, contact, job) tuple in one
+  POST. The renderer always includes the portfolio link and a clear
+  signature; PE/Mines variants are rendered when relevant.
+- Drafts default to `status="draft"`; nothing leaves the system until
+  Phase 9 sends an approved draft.
+
+**Remaining work**
+- Phase 9 plugs `email_drafts` rows into Gmail (draft create + live
+  send when ENABLE_LIVE_SEND=true) and links `gmail_thread_id` /
+  `gmail_message_id` back to the draft row.
+- A future UI page can render outreach actions and let the human
+  approve / edit drafts inline; for now the routes are usable from
+  the command center via the contact/company panels.
+
+**Assumptions made**
+1. The default candidate is hardcoded as Kohler Wood with the Mines /
+   EIT signature; future support for multiple candidate profiles can
+   thread `candidate_profile_id` through the renderer.
+2. `pickTemplate` falls back to `company_intro` for `monitor` / `skip`
+   / unknown actions so the UI never crashes when an action lacks a
+   template.
+3. `applications` rows mark the linked outreach action as 'sent' to
+   keep the funnel coherent — adjustable later if Kohler wants
+   "applied without outreach" tracked separately.
