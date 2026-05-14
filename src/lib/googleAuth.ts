@@ -10,10 +10,17 @@ export function getOAuth2Client() {
   );
 }
 
-export async function getAuthedGmailClient() {
-  const { data: account, error } = await supabaseAdmin
+export async function getAuthedGmailClient(accountEmail?: string) {
+  let query = supabaseAdmin
     .from("gmail_accounts")
-    .select("*")
+    .select("*");
+
+  if (accountEmail) {
+    query = query.eq("email", accountEmail.trim().toLowerCase());
+  }
+
+  const { data: account, error } = await query
+    .order("updated_at", { ascending: false })
     .limit(1)
     .single();
 

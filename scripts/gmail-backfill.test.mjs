@@ -12,8 +12,10 @@ const compiled = ts.transpileModule(source, {
 });
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(compiled.outputText).toString("base64")}`;
 const {
+  buildSentMessageRows,
   classifyGmailReply,
   extractEmailAddress,
+  inferOutreachChannel,
   normalizeSubject,
   pickBestOutreach,
   redactEmail,
@@ -74,6 +76,52 @@ test("matches replies to the nearest prior outreach row", () => {
 
   assert.equal(match?.row.id, "new");
   assert.equal(match?.channel, "email");
+});
+
+test("builds one outbound row per outreach channel without double counting emails", () => {
+  const rows = buildSentMessageRows([
+    {
+      id: "email-row",
+      companyname: "Email Co",
+      contactname: "A",
+      contact_email: "person@example.com",
+      subject_final: "Intro",
+      status: "emailed",
+      emailed_at: "2026-04-01T00:00:00Z",
+      sent_at: "2026-04-02T00:00:00Z",
+      printed_at: null,
+      updated_at: "2026-04-02T00:00:00Z",
+    },
+    {
+      id: "letter-row",
+      companyname: "Letter Co",
+      contactname: "B",
+      contact_email: "letter@example.com",
+      subject_final: "Intro",
+      status: "sent",
+      emailed_at: null,
+      sent_at: "2026-04-03T00:00:00Z",
+      printed_at: null,
+      updated_at: "2026-04-03T00:00:00Z",
+    },
+  ]);
+
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].channel, "email");
+  assert.equal(rows[0].sent_at, "2026-04-01T00:00:00Z");
+  assert.equal(rows[1].channel, "letter");
+  assert.equal(inferOutreachChannel({
+    id: "letter-row",
+    companyname: "Letter Co",
+    contactname: "B",
+    contact_email: "letter@example.com",
+    subject_final: "Intro",
+    status: "sent",
+    emailed_at: null,
+    sent_at: "2026-04-03T00:00:00Z",
+    printed_at: null,
+    updated_at: "2026-04-03T00:00:00Z",
+  }), "letter");
 });
 
 test("normalizes subjects and redacts email addresses", () => {

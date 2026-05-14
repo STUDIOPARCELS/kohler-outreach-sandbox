@@ -9,6 +9,8 @@ const links = [
   { href: "/queue", label: "Queue" },
   { href: "/template", label: "Template" },
   { href: "/open-roles", label: "Open Roles" },
+  { href: "/replies", label: "Replies" },
+  { href: "/analytics", label: "Analytics" },
 ];
 
 export default function Nav() {

@@ -1,6 +1,7 @@
 import { requireApiSecret } from "@/lib/auth";
 import {
   classifyGmailReply,
+  buildSentMessageRows,
   extractEmailAddress,
   extractEmailAddresses,
   isActionableReply,
@@ -25,6 +26,7 @@ const MAX_LIMIT_PER_CONTACT = 25;
 const DEFAULT_MAX_CONTACTS = 250;
 const MAX_MAX_CONTACTS = 1000;
 const MAX_SAMPLE_COUNT = 12;
+const DEFAULT_START_DATE = "2026-03-01";
 
 interface ReplyCandidate {
   gmailMessageId: string;
@@ -69,6 +71,27 @@ function parseDryRun(value: unknown): boolean {
   if (typeof value === "boolean") return value;
   if (typeof value === "string") return !["false", "0", "no"].includes(value.toLowerCase());
   return true;
+}
+
+function parseDateInput(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = Date.parse(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed) ? value : null;
+}
+
+function addDays(value: string, days: number): string {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function gmailDate(value: string): string {
+  return value.replace(/-/g, "/");
+}
+
+function dateClause(startDate: string, endDate: string): string {
+  return `after:${gmailDate(startDate)} before:${gmailDate(addDays(endDate, 1))}`;
 }
 
 function headerRecord(message: gmail_v1.Schema$Message): Record<string, string> {
@@ -168,12 +191,14 @@ async function loadOutreachRows(): Promise<OutreachHistoryRow[]> {
     .select(
       "id, companyname, contactname, contact_email, subject_final, status, emailed_at, sent_at, printed_at, updated_at, job_title, job_url"
     )
-    .not("contact_email", "is", null)
     .order("updated_at", { ascending: false, nullsFirst: false })
     .limit(2000);
 
   if (error) throw new Error(`Could not load outreach history: ${error.message}`);
-  return (data || []) as OutreachHistoryRow[];
+  return ((data || []) as OutreachHistoryRow[]).filter((row) => {
+    if ((row.status || "").toLowerCase() === "draft") return false;
+    return Boolean(row.emailed_at || row.sent_at || row.printed_at);
+  });
 }
 
 function indexOutreachByEmail(rows: OutreachHistoryRow[]): Map<string, OutreachHistoryRow[]> {
@@ -213,10 +238,10 @@ async function scanContactReplies(
   gmail: gmail_v1.Gmail,
   contactEmail: string,
   rows: OutreachHistoryRow[],
-  days: number,
+  rangeClause: string,
   limitPerContact: number
 ): Promise<ReplyCandidate[]> {
-  const q = `from:${contactEmail} newer_than:${days}d -in:chats`;
+  const q = `from:${contactEmail} ${rangeClause} -in:chats`;
   const response = await gmail.users.messages.list({
     userId: "me",
     q,
@@ -297,48 +322,18 @@ function sampleCandidates(candidates: ReplyCandidate[]) {
   }));
 }
 
-function buildSentMessageRows(rows: OutreachHistoryRow[]) {
-  return rows.flatMap((row) => {
-    const base = {
-      outreach_id: row.id,
-      source_table: "reachout_company_inserts",
-      source_id: row.id,
-      companyname: row.companyname,
-      contact_email: normalizeEmail(row.contact_email) || null,
-      subject: row.subject_final,
-      status: row.status,
-      metadata: {
-        contactname: row.contactname,
-        job_title: row.job_title || null,
-        job_url: row.job_url || null,
-        emailed_at: row.emailed_at,
-        sent_at: row.sent_at,
-        printed_at: row.printed_at,
-      },
-    };
-
-    const rowsToWrite = [];
-    if (row.emailed_at) {
-      rowsToWrite.push({ ...base, channel: "email", sent_at: row.emailed_at });
-    }
-    if (row.sent_at || row.printed_at) {
-      rowsToWrite.push({ ...base, channel: "letter", sent_at: row.sent_at || row.printed_at });
-    }
-    return rowsToWrite;
-  });
-}
-
-async function writeBackfill(candidates: ReplyCandidate[], outreachRows: OutreachHistoryRow[]) {
+async function writeSentMessages(outreachRows: OutreachHistoryRow[]) {
   const sentRows = buildSentMessageRows(outreachRows);
-  let sentMessagesUpserted = 0;
   if (sentRows.length > 0) {
     const { error } = await supabaseAdmin
       .from("sent_messages")
       .upsert(sentRows, { onConflict: "source_table,source_id,channel" });
     if (error) throw new Error(`Could not upsert sent_messages: ${error.message}`);
-    sentMessagesUpserted = sentRows.length;
   }
+  return sentRows.length;
+}
 
+async function writeBackfill(candidates: ReplyCandidate[]) {
   const threadRows = aggregateThreads(candidates);
   const threadIdByGmailId = new Map<string, string>();
   if (threadRows.length > 0) {
@@ -386,7 +381,6 @@ async function writeBackfill(candidates: ReplyCandidate[], outreachRows: Outreac
   }
 
   return {
-    sentMessagesUpserted,
     emailThreadsUpserted: threadRows.length,
     emailMessagesUpserted: messageRows.length,
   };
@@ -399,6 +393,9 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const dryRun = parseDryRun(body.dry_run ?? body.dryRun);
   const days = parseBoundedNumber(body.days, DEFAULT_DAYS, 1, MAX_DAYS);
+  const startDate = parseDateInput(body.start_date ?? body.startDate) || DEFAULT_START_DATE;
+  const endDate = parseDateInput(body.end_date ?? body.endDate) || new Date().toISOString().slice(0, 10);
+  const rangeClause = dateClause(startDate, endDate);
   const limitPerContact = parseBoundedNumber(
     body.limit_per_contact ?? body.limitPerContact,
     DEFAULT_LIMIT_PER_CONTACT,
@@ -416,40 +413,91 @@ export async function POST(req: NextRequest) {
     const outreachRows = await loadOutreachRows();
     const outreachByEmail = indexOutreachByEmail(outreachRows);
     const contactEmails = Array.from(outreachByEmail.keys()).slice(0, maxContacts);
-    const { gmail, account } = await getAuthedGmailClient();
+    const sentMessagesUpserted = dryRun ? 0 : await writeSentMessages(outreachRows);
+    const requestedMailboxes = Array.isArray(body.mailboxes)
+      ? body.mailboxes.filter((email: unknown): email is string => typeof email === "string" && email.includes("@"))
+      : [];
+    const mailboxTargets = requestedMailboxes.length > 0 ? requestedMailboxes : [undefined];
 
     const seenMessages = new Set<string>();
     const candidates: ReplyCandidate[] = [];
     const scanErrors: Array<{ contactEmail: string; error: string }> = [];
+    const mailboxErrors: Array<{ mailbox: string; error: string }> = [];
+    const gmailAccounts: Array<string | null> = [];
 
-    for (const contactEmail of contactEmails) {
+    for (const mailbox of mailboxTargets) {
+      let gmail: gmail_v1.Gmail;
+      let account: { email?: string | null };
       try {
-        const found = await scanContactReplies(
-          gmail,
-          contactEmail,
-          outreachByEmail.get(contactEmail) || [],
-          days,
-          limitPerContact
-        );
-        for (const candidate of found) {
-          if (seenMessages.has(candidate.gmailMessageId)) continue;
-          seenMessages.add(candidate.gmailMessageId);
-          candidates.push(candidate);
-        }
+        const authed = await getAuthedGmailClient(mailbox);
+        gmail = authed.gmail;
+        account = authed.account;
+        gmailAccounts.push(redactEmail(account.email));
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        scanErrors.push({ contactEmail: redactEmail(contactEmail) || "(unknown)", error: message });
+        mailboxErrors.push({ mailbox: redactEmail(mailbox) || "(default)", error: message });
+        continue;
       }
+
+      for (const contactEmail of contactEmails) {
+        try {
+          const found = await scanContactReplies(
+            gmail,
+            contactEmail,
+            outreachByEmail.get(contactEmail) || [],
+            rangeClause,
+            limitPerContact
+          );
+          for (const candidate of found) {
+            if (seenMessages.has(candidate.gmailMessageId)) continue;
+            seenMessages.add(candidate.gmailMessageId);
+            candidates.push(candidate);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          scanErrors.push({ contactEmail: redactEmail(contactEmail) || "(unknown)", error: message });
+        }
+      }
+    }
+
+    if (gmailAccounts.length === 0 && mailboxErrors.length > 0) {
+      return NextResponse.json(
+        {
+          error: mailboxErrors.map((item) => `${item.mailbox}: ${item.error}`).join("; "),
+          dryRun,
+          days,
+          startDate,
+          endDate,
+          outreachRows: outreachRows.length,
+          contactEmailsScanned: 0,
+          limitPerContact,
+          candidateReplies: 0,
+          actionableReplies: 0,
+          classificationCounts: {},
+          writeResult: {
+            sentMessagesUpserted,
+            emailThreadsUpserted: 0,
+            emailMessagesUpserted: 0,
+          },
+          samples: [],
+          scanErrors: [],
+          mailboxErrors,
+          nextStep: "Reconnect Gmail at /api/google/connect, then retry this route.",
+        },
+        { status: 401 }
+      );
     }
 
     const writeResult = dryRun
       ? { sentMessagesUpserted: 0, emailThreadsUpserted: 0, emailMessagesUpserted: 0 }
-      : await writeBackfill(candidates, outreachRows);
+      : { sentMessagesUpserted, ...(await writeBackfill(candidates)) };
 
     return NextResponse.json({
       dryRun,
       days,
-      gmailAccount: redactEmail(account.email),
+      startDate,
+      endDate,
+      gmailAccounts,
       outreachRows: outreachRows.length,
       contactEmailsScanned: contactEmails.length,
       limitPerContact,
@@ -459,6 +507,7 @@ export async function POST(req: NextRequest) {
       writeResult,
       samples: sampleCandidates(candidates),
       scanErrors: scanErrors.slice(0, MAX_SAMPLE_COUNT),
+      mailboxErrors,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -468,6 +517,8 @@ export async function POST(req: NextRequest) {
         error: message,
         dryRun,
         days,
+        startDate,
+        endDate,
         nextStep:
           status === 401
             ? "Reconnect Gmail at /api/google/connect, then retry this route."

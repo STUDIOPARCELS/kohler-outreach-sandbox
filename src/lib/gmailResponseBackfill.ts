@@ -31,6 +31,26 @@ export interface MatchedOutreach {
   channel: "email" | "letter" | "unknown";
 }
 
+export interface SentMessageUpsertRow {
+  outreach_id: string;
+  source_table: "reachout_company_inserts";
+  source_id: string;
+  companyname: string | null;
+  contact_email: string | null;
+  subject: string | null;
+  status: string | null;
+  metadata: {
+    contactname: string | null;
+    job_title: string | null;
+    job_url: string | null;
+    emailed_at: string | null;
+    sent_at: string | null;
+    printed_at: string | null;
+  };
+  channel: "email" | "letter";
+  sent_at: string;
+}
+
 export interface GmailClassificationInput {
   fromEmail?: string | null;
   subject?: string | null;
@@ -198,6 +218,39 @@ export function inferOutreachChannel(row: OutreachHistoryRow): "email" | "letter
   if (row.emailed_at) return "email";
   if (row.sent_at || row.printed_at) return "letter";
   return "unknown";
+}
+
+export function buildSentMessageRows(rows: OutreachHistoryRow[]): SentMessageUpsertRow[] {
+  return rows.flatMap<SentMessageUpsertRow>((row) => {
+    const base: Omit<SentMessageUpsertRow, "channel" | "sent_at"> = {
+      outreach_id: row.id,
+      source_table: "reachout_company_inserts",
+      source_id: row.id,
+      companyname: row.companyname,
+      contact_email: normalizeEmail(row.contact_email) || null,
+      subject: row.subject_final,
+      status: row.status,
+      metadata: {
+        contactname: row.contactname,
+        job_title: row.job_title || null,
+        job_url: row.job_url || null,
+        emailed_at: row.emailed_at,
+        sent_at: row.sent_at,
+        printed_at: row.printed_at,
+      },
+    };
+
+    if (row.emailed_at) {
+      return [{ ...base, channel: "email", sent_at: row.emailed_at }];
+    }
+
+    const letterSentAt = row.sent_at || row.printed_at;
+    if (letterSentAt) {
+      return [{ ...base, channel: "letter", sent_at: letterSentAt }];
+    }
+
+    return [];
+  });
 }
 
 export function pickBestOutreach(

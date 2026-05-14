@@ -129,3 +129,13 @@
 - Result: TypeScript and fit tests passed. Browser check shows the fit guide visible under the filters at the current viewport with no overlap.
 - Remaining work: add a deeper scoring detail drawer only if users need row-level score breakdowns beyond the current tooltip and guide.
 - Assumptions made: the fit score should remain a compact ranking aid in the UI, not a percent-style grade.
+
+## 2026-05-14 - Replies And Analytics Backfill Attempt
+
+- What was inspected: `gmail_accounts`, historical outbound rows in `reachout_company_inserts`, `sent_messages`, `email_threads`, `email_messages`, `POST /api/gmail/backfill-responses`, `/replies`, `/analytics`, and local browser rendering.
+- What changed: added mailbox-specific Gmail OAuth lookup, explicit March 1-May 14 date-range support, independent outbound sync into `sent_messages`, `/api/replies`, `/api/analytics`, `/replies`, `/analytics`, and reply/analytics navigation links.
+- Files changed: `src/lib/googleAuth.ts`, `src/lib/gmailResponseBackfill.ts`, `src/app/api/gmail/backfill-responses/route.ts`, `src/app/api/replies/route.ts`, `src/app/api/analytics/route.ts`, `src/app/replies/page.tsx`, `src/app/analytics/page.tsx`, `src/components/Nav.tsx`, `scripts/gmail-backfill.test.mjs`, docs.
+- Tests/checks run: protected `POST /api/gmail/backfill-responses` dry-run and real-run attempts for `kwood12802@gmail.com` and `akwood1@mines.edu`, `GET /api/analytics`, `GET /api/replies`, true-sandbox Gmail table count check, `npx tsc --noEmit --pretty false`, `npm run test:gmail`, `npm run test:fit`, `npm run test:schema`, `npm run build`, `git diff --check`, and browser smoke for `/replies` and `/analytics`.
+- Result: true sandbox has 33 outbound records in `sent_messages` (8 email, 25 letters). `/analytics` and `/replies` render those real counts. `email_threads` and `email_messages` remain empty because neither requested Kohler mailbox is connected in `gmail_accounts`; the route returns reconnect guidance instead of scanning the wrong mailbox. TypeScript, focused tests, build, and whitespace checks passed.
+- Remaining work: reconnect `kwood12802@gmail.com` and/or `akwood1@mines.edu` through Gmail OAuth, then rerun `POST /api/gmail/backfill-responses` for March 1-May 14 with `dry_run=true`, then `dry_run=false` if counts look sane.
+- Assumptions made: the existing `31***@gmail.com` OAuth row should not be used as a substitute for Kohler's mailboxes, and physical letters should count as outbound sends but only become reply-matched if a Gmail reply can be tied to the same contact email.

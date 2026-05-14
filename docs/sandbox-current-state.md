@@ -19,6 +19,8 @@ Date: 2026-05-14
 - `/` main outreach CRM surface
 - `/outreach-list` company outreach list
 - `/open-roles` open roles command surface
+- `/replies` Gmail reply and bounce review surface
+- `/analytics` outreach performance dashboard
 - `/queue` letters/drafts queue
 - `/template` outreach template editor
 - `/followups` email follow-up workflow
@@ -29,7 +31,7 @@ Date: 2026-05-14
 ## API Routes
 
 - Company/contact/data: `/api/company`, `/api/contacts`, `/api/research-contacts`, `/api/alt-contacts`, `/api/find-email`, `/api/find-leads`, `/api/search-places`, `/api/company-descriptions`, `/api/backfill-addresses`, `/api/backfill-emails`, `/api/clean-emails`, `/api/merge-data`, `/api/data-audit`, `/api/delete-company`, `/api/restore-company`
-- Outreach/queue/email: `/api/draft`, `/api/template`, `/api/queue`, `/api/batch-status`, `/api/send-email`, `/api/approve-followup`, `/api/update-followup-email`, `/api/followup-candidates`, `/api/save-signature`, `/api/gmail/backfill-responses`
+- Outreach/queue/email: `/api/draft`, `/api/template`, `/api/queue`, `/api/batch-status`, `/api/send-email`, `/api/approve-followup`, `/api/update-followup-email`, `/api/followup-candidates`, `/api/save-signature`, `/api/gmail/backfill-responses`, `/api/replies`, `/api/analytics`
 - Job intelligence: `/api/open-roles-list`, `/api/relevant-roles`, `/api/search-jobs`, `/api/import-ziprecruiter`, `/api/ingest/ziprecruiter`, `/api/ingest/careers`, `/api/jobs/rescore`
 - Auth/health/cron: `/api/google/connect`, `/api/google/callback`, `/api/health`, `/api/runtime-diagnostics`, `/api/cron/research`
 
@@ -61,7 +63,7 @@ True sandbox live schema source of truth:
 - Current true-sandbox counts after backfill: `role_fit_scores` 185, `job_sources` 0, `sync_runs` 0, `outreach_actions` 0.
 - Additive Gmail analytics migration applied to true sandbox project `nwsjgppkfducaikxsyvk`: `supabase/migrations/202605140002_gmail_response_backfill.sql`.
 - Live-confirmed true-sandbox server-only Gmail analytics tables with RLS enabled: `sent_messages`, `email_threads`, `email_messages`.
-- Current true-sandbox Gmail analytics counts after migration: `sent_messages` 0, `email_threads` 0, `email_messages` 0.
+- Current true-sandbox Gmail analytics counts after outbound sync: `sent_messages` 33, `email_threads` 0, `email_messages` 0.
 
 ## Open Roles Data Path
 
@@ -87,8 +89,10 @@ True sandbox live schema source of truth:
 - Reply analytics: `/api/gmail/backfill-responses` is protected by `API_SECRET`, defaults to `dry_run=true`, scans known outreach contact emails, classifies reply metadata, and writes only to `sent_messages`, `email_threads`, and `email_messages` when `dry_run=false`.
 - Live SMTP routes: `/api/send-email` and `/api/approve-followup`.
 - Safety gate added: live send now requires `ENABLE_LIVE_SEND=true` and the draft row status `human_approved`.
-- Current OAuth status: the existing `gmail_accounts` row is present, but Google token refresh returns `invalid_grant` as of 2026-05-14. Historical Gmail backfill is blocked until Gmail is reconnected through `/api/google/connect`.
-- Missing: Gmail draft creation route and response dashboard UI.
+- Current OAuth status: one existing `gmail_accounts` row is present for `31***@gmail.com`; neither `kwood12802@gmail.com` nor `akwood1@mines.edu` is connected as of 2026-05-14. Historical reply/bounce backfill for Kohler's two mailboxes is blocked until those exact accounts are reconnected through `/api/google/connect`.
+- Current outbound sync status: `sent_messages` has 33 server-side records from historical outbound rows, split into 8 email sends and 25 physical letters. `email_messages` remains empty because Gmail mailbox access is not connected.
+- Reply/dashboard UI: `/replies` and `/analytics` exist and read from `sent_messages`, `email_threads`, and `email_messages`; they currently show the 33 outbound records and zero imported replies/bounces.
+- Missing: Gmail draft creation route and a successful Kohler-mailbox OAuth reconnect.
 
 ## Scheduler/Cron Assumptions
 
@@ -129,8 +133,8 @@ Observed key names only, values intentionally redacted:
 - Fit scoring exists as a server utility and Open Roles response enrichment. `POST /api/jobs/rescore` defaults to dry-run and has successfully persisted 185 true-sandbox rows into `role_fit_scores`.
 - Open Roles now displays 161 screened jobs across 105 companies from 185 tracked relevant/open sandbox jobs, but still lacks direct actions for find contacts, create draft, mark applied, and monitor.
 - RocketReach flow exists as direct routes, not yet behind a provider interface.
-- Gmail reply backfill/classification route and storage exist, but live backfill is blocked by expired/revoked Gmail OAuth permission until reconnect.
-- Metrics dashboard is still partial and spread across existing pages.
+- Gmail reply backfill/classification route and storage exist, but live reply/bounce backfill is blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected in `gmail_accounts`.
+- Metrics dashboard now exists at `/analytics`, with current real data limited to 33 outbound records until Gmail reply import is unblocked.
 - Production promotion requires schema decisions and environment review.
 
 ## Security Flagging Assessment
