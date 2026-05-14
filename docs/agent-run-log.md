@@ -163,3 +163,71 @@
    ATS-style apply link different from the source URL can record both.
 3. `normalized_hash` is informational for now (no UNIQUE constraint) so
    migration cannot fail on existing duplicate content.
+
+### Phase 4 — Job source adapter architecture
+
+**Inspected**
+- `src/app/api/ingest/careers/route.ts` to confirm the existing per-source
+  branches (Built In Colorado, GovernmentJobs direct, USAJOBS, JSON-LD,
+  career-link scrape) — these are out of scope for Phase 4 because they
+  already work; Phase 4 introduces *new* ATS adapters (Greenhouse, Lever,
+  Ashby) plus a generic sync route on top of them.
+
+**Changed**
+- `src/lib/jobIngest/types.ts` — `NormalizedJob`, `AdapterCompany`,
+  `JobSourceAdapter`, `AdapterRegistry` (matches the contracts in
+  `docs/architecture.md`).
+- `src/lib/jobIngest/adapters/greenhouse.ts` — public boards-api adapter,
+  detects slug from `boards.greenhouse.io/{slug}` URLs.
+- `src/lib/jobIngest/adapters/lever.ts` — public lever postings adapter,
+  detects slug from `jobs.lever.co/{slug}` URLs.
+- `src/lib/jobIngest/adapters/ashby.ts` — public Ashby job-board adapter,
+  detects slug from `jobs.ashbyhq.com/{slug}` URLs.
+- `src/lib/jobIngest/adapters/manualSeed.ts` — placeholder for hand-entered
+  rows (read-only).
+- `src/lib/jobIngest/adapters/mock.ts` — deterministic mock adapter so
+  tests and local dev can exercise the path without network access.
+- `src/lib/jobIngest/registry.ts` — `adapterRegistry.list/get` plus
+  `detectAdapterFromCareersUrl(url)`.
+- `src/lib/jobIngest/persist.ts` — `persistNormalizedJobs(jobs)` writes
+  to `job_listings` with the new provenance columns, runs
+  `scoreTargetRole`, and counts inserts/updates/skips/errors.
+- `src/app/api/jobs/sync-source/route.ts` — POST `{ source_type,
+  company_id|companyname, limit?, dryRun? }` for one company.
+- `src/app/api/jobs/sync-all/route.ts` — POST `{ source_types?,
+  max_companies?, limit?, dryRun? }` that iterates the eligible
+  ATS/careers adapters across companies that have a careers URL.
+- `scripts/adapters.test.mjs` — 14 cases for slug detection across the
+  three ATS providers and minimal parsing-shape contracts.
+
+**Tests / checks**
+- `node scripts/adapters.test.mjs` → 14 passed, 0 failed.
+- `npx tsc --noEmit` → clean (one cast widened to a named type).
+
+**Result**
+- The sandbox can now ingest jobs from any company whose careers_url
+  points at Greenhouse / Lever / Ashby with no extra credentials.
+- Sync runs are recorded in `sync_runs` (when the migration is applied)
+  with per-source counters and adapter warnings.
+- The legacy `/api/ingest/ziprecruiter` and `/api/ingest/careers`
+  routes are untouched and remain authoritative for those source types.
+
+**Remaining work**
+- Phase 5 will introduce per-row fit scoring that reads the new
+  `body_text` adapters return (Greenhouse `content`, Lever
+  `descriptionPlain`, Ashby `descriptionPlain`) so PE/Mines/skill
+  signals get higher resolution than today's title-only scoring.
+- A future phase can refactor the existing ingest routes to share
+  `persistNormalizedJobs`, but that's deferred to keep this commit
+  reviewable.
+
+**Assumptions made**
+1. ATS slug detection from `careers_url` is sufficient for the first pass.
+   When a company hosts its board outside the canonical domain (e.g.
+   `careers.example.com`), an `ats_slug` column must be set manually —
+   the adapter looks for that field first.
+2. Adapters never throw to the caller; errors and warnings are returned
+   in arrays so the sync routes can log them in `sync_runs.warnings`.
+3. The sync-all route deliberately excludes email/manual sources because
+   their existing routes are already wired into cron and the prompt asked
+   for additive work.
