@@ -922,3 +922,155 @@ them with the current algorithm) or LEAVE them and only score new
 rows? The safe call: leave them alone unless a `force_rescore=true`
 flag is passed. That preserves existing scores Kohler may have used
 to make decisions. Bulk re-score becomes its own conscious action.
+
+> **Resolved by user 2026-05-14:** preserve old scores. Strategy:
+> bump `score_version` from `kohler-fit-v1` (the 273 existing rows)
+> to `kohler-fit-v2` for any new write. Old rows stay forever as
+> historical record; the unique key `(job_listing_id, score_version)`
+> guarantees no overwrite. Confirmed all 273 rows are
+> `score_version='kohler-fit-v1'`.
+
+### Session F — Gmail reply ingestion live (jumped ahead of B-E)
+
+**Why jumped:** user prioritized the "stop manually logging Gmail
+replies" workflow above fit scoring / contact enrichment / etc.
+Sessions B–E are still scoped in the original handoff plan; F just
+moved up the queue.
+
+**Inspected**
+- Re-introspected `email_threads`, `email_messages`, `sent_messages`
+  via `list_tables` — all three absent in KOHLER OS, no out-of-band
+  collision risk.
+- Verified `gmail_accounts` has 1 row for `317lrw@gmail.com` with a
+  refresh_token and a populated `last_history_id` cursor. Production
+  cron uses this account; local dev cannot (see "Known limit"
+  below).
+- Confirmed all 273 existing `role_fit_scores` rows are
+  `score_version='kohler-fit-v1'` — clears the path for Session B
+  to use `v2` cleanly.
+
+**Applied** (via `mcp__…__apply_migration`)
+- `add_email_messages_for_gmail_reply_ingest` migration. Reconciled
+  from the draft to match live FK column types:
+  - all PKs `uuid` (matches role_fit_scores / outreach_actions /
+    job_sources / sync_runs convention)
+  - `outreach_action_id` is `uuid REFERENCES outreach_actions(id)`
+  - `contact_id` is `integer REFERENCES contacts(id)`
+  - `job_listing_id` is `integer REFERENCES job_listings(id)`
+    (renamed from draft's `job_id` for consistency)
+  - `email_draft_id` is `uuid` with NO FK (added in Session E when
+    `email_drafts` ships)
+  - added `email_messages_inbound_action_idx` partial index for the
+    dashboard's "show me follow-ups due" query
+  - added `last_message_at desc` and `internal_date desc` indexes
+    for chronological views
+
+**Changed**
+- `src/app/api/gmail/backfill-responses/route.ts`:
+  - `emailThreadId: number | null` → `string | null` (uuid)
+  - all `id` casts updated for uuid
+  - `email_drafts` lookup wrapped in try/catch — gracefully skips
+    when the table is missing (still missing pre-Session E)
+  - factored `needsActionClassifications` into a Set
+  - thread insert error now surfaces in `summary.warnings` (was
+    silently swallowed)
+- `src/app/api/gmail/sync-incremental/route.ts`:
+  - default query: `in:inbox newer_than:7d` → `newer_than:2d`
+  - default max_messages: 50 → 100
+  - exports `GET` in addition to `POST` so a healthcheck doesn't 405
+  - explicit `maxDuration = 60` for Vercel cron tier
+- `vercel.json`:
+  - added cron: `/api/gmail/sync-incremental` daily at `0 14 * * *`
+    UTC (= 8am MST), aligns with the existing `cron/research`
+    schedule (8am UTC) and pg_cron ZipRecruiter (`14:00 UTC`)
+- `src/app/api/replies/list/route.ts` (new):
+  - GET that joins `email_messages` (inbound only) + `email_threads`
+  - filter params: `classification`, `needs_action_only`, `limit`
+  - returns per-classification breakdown so the UI can render tab
+    counts
+  - graceful "table missing" warning if migration hasn't shipped
+- `src/app/replies/page.tsx` (new):
+  - 11 classification filter chips with live counts
+  - "Sync now" button that hits `/api/gmail/sync-incremental`
+    on demand
+  - per-message card: classification pill, "action needed" badge,
+    company name, subject, sender, snippet, "Open in Gmail ↗"
+    link
+  - `formatTimestamp` shows "today X:XXpm", "yesterday", "Nd ago"
+- `src/components/Nav.tsx`: added `Replies` link between
+  Command center and Open Roles.
+
+**Drive-by fixes (per "work recursively" directive)**
+- `src/app/api/runtime-diagnostics/route.ts`: corrected
+  `job_listings.date_posted` → `posted_date` (live column name) and
+  swapped non-existent `last_seen` → `last_seen_at` and
+  non-existent `created_at` → `received_at` / `fetched_at`. This
+  resolves the warning that was appearing on every env-badge open.
+
+**Tests / checks**
+- `npx tsc --noEmit` → clean.
+- `GET /api/replies/list` against empty `email_messages` →
+  `200 { ok: true, count: 0, breakdown: {} }`. No "table missing"
+  warning, which confirms the migration is live.
+- `GET /replies` page → `200`, renders empty state + filter chips
+  + "Sync now" button.
+
+**Known limit (production-only path works)**
+- Local Gmail smoke test fails with `gmail auth: invalid_request`
+  because `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` aren't in
+  `env_vault` — they live only on the existing Vercel project. The
+  production deploy of this code will work because Vercel has those
+  secrets. To enable local testing in a future session, ask the user
+  to drop them into env_vault under project `kohler-outreach`.
+- Until production deploy, the `/replies` page will show "No replies
+  in this category yet. Click 'Sync now' to pull from Gmail." —
+  empty state is correct.
+
+**Result**
+- Schema is in place: any reply landing in 317lrw's Gmail inbox can
+  be classified and stored.
+- The "stop manually logging" loop closes once production deploy
+  exists: daily cron runs at 8am MST, classifies the previous day's
+  replies, updates the `/replies` page and the `/dashboard`
+  "follow-ups due" tile.
+- Existing legacy outreach data (210 `reachout_company_inserts`
+  rows, 1330 `tracking` rows, 843 `contacts`) is untouched — these
+  are NEW tables alongside.
+
+**Remaining work**
+- Production deploy of this branch (gated on the new Vercel project
+  setup we discussed earlier).
+- Drop `GOOGLE_CLIENT_ID/SECRET` into env_vault if local Gmail
+  testing is wanted in future sessions.
+- Session E (when it runs) will add `email_drafts` + a FK from
+  `sent_messages.email_draft_id`. Backfill route's email_drafts
+  lookup will then start linking replies to outreach actions
+  automatically — no further code change needed in F.
+- Session B (next): bump `score_version=kohler-fit-v2`, fix
+  `/api/jobs/rescore` upsert. 273 v1 rows preserved as historical
+  record.
+
+### Session G handoff (Session B is the next reconciliation)
+
+**Pick the next reconciliation by priority:**
+- **Session B (`role_fit_scores`):** highest user-facing value
+  after F. Makes "Rescore all" on `/command-center` actually work.
+- **Session C (`contacts` enrichment):** lights up `is_mines_alumni`
+  / `is_possible_pe` / `role_type` columns on the contacts table —
+  helps Phase 8 templates pick the right contact.
+- **Session D (`job_listings` provenance gap):** adds `source_url`,
+  `normalized_hash`, `closed_at`. Smallest scope.
+- **Session E (`outreach_actions` + new tables):** unlocks Phase 8
+  draft creation + retroactively links email_threads → outreach
+  actions in F's backfill.
+
+**Recommended next: Session B.** Reasons:
+1. Now that the 273-row preservation strategy is locked in (bump to
+   v2), it's a straightforward edit.
+2. `/command-center` "Rescore all" button is the most-clicked write
+   in the new UI.
+3. After B, all three "currently live" Claude sandbox features
+   (command-center, dashboard, replies) round out cleanly.
+
+**Session B detailed prompt** is already in this run log under
+"Session B handoff" earlier — no new prompt needed.

@@ -7,6 +7,10 @@
     {
       "path": "/api/ingest/careers",
       "schedule": "15 14 * * 2,5"
+    },
+    {
+      "path": "/api/gmail/sync-incremental",
+      "schedule": "0 14 * * *"
     }
   ],
   "headers": [

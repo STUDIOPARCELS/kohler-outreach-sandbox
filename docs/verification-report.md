@@ -88,6 +88,38 @@ recreate.
 | `reply-classification.test.mjs` | 11 | 11 |
 | **Total** | **94** | **94** |
 
+## Status update after Sessions A + F (2026-05-14, post-audit)
+
+| # | Question | Status | Change |
+| - | --- | --- | --- |
+| 1 | Which target companies have new roles? | partial | unchanged |
+| 2 | Which roles fit Kohler best? | partial | unchanged |
+| 3 | Which roles support his PE-track path? | partial | unchanged |
+| 4 | Who is the best person to contact? | partial | unchanged |
+| 5 | What is the next best action? | **partial → improving** | Session F unlocked auto-import of Gmail replies (production cron); `/replies` page now shows classified inbound mail. |
+
+**Session A** reconciled `sync_runs` writes — adapter sync routes
+now record runs correctly to KOHLER OS (mock_ats dryRun verified
+live: row landed with all 18 columns populated correctly).
+
+**Session F** applied the `email_messages` migration to KOHLER OS
+and shipped:
+- `email_threads`, `email_messages`, `sent_messages` tables (uuid
+  PKs, FKs to existing tables match live types).
+- `/replies` UI page with 11 classification filters + "Sync now"
+  button.
+- Daily Vercel cron entry `0 14 * * *` for
+  `/api/gmail/sync-incremental` (8am MST).
+- Backfill route reconciled to use uuids and gracefully skip the
+  not-yet-existing `email_drafts` lookup.
+
+**What still needs production deploy to fully work:**
+- Gmail OAuth requires `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`
+  which are in the existing Vercel project but not in `env_vault`
+  (so local dev can't read Gmail; production will).
+- Once deployed, the daily cron will start populating
+  `email_messages` automatically.
+
 Type-check: `npx tsc --noEmit` exits clean.
 
 `next build` still not exercised (requires real env vars). No live

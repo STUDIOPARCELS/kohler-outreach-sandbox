@@ -131,9 +131,15 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // Resolve / insert thread.
+      // Resolve / insert thread. NOTE: email_threads.id is uuid, not int.
       const threadId = msg.data.threadId ?? null;
-      let emailThreadId: number | null = null;
+      let emailThreadId: string | null = null;
+      const needsActionClassifications = new Set([
+        "positive_reply",
+        "recruiter_screen",
+        "needs_follow_up",
+        "referral",
+      ]);
       if (threadId) {
         const { data: existingThread } = await supabaseAdmin
           .from("email_threads")
@@ -141,26 +147,35 @@ export async function POST(req: NextRequest) {
           .eq("gmail_thread_id", threadId)
           .maybeSingle();
         if (existingThread) {
-          emailThreadId = (existingThread as { id: number }).id;
+          emailThreadId = (existingThread as { id: string }).id;
           await supabaseAdmin
             .from("email_threads")
             .update({
               last_message_at: internalDate,
               last_classification: cls.classification,
-              needs_action:
-                ["positive_reply", "recruiter_screen", "needs_follow_up", "referral"].includes(cls.classification),
+              needs_action: needsActionClassifications.has(cls.classification),
             })
             .eq("id", emailThreadId);
         } else {
-          // Try to link to an outreach action by gmail_thread_id on email_drafts.
-          const { data: linkedDraft } = await supabaseAdmin
-            .from("email_drafts")
-            .select("outreach_action_id, to_email")
-            .eq("gmail_thread_id", threadId)
-            .maybeSingle();
-          const outreachActionId = (linkedDraft as { outreach_action_id?: number | null } | null)?.outreach_action_id ?? null;
+          // Try to link to an outreach action by gmail_thread_id on
+          // email_drafts. The email_drafts table doesn't ship until
+          // Session E — until then, this lookup gracefully degrades.
+          let outreachActionId: string | null = null;
+          try {
+            const { data: linkedDraft, error: draftErr } = await supabaseAdmin
+              .from("email_drafts")
+              .select("outreach_action_id, to_email")
+              .eq("gmail_thread_id", threadId)
+              .maybeSingle();
+            if (!draftErr && linkedDraft) {
+              outreachActionId =
+                (linkedDraft as { outreach_action_id?: string | null }).outreach_action_id ?? null;
+            }
+          } catch {
+            // email_drafts not present — that's expected pre-Session E.
+          }
 
-          const { data: insertedThread } = await supabaseAdmin
+          const { data: insertedThread, error: insertThreadErr } = await supabaseAdmin
             .from("email_threads")
             .insert({
               gmail_thread_id: threadId,
@@ -169,13 +184,16 @@ export async function POST(req: NextRequest) {
               first_seen_at: internalDate ?? new Date().toISOString(),
               last_message_at: internalDate,
               last_classification: cls.classification,
-              needs_action:
-                ["positive_reply", "recruiter_screen", "needs_follow_up", "referral"].includes(cls.classification),
+              needs_action: needsActionClassifications.has(cls.classification),
             })
             .select("id")
             .single();
-          emailThreadId = (insertedThread as { id?: number } | null)?.id ?? null;
-          if (emailThreadId) summary.inserted_threads++;
+          if (insertThreadErr) {
+            summary.warnings.push(`thread insert ${threadId}: ${insertThreadErr.message}`);
+          } else {
+            emailThreadId = (insertedThread as { id?: string } | null)?.id ?? null;
+            if (emailThreadId) summary.inserted_threads++;
+          }
         }
       }
 

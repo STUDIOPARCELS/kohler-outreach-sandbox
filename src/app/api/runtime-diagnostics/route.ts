@@ -132,18 +132,22 @@ async function fetchJobsSnapshot() {
   if (relErr) warnings.push(`job_listings relevant count: ${relErr.message}`);
   else relevant = relCount ?? null;
 
+  // Drive-by fix flagged by Session A: live column is posted_date (not
+  // date_posted), and there is no created_at column on job_listings —
+  // use received_at / fetched_at / last_seen_at instead.
   const { data: latestRows, error: latestErr } = await supabaseAdmin
     .from("job_listings")
-    .select("date_posted, last_seen, created_at")
-    .order("created_at", { ascending: false })
+    .select("posted_date, last_seen_at, received_at, fetched_at")
+    .order("received_at", { ascending: false, nullsFirst: false })
     .limit(1);
   if (latestErr) warnings.push(`job_listings latest: ${latestErr.message}`);
   else if (latestRows && latestRows.length > 0) {
     const row = latestRows[0] as Record<string, unknown>;
     latestPostedAt =
-      (row.date_posted as string | null) ??
-      (row.last_seen as string | null) ??
-      (row.created_at as string | null) ??
+      (row.posted_date as string | null) ??
+      (row.last_seen_at as string | null) ??
+      (row.received_at as string | null) ??
+      (row.fetched_at as string | null) ??
       null;
   }
 

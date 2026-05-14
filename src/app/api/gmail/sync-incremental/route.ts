@@ -1,14 +1,22 @@
-// Phase 9 — POST /api/gmail/sync-incremental
+// Session F — POST /api/gmail/sync-incremental
 //
-// Lightweight wrapper around backfill-responses that defaults to the
-// last 7 days. Designed to run on a frequent cron schedule.
+// Daily cron wrapper around backfill-responses. Pulls the last 2 days of
+// inbox messages (overlap is fine — `email_messages.gmail_message_id` is
+// UNIQUE so duplicates are skipped).
+//
+// Wired in vercel.json as `0 14 * * *` UTC = 8am MST.
+// GET also accepted so a healthcheck or smoke ping doesn't 405.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSecret, requireCronSecret } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
-export async function POST(req: NextRequest) {
+const DEFAULT_QUERY = "in:inbox newer_than:2d";
+const DEFAULT_MAX_MESSAGES = 100;
+
+async function run(req: NextRequest) {
   const apiAuth = requireApiSecret(req);
   if (apiAuth) {
     const cronAuth = requireCronSecret(req);
@@ -25,8 +33,11 @@ export async function POST(req: NextRequest) {
       authorization: req.headers.get("authorization") ?? "",
       origin: url.origin,
     },
-    body: JSON.stringify({ query: "in:inbox newer_than:7d", max_messages: 50 }),
+    body: JSON.stringify({ query: DEFAULT_QUERY, max_messages: DEFAULT_MAX_MESSAGES }),
   });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }
+
+export const POST = run;
+export const GET = run;
