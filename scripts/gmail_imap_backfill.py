@@ -26,6 +26,20 @@ from typing import Any
 
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
 ACTIONABLE = {"positive_reply", "recruiter_screen", "apply_online", "referral", "needs_follow_up"}
+GENERIC_EMAIL_DOMAINS = {
+    "aol.com",
+    "gmail.com",
+    "googlemail.com",
+    "hotmail.com",
+    "icloud.com",
+    "live.com",
+    "me.com",
+    "msn.com",
+    "outlook.com",
+    "proton.me",
+    "protonmail.com",
+    "yahoo.com",
+}
 
 
 def load_env(path: str) -> dict[str, str]:
@@ -50,6 +64,18 @@ def mask_email(value: str | None) -> str | None:
 
 def normalize_email(value: str | None) -> str:
     return (value or "").strip().lower()
+
+
+def email_domain(value: str | None) -> str | None:
+    normalized = normalize_email(value)
+    if "@" not in normalized:
+        return None
+    domain = normalized.rsplit("@", 1)[1].strip()
+    return domain or None
+
+
+def is_generic_email_domain(domain: str | None) -> bool:
+    return not domain or domain in GENERIC_EMAIL_DOMAINS
 
 
 def extract_emails(value: str | None) -> list[str]:
@@ -97,6 +123,64 @@ def normalize_subject(value: str | None) -> str:
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
+def looks_like_reply_subject(value: str | None) -> bool:
+    return bool(re.match(r"^\s*(re|fw|fwd|automatic reply)\s*:", value or "", flags=re.I))
+
+
+def token_set(value: str | None) -> set[str]:
+    stop_words = {
+        "and",
+        "associates",
+        "company",
+        "corp",
+        "corporation",
+        "engineers",
+        "engineering",
+        "group",
+        "inc",
+        "llc",
+        "systems",
+        "technologies",
+        "technology",
+        "the",
+    }
+    text = re.sub(r"[^a-z0-9\s]", " ", (value or "").lower())
+    return {token for token in text.split() if len(token) >= 4 and token not in stop_words}
+
+
+def should_skip_automated_domain_sender(from_email: str | None, subject: str | None, snippet: str | None) -> bool:
+    sender = normalize_email(from_email)
+    local = sender.split("@", 1)[0] if "@" in sender else sender
+    text = f"{subject or ''} {snippet or ''}".lower()
+    if re.search(r"mailer-daemon|postmaster", sender):
+        return False
+    if re.search(r"^((no-?|do-?not-?)reply|noreply|donotreply)$", local):
+        return True
+    if re.search(r"career|job|talent|alert|notification|opportunit|workday|greenhouse|lever|ashby|icims|successfactors", sender):
+        return True
+    return bool(re.search(r"finish your application|talent community|job alert|career alert|new openings in your area", text))
+
+
+def direct_outreach_evidence(rows: list[dict[str, Any]], from_email: str | None, subject: str | None, snippet: str | None) -> list[str]:
+    text = f"{from_email or ''} {subject or ''} {snippet or ''}".lower()
+    evidence: list[str] = []
+    for marker in ("kohler", "kwood12802", "akwood1", "solokit", "bsme", "eit"):
+        if marker in text:
+            evidence.append(f"marker:{marker}")
+    if looks_like_reply_subject(subject):
+        evidence.append("reply_subject")
+
+    for row in rows:
+        contact = normalize_email(row.get("contact_email"))
+        if contact and contact in text:
+            evidence.append("contact_email")
+        for token in token_set(row.get("contactname")):
+            if token in text:
+                evidence.append(f"contact_token:{token}")
+
+    return sorted(set(evidence))
+
+
 def subject_similarity(left: str | None, right: str | None) -> float:
     a = {token for token in normalize_subject(left).split() if len(token) > 2}
     b = {token for token in normalize_subject(right).split() if len(token) > 2}
@@ -138,6 +222,8 @@ def classify_reply(from_email: str | None, subject: str | None, snippet: str | N
         return "bounce"
     if re.search(r"out of office|automatic reply|auto(?:matic)? response|\booo\b", text) or (auto_submitted and auto_submitted != "no") or precedence in {"bulk", "auto_reply"}:
         return "out_of_office"
+    if re.search(r"finish your application|talent community|job alert|career alert|new openings in your area", text):
+        return "auto_reply"
     if re.search(r"not moving forward|unfortunately|not a fit|no current openings|we'?ll keep (your|his) (resume|information)|position has been filled", text):
         return "rejection"
     if re.search(r"phone screen|screening call|schedule (a )?(call|conversation|interview)|availability|recruiter|talent acquisition|interview", text):
@@ -278,6 +364,8 @@ def main() -> int:
     parser.add_argument("--end-date", required=True)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--max-contacts", type=int, default=1000)
+    parser.add_argument("--no-domain-scan", action="store_true")
+    parser.add_argument("--limit-per-domain", type=int, default=25)
     args = parser.parse_args()
 
     sandbox_env = load_env(".env.local")
@@ -297,12 +385,17 @@ def main() -> int:
         if (row.get("status") or "").lower() != "draft" and (row.get("emailed_at") or row.get("sent_at") or row.get("printed_at"))
     ]
     by_email: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    by_domain: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in outreach_rows:
         normalized = normalize_email(row.get("contact_email"))
         if normalized:
             by_email[normalized].append(row)
+        domain = email_domain(normalized)
+        if not is_generic_email_domain(domain):
+            by_domain[domain].append(row)
 
     contact_emails = sorted(by_email.keys())[: args.max_contacts]
+    contact_domains = sorted(by_domain.keys())[: args.max_contacts]
     sent_rows = build_sent_rows(outreach_rows)
 
     mail = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=30)
@@ -314,8 +407,16 @@ def main() -> int:
     seen: set[str] = set()
     candidates: list[dict[str, Any]] = []
     scan_errors = []
+    domain_messages_skipped = 0
 
-    def add_candidate(uid: bytes, source_contact: str | None = None, bounce_scan: bool = False) -> None:
+    def add_candidate(
+        uid: bytes,
+        source_contact: str | None = None,
+        source_rows: list[dict[str, Any]] | None = None,
+        bounce_scan: bool = False,
+        match_mode: str = "contact_email",
+    ) -> None:
+        nonlocal domain_messages_skipped
         fetched = fetch_message(mail, uid)
         if not fetched:
             return
@@ -337,7 +438,7 @@ def main() -> int:
             "message-id": message.get("Message-ID", ""),
             "in-reply-to": message.get("In-Reply-To", ""),
         }
-        header_id = message.get("Message-ID", "").strip("<> ")
+        header_id = re.sub(r"\s+", "", message.get("Message-ID", "")).strip("<>")
         gmail_message_id = f"imap:{header_id}" if header_id else f"imap-uid:{uid.decode('ascii')}"
         if gmail_message_id in seen:
             return
@@ -351,10 +452,22 @@ def main() -> int:
             if not matched_email:
                 return
 
-        match = pick_best_outreach(by_email.get(matched_email or sender, []), received_at, subject)
+        rows_for_match = source_rows or by_email.get(matched_email or sender, [])
+        match = pick_best_outreach(rows_for_match, received_at, subject)
         classification = classify_reply(sender, subject, snippet, headers)
         if bounce_scan:
             classification = "bounce"
+        evidence = direct_outreach_evidence(rows_for_match, sender, subject, snippet)
+        if match_mode == "company_domain":
+            automated_sender = should_skip_automated_domain_sender(sender, subject, snippet)
+            if automated_sender and classification != "out_of_office":
+                domain_messages_skipped += 1
+                return
+            if not evidence and classification == "unknown":
+                domain_messages_skipped += 1
+                return
+
+        match_row = (match or {}).get("row", {}) if match else {}
         candidates.append({
             "gmail_thread_id": f"imap-gmail:{gmail_thread_id}" if gmail_thread_id else f"imap-thread:{gmail_message_id}",
             "gmail_message_id": gmail_message_id,
@@ -371,11 +484,13 @@ def main() -> int:
             "raw_headers": headers,
             "metadata": {
                 "source": "gmail_imap_backfill",
-                "contact_email": matched_email or sender or None,
-                "contact_name": (match or {}).get("row", {}).get("contactname") if match else None,
-                "companyname": (match or {}).get("row", {}).get("companyname") if match else None,
-                "matched_outreach_id": (match or {}).get("row", {}).get("id") if match else None,
-                "matched_by": (match or {}).get("matched_by") if match else None,
+                "contact_email": matched_email or match_row.get("contact_email") or sender or None,
+                "contact_name": match_row.get("contactname"),
+                "companyname": match_row.get("companyname"),
+                "matched_outreach_id": match_row.get("id"),
+                "matched_by": f"{match.get('matched_by')}+{match_mode}" if match else match_mode,
+                "match_mode": match_mode,
+                "match_evidence": evidence,
                 "channel": (match or {}).get("channel") if match else "unknown",
             },
         })
@@ -388,6 +503,17 @@ def main() -> int:
                     add_candidate(uid, source_contact=contact)
         except Exception as exc:
             scan_errors.append({"contactEmail": mask_email(contact), "error": str(exc)[:160]})
+
+    if not args.no_domain_scan:
+        for domain in contact_domains:
+            try:
+                typ, data = mail.uid("SEARCH", None, "SINCE", start, "BEFORE", before, "FROM", domain)
+                if typ != "OK":
+                    continue
+                for uid in (data[0] or b"").split()[: max(0, args.limit_per_domain)]:
+                    add_candidate(uid, source_rows=by_domain.get(domain, []), match_mode="company_domain")
+            except Exception as exc:
+                scan_errors.append({"contactEmail": f"domain:{domain}", "error": str(exc)[:160]})
 
     bounce_uids: set[bytes] = set()
     for field, value in [("FROM", "mailer-daemon"), ("FROM", "postmaster"), ("SUBJECT", "Undelivered"), ("SUBJECT", "Delivery"), ("SUBJECT", "Failure"), ("SUBJECT", "Returned")]:
@@ -412,6 +538,8 @@ def main() -> int:
         "outreachRows": len(outreach_rows),
         "sentMessagesPrepared": len(sent_rows),
         "contactEmailsScanned": len(contact_emails),
+        "contactDomainsScanned": 0 if args.no_domain_scan else len(contact_domains),
+        "domainMessagesSkipped": domain_messages_skipped,
         "candidateReplies": len(candidates),
         "actionableReplies": sum(1 for row in candidates if row["classification"] in ACTIONABLE),
         "classificationCounts": dict(classification_counts),
@@ -425,6 +553,7 @@ def main() -> int:
                 "receivedAt": row.get("received_at"),
                 "classification": row.get("classification"),
                 "matchedBy": row["metadata"].get("matched_by"),
+                "matchMode": row["metadata"].get("match_mode"),
                 "channel": row["metadata"].get("channel"),
             }
             for row in candidates[:12]
@@ -453,7 +582,13 @@ def main() -> int:
                     "last_message_at": row.get("received_at"),
                     "classification": row["classification"],
                     "needs_follow_up": row["classification"] in ACTIONABLE,
-                    "metadata": {"source": "gmail_imap_backfill", "channel": meta.get("channel"), "sample_message_id": row["gmail_message_id"]},
+                    "metadata": {
+                        "source": "gmail_imap_backfill",
+                        "channel": meta.get("channel"),
+                        "match_mode": meta.get("match_mode"),
+                        "match_evidence": meta.get("match_evidence"),
+                        "sample_message_id": row["gmail_message_id"],
+                    },
                 }
             else:
                 received = row.get("received_at")

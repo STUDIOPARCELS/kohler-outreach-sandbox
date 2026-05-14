@@ -59,6 +59,20 @@ export interface GmailClassificationInput {
 }
 
 const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+const GENERIC_EMAIL_DOMAINS = new Set([
+  "aol.com",
+  "gmail.com",
+  "googlemail.com",
+  "hotmail.com",
+  "icloud.com",
+  "live.com",
+  "me.com",
+  "msn.com",
+  "outlook.com",
+  "proton.me",
+  "protonmail.com",
+  "yahoo.com",
+]);
 
 export function normalizeEmail(value: string | null | undefined): string {
   return (value || "").trim().toLowerCase();
@@ -74,6 +88,17 @@ export function extractEmailAddresses(value: string | null | undefined): string[
   return Array.from(new Set(matches.map((email) => email.toLowerCase())));
 }
 
+export function emailDomain(value: string | null | undefined): string | null {
+  const email = extractEmailAddress(value) || normalizeEmail(value);
+  if (!email.includes("@")) return null;
+  const domain = email.split("@").pop()?.trim();
+  return domain || null;
+}
+
+export function isGenericEmailDomain(domain: string | null | undefined): boolean {
+  return !domain || GENERIC_EMAIL_DOMAINS.has(domain.toLowerCase());
+}
+
 export function normalizeSubject(value: string | null | undefined): string {
   return (value || "")
     .replace(/^(\s*(re|fw|fwd)\s*:\s*)+/i, "")
@@ -82,6 +107,73 @@ export function normalizeSubject(value: string | null | undefined): string {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+}
+
+export function looksLikeReplySubject(value: string | null | undefined): boolean {
+  return /^\s*(re|fw|fwd|automatic reply)\s*:/i.test(value || "");
+}
+
+export function shouldSkipAutomatedDomainSender(
+  fromEmail: string | null | undefined,
+  subject: string | null | undefined,
+  snippet: string | null | undefined
+): boolean {
+  const sender = normalizeEmail(fromEmail);
+  const localPart = sender.includes("@") ? sender.split("@")[0] : sender;
+  const text = `${subject || ""} ${snippet || ""}`.toLowerCase();
+
+  if (/mailer-daemon|postmaster/.test(sender)) return false;
+  if (/^((no-?|do-?not-?)reply|noreply|donotreply)$/.test(localPart)) return true;
+  if (/career|job|talent|alert|notification|opportunit|workday|greenhouse|lever|ashby|icims|successfactors/.test(sender)) {
+    return true;
+  }
+  return /finish your application|talent community|job alert|career alert|new openings in your area/.test(text);
+}
+
+function tokenSet(value: string | null | undefined): Set<string> {
+  const stopWords = new Set([
+    "and",
+    "associates",
+    "company",
+    "corp",
+    "corporation",
+    "engineers",
+    "engineering",
+    "group",
+    "inc",
+    "llc",
+    "systems",
+    "technologies",
+    "technology",
+    "the",
+  ]);
+  const tokens = (value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((token) => token.length >= 4 && !stopWords.has(token));
+  return new Set(tokens);
+}
+
+export function hasDirectOutreachEvidence(
+  rows: OutreachHistoryRow[],
+  fromEmail: string | null | undefined,
+  subject: string | null | undefined,
+  snippet: string | null | undefined
+): boolean {
+  const text = `${fromEmail || ""} ${subject || ""} ${snippet || ""}`.toLowerCase();
+  if (/kohler|kwood12802|akwood1|solokit|bsme|eit/.test(text)) return true;
+  if (looksLikeReplySubject(subject)) return true;
+
+  for (const row of rows) {
+    const contactEmail = normalizeEmail(row.contact_email);
+    if (contactEmail && text.includes(contactEmail)) return true;
+    for (const token of Array.from(tokenSet(row.contactname))) {
+      if (text.includes(token)) return true;
+    }
+  }
+
+  return false;
 }
 
 function getHeader(headers: Record<string, string | undefined> | undefined, name: string): string {

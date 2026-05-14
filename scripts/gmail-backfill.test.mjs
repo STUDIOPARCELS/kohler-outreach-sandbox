@@ -14,11 +14,16 @@ const moduleUrl = `data:text/javascript;base64,${Buffer.from(compiled.outputText
 const {
   buildSentMessageRows,
   classifyGmailReply,
+  emailDomain,
   extractEmailAddress,
+  hasDirectOutreachEvidence,
   inferOutreachChannel,
+  isGenericEmailDomain,
+  looksLikeReplySubject,
   normalizeSubject,
   pickBestOutreach,
   redactEmail,
+  shouldSkipAutomatedDomainSender,
 } = await import(moduleUrl);
 
 test("classifies recruiter screening replies as actionable", () => {
@@ -127,5 +132,45 @@ test("builds one outbound row per outreach channel without double counting email
 test("normalizes subjects and redacts email addresses", () => {
   assert.equal(normalizeSubject("Re: [External] Mechanical Engineer!"), "mechanical engineer");
   assert.equal(extractEmailAddress("Kohler <kohler@example.com>"), "kohler@example.com");
+  assert.equal(emailDomain("Kohler <kohler@example.com>"), "example.com");
+  assert.equal(isGenericEmailDomain("gmail.com"), true);
+  assert.equal(isGenericEmailDomain("trustile.com"), false);
   assert.equal(redactEmail("kohler@example.com"), "ko***@example.com");
+});
+
+test("keeps domain scans narrow to real outreach replies", () => {
+  const outreachRows = [
+    {
+      id: "trustile",
+      companyname: "TruStile Doors, LLC",
+      contactname: "Chad Tiedemann",
+      contact_email: "ctiedemann@trustile.com",
+      subject_final: "Following up - BSME, EIT - Kohler Wood",
+      status: "emailed",
+      emailed_at: "2026-04-04T20:26:58.032Z",
+      sent_at: null,
+      printed_at: null,
+      updated_at: "2026-04-04T20:26:58.032Z",
+    },
+  ];
+
+  assert.equal(looksLikeReplySubject("Automatic reply: Following up - BSME, EIT - Kohler Wood"), true);
+  assert.equal(
+    hasDirectOutreachEvidence(
+      outreachRows,
+      "chad.tiedemann@trustile.com",
+      "Automatic reply: Following up - BSME, EIT - Kohler Wood",
+      "I am out of the office."
+    ),
+    true
+  );
+  assert.equal(
+    shouldSkipAutomatedDomainSender(
+      "opportunities@careeralerts.conmed.com",
+      "Finish your application at CONMED!",
+      "Join our talent community and be notified about new openings."
+    ),
+    true
+  );
+  assert.equal(shouldSkipAutomatedDomainSender("noreply@example.com", "Re: Your application", "Kohler Wood"), true);
 });

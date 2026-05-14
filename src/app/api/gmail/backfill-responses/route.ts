@@ -2,12 +2,16 @@ import { requireApiSecret } from "@/lib/auth";
 import {
   classifyGmailReply,
   buildSentMessageRows,
+  emailDomain,
   extractEmailAddress,
   extractEmailAddresses,
+  hasDirectOutreachEvidence,
   isActionableReply,
+  isGenericEmailDomain,
   normalizeEmail,
   pickBestOutreach,
   redactEmail,
+  shouldSkipAutomatedDomainSender,
   type OutreachHistoryRow,
   type ReplyClassification,
 } from "@/lib/gmailResponseBackfill";
@@ -213,6 +217,18 @@ function indexOutreachByEmail(rows: OutreachHistoryRow[]): Map<string, OutreachH
   return byEmail;
 }
 
+function indexOutreachByDomain(rows: OutreachHistoryRow[]): Map<string, OutreachHistoryRow[]> {
+  const byDomain = new Map<string, OutreachHistoryRow[]>();
+  for (const row of rows) {
+    const domain = emailDomain(row.contact_email);
+    if (!domain || isGenericEmailDomain(domain)) continue;
+    const bucket = byDomain.get(domain) || [];
+    bucket.push(row);
+    byDomain.set(domain, bucket);
+  }
+  return byDomain;
+}
+
 async function fetchMessageMetadata(gmail: gmail_v1.Gmail, messageId: string): Promise<gmail_v1.Schema$Message> {
   const response = await gmail.users.messages.get({
     userId: "me",
@@ -299,6 +315,87 @@ async function scanContactReplies(
   }
 
   return candidates;
+}
+
+async function scanDomainReplies(
+  gmail: gmail_v1.Gmail,
+  domain: string,
+  rows: OutreachHistoryRow[],
+  rangeClause: string,
+  limitPerDomain: number
+): Promise<{ candidates: ReplyCandidate[]; skippedAutomated: number }> {
+  const q = `from:${domain} ${rangeClause} -in:chats`;
+  const response = await gmail.users.messages.list({
+    userId: "me",
+    q,
+    maxResults: limitPerDomain,
+    includeSpamTrash: false,
+  });
+
+  const messages = response.data.messages || [];
+  const candidates: ReplyCandidate[] = [];
+  let skippedAutomated = 0;
+  for (const listed of messages) {
+    if (!listed.id) continue;
+    const message = await fetchMessageMetadata(gmail, listed.id);
+    const headers = headerRecord(message);
+    const fromEmail = extractEmailAddress(getHeader(headers, "from"));
+    if (emailDomain(fromEmail) !== domain) continue;
+
+    const subject = getHeader(headers, "subject") || null;
+    const snippet = safeSnippet(message.snippet);
+    const receivedAt = receivedAtFromMessage(message, headers);
+    const classification = classifyGmailReply({
+      fromEmail,
+      subject,
+      snippet,
+      headers,
+    });
+    const isAutomatedSender = shouldSkipAutomatedDomainSender(fromEmail, subject, snippet);
+    const hasEvidence = hasDirectOutreachEvidence(rows, fromEmail, subject, snippet);
+
+    if (isAutomatedSender && classification !== "out_of_office") {
+      skippedAutomated += 1;
+      continue;
+    }
+
+    if (!hasEvidence && classification === "unknown") {
+      continue;
+    }
+
+    const match = pickBestOutreach(rows, receivedAt, subject);
+    candidates.push({
+      gmailMessageId: message.id || listed.id,
+      gmailThreadId: message.threadId || listed.threadId || listed.id,
+      fromEmail,
+      toEmails: extractEmailAddresses(`${getHeader(headers, "to")} ${getHeader(headers, "cc")}`),
+      subject,
+      snippet,
+      receivedAt,
+      internalDateMs: message.internalDate ? Number(message.internalDate) : null,
+      labelIds: message.labelIds || [],
+      headers: {
+        from: getHeader(headers, "from"),
+        to: getHeader(headers, "to"),
+        cc: getHeader(headers, "cc"),
+        subject: getHeader(headers, "subject"),
+        date: getHeader(headers, "date"),
+        auto_submitted: getHeader(headers, "auto-submitted"),
+        precedence: getHeader(headers, "precedence"),
+        message_id: getHeader(headers, "message-id"),
+        in_reply_to: getHeader(headers, "in-reply-to"),
+      },
+      classification,
+      matchedOutreachId: match?.row.id || null,
+      matchedBy: match?.matchedBy ? `${match.matchedBy}+company_domain` : "company_domain",
+      channel: match?.channel || "unknown",
+      companyname: match?.row.companyname || rows[0]?.companyname || null,
+      contactEmail: match?.row.contact_email || rows[0]?.contact_email || null,
+      contactName: match?.row.contactname || rows[0]?.contactname || null,
+    });
+  }
+
+  return { candidates, skippedAutomated };
 }
 
 function countByClassification(candidates: ReplyCandidate[]): Record<string, number> {
@@ -412,7 +509,9 @@ export async function POST(req: NextRequest) {
   try {
     const outreachRows = await loadOutreachRows();
     const outreachByEmail = indexOutreachByEmail(outreachRows);
+    const outreachByDomain = indexOutreachByDomain(outreachRows);
     const contactEmails = Array.from(outreachByEmail.keys()).slice(0, maxContacts);
+    const contactDomains = Array.from(outreachByDomain.keys()).slice(0, maxContacts);
     const sentMessagesUpserted = dryRun ? 0 : await writeSentMessages(outreachRows);
     const requestedMailboxes = Array.isArray(body.mailboxes)
       ? body.mailboxes.filter((email: unknown): email is string => typeof email === "string" && email.includes("@"))
@@ -421,6 +520,7 @@ export async function POST(req: NextRequest) {
 
     const seenMessages = new Set<string>();
     const candidates: ReplyCandidate[] = [];
+    let domainMessagesSkipped = 0;
     const scanErrors: Array<{ contactEmail: string; error: string }> = [];
     const mailboxErrors: Array<{ mailbox: string; error: string }> = [];
     const gmailAccounts: Array<string | null> = [];
@@ -458,6 +558,27 @@ export async function POST(req: NextRequest) {
           scanErrors.push({ contactEmail: redactEmail(contactEmail) || "(unknown)", error: message });
         }
       }
+
+      for (const domain of contactDomains) {
+        try {
+          const found = await scanDomainReplies(
+            gmail,
+            domain,
+            outreachByDomain.get(domain) || [],
+            rangeClause,
+            limitPerContact
+          );
+          domainMessagesSkipped += found.skippedAutomated;
+          for (const candidate of found.candidates) {
+            if (seenMessages.has(candidate.gmailMessageId)) continue;
+            seenMessages.add(candidate.gmailMessageId);
+            candidates.push(candidate);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          scanErrors.push({ contactEmail: `domain:${domain}`, error: message });
+        }
+      }
     }
 
     if (gmailAccounts.length === 0 && mailboxErrors.length > 0) {
@@ -470,6 +591,7 @@ export async function POST(req: NextRequest) {
           endDate,
           outreachRows: outreachRows.length,
           contactEmailsScanned: 0,
+          contactDomainsScanned: 0,
           limitPerContact,
           candidateReplies: 0,
           actionableReplies: 0,
@@ -480,6 +602,7 @@ export async function POST(req: NextRequest) {
             emailMessagesUpserted: 0,
           },
           samples: [],
+          domainMessagesSkipped,
           scanErrors: [],
           mailboxErrors,
           nextStep: "Reconnect Gmail at /api/google/connect, then retry this route.",
@@ -500,12 +623,14 @@ export async function POST(req: NextRequest) {
       gmailAccounts,
       outreachRows: outreachRows.length,
       contactEmailsScanned: contactEmails.length,
+      contactDomainsScanned: contactDomains.length,
       limitPerContact,
       candidateReplies: candidates.length,
       actionableReplies: candidates.filter((candidate) => isActionableReply(candidate.classification)).length,
       classificationCounts: countByClassification(candidates),
       writeResult,
       samples: sampleCandidates(candidates),
+      domainMessagesSkipped,
       scanErrors: scanErrors.slice(0, MAX_SAMPLE_COUNT),
       mailboxErrors,
     });

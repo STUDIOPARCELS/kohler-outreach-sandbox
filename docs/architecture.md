@@ -63,7 +63,7 @@ Company targets
 - Contact providers are currently route-local RocketReach calls. They should be moved behind a people-provider interface before adding more providers.
 - Gmail send is currently SMTP. Draft creation and reply sync should use Gmail API routes with explicit human approval state.
 - `POST /api/jobs/rescore` is protected by `API_SECRET` and defaults to dry-run. It scores current `job_listings` and persists only when `dryRun=false`.
-- `POST /api/gmail/backfill-responses` is protected by `API_SECRET` and defaults to dry-run. It syncs historical outbound rows into `sent_messages`, then matches Gmail replies to `reachout_company_inserts` by contact email and stores `email_threads`/`email_messages` only when `dry_run=false`.
+- `POST /api/gmail/backfill-responses` is protected by `API_SECRET` and defaults to dry-run. It syncs historical outbound rows into `sent_messages`, then matches Gmail replies to `reachout_company_inserts` by exact contact email or non-generic company domain with outreach evidence, skips automated career-site noise, and stores `email_threads`/`email_messages` only when `dry_run=false`.
 - `GET /api/replies` is app-origin protected and returns imported reply/bounce records plus classification counts.
 - `GET /api/analytics` is app-origin protected and returns response-rate cards from `sent_messages`, `email_threads`, and `email_messages`.
 

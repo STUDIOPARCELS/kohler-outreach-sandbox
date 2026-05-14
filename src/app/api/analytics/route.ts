@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
     supabaseAdmin
       .from("reachout_company_inserts")
       .select("*", { count: "exact", head: true })
+      .neq("status", "draft")
       .or("emailed_at.not.is.null,sent_at.not.is.null,printed_at.not.is.null"),
   ]);
 

@@ -26,7 +26,7 @@ Date: 2026-05-14
 
 5. What is the next best action?
    - Status: partial.
-   - Evidence: `scoreJobForKohler` returns `recommended_action`; Open Roles company cards and job rows show the action. `POST /api/gmail/backfill-responses` can classify historical replies as positive, recruiter screen, apply online, referral, follow-up, rejection, bounce, out-of-office, auto-reply, or unknown after Gmail reconnect. `/replies` and `/analytics` now read real outbound analytics from `sent_messages`.
+   - Evidence: `scoreJobForKohler` returns `recommended_action`; Open Roles company cards and job rows show the action. `POST /api/gmail/backfill-responses` can classify historical replies as positive, recruiter screen, apply online, referral, follow-up, rejection, bounce, out-of-office, auto-reply, or unknown after Gmail reconnect. The IMAP backfill for `kwood12802@gmail.com` imported matched bounces and an out-of-office auto-reply into `/replies` and `/analytics`.
    - Missing: action queue UI, draft/contact/application buttons, and successful Kohler-mailbox reply import.
 
 ## Checks
@@ -43,11 +43,11 @@ Date: 2026-05-14
 - Protected rescore route smoke: passed for `POST /api/jobs/rescore` with `{ "dryRun": true, "limit": 3 }`.
 - Protected rescore write smoke: passed for `POST /api/jobs/rescore` with `{ "dryRun": false, "limit": 1000 }`; 185 true-sandbox rows persisted and `missingTable=false`.
 - Supabase table verification: `job_sources`, `sync_runs`, `role_fit_scores`, and `outreach_actions` exist in true sandbox; `role_fit_scores` count is 185.
-- Supabase Gmail analytics table verification: `sent_messages`, `email_threads`, and `email_messages` exist in true sandbox with RLS enabled. `sent_messages` now contains 33 historical outbound records; `email_threads` and `email_messages` remain 0 because mailbox OAuth is not connected for Kohler.
+- Supabase Gmail analytics table verification: `sent_messages`, `email_threads`, and `email_messages` exist in true sandbox with RLS enabled. `sent_messages` now contains 33 historical outbound records; `email_threads` and `email_messages` contain 5 matched Gmail events from IMAP backfill.
 - Gmail OAuth smoke test: blocked for the requested Kohler mailboxes. The only `gmail_accounts` row is `31***@gmail.com`; `kwood12802@gmail.com` and `akwood1@mines.edu` are not connected. Localhost OAuth is also blocked by Google `redirect_uri_mismatch`.
-- Gmail IMAP smoke test: passed for `kwood12802@gmail.com` using the existing `GMAIL_APP_PASSWORD` from local production env. March 1-May 14 backfill scanned 28 contact emails and found 4 delivery-failure bounces.
+- Gmail IMAP smoke test: passed for `kwood12802@gmail.com` using the existing `GMAIL_APP_PASSWORD` from local production env. March 1-May 14 backfill scanned 28 contact emails and 24 non-generic company domains, skipped 5 automated ConMed career-site messages, and imported 4 delivery-failure bounces plus 1 TruStile out-of-office auto-reply. No human/actionable replies were found.
 - Gmail backfill route smoke: passed safety behavior. `POST /api/gmail/backfill-responses` with `dry_run=true`, `start_date=2026-03-01`, `end_date=2026-05-14`, and the two requested mailboxes returns 401 plus reconnect guidance. `dry_run=false` also returns reconnect guidance, but synced 33 outbound rows into `sent_messages` independently of Gmail reply access.
-- Replies/analytics UI smoke: passed in the local browser. `/replies` shows 33 outbound records, 4 threads/messages, and 4 bounces. `/analytics` shows 33 outbound, 8 email, 25 letters, 0 human replies, 4 bounces, 0% response rate, and 12.1% bounce rate.
+- Replies/analytics UI smoke: passed in the local browser. `/replies` shows 33 outbound records, 5 threads/messages, 4 bounces, and 1 out-of-office. `/analytics` shows 33 outbound, 8 email, 25 letters, 0 human replies, 4 bounces, 0% response rate, and 12.1% bounce rate.
 - Runtime diagnostics smoke: passed; `/api/runtime-diagnostics` shows `appEnvironment=sandbox`, `supabaseProjectRef=nwsjgppkfducaikxsyvk`, 185 tracked jobs, 123 tracked companies, Gmail cursor set, safety gates off, and latest ingest run status from `job_ingest_runs.started_at`.
 - Open Roles API smoke: passed; `/api/open-roles-list` returns 161 screened jobs across 105 companies after command-center filtering.
 - Browser UI smoke: passed at `http://localhost:3000/open-roles`; page shows `SANDBOX`, safety gates off, sandbox Supabase project ref, 161 visible jobs, 105 visible companies, and relevance-aware Fit/PE chips across MEP, government, construction, aerospace, and manufacturing groups.
@@ -59,4 +59,4 @@ Date: 2026-05-14
 - The production-style project `acwgirrldntjpzrhqmdh` also received the additive migration and a 273-row fit-score backfill before true sandbox discovery. Treat it as production data during future promotion work.
 - Vercel env vars are updated for the sandbox project, but a new deployment is still required before the hosted Vercel site uses the new env values and code changes.
 - `npm run lint` may be limited by Next.js lint availability in Next 14.
-- Gmail response backfill storage, route, `/replies`, `/analytics`, and IMAP fallback are implemented. OAuth scanning is still blocked until the requested Kohler mailboxes are connected. Gmail draft creation is not yet implemented.
+- Gmail response backfill storage, route, `/replies`, `/analytics`, and IMAP fallback are implemented. Current matching is intentionally narrow to exact contact replies, bounces, and same-company/domain replies with outreach evidence. OAuth scanning is still blocked until the requested Kohler mailboxes are connected. Gmail draft creation is not yet implemented.

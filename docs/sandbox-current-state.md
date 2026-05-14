@@ -63,7 +63,7 @@ True sandbox live schema source of truth:
 - Current true-sandbox counts after backfill: `role_fit_scores` 185, `job_sources` 0, `sync_runs` 0, `outreach_actions` 0.
 - Additive Gmail analytics migration applied to true sandbox project `nwsjgppkfducaikxsyvk`: `supabase/migrations/202605140002_gmail_response_backfill.sql`.
 - Live-confirmed true-sandbox server-only Gmail analytics tables with RLS enabled: `sent_messages`, `email_threads`, `email_messages`.
-- Current true-sandbox Gmail analytics counts after IMAP backfill: `sent_messages` 33, `email_threads` 4, `email_messages` 4.
+- Current true-sandbox Gmail analytics counts after IMAP backfill: `sent_messages` 33, `email_threads` 5, `email_messages` 5.
 
 ## Open Roles Data Path
 
@@ -86,13 +86,13 @@ True sandbox live schema source of truth:
 
 - OAuth connection: `/api/google/connect` and `/api/google/callback`; token/cursor storage in `gmail_accounts`.
 - Job ingest from Gmail: `/api/ingest/ziprecruiter`.
-- Reply analytics: `/api/gmail/backfill-responses` is protected by `API_SECRET`, defaults to `dry_run=true`, scans known outreach contact emails, classifies reply metadata, and writes only to `sent_messages`, `email_threads`, and `email_messages` when `dry_run=false`.
+- Reply analytics: `/api/gmail/backfill-responses` is protected by `API_SECRET`, defaults to `dry_run=true`, scans known outreach contact emails plus non-generic company domains, skips automated career-site noise, classifies reply metadata, and writes only to `sent_messages`, `email_threads`, and `email_messages` when `dry_run=false`.
 - Live SMTP routes: `/api/send-email` and `/api/approve-followup`.
 - Safety gate added: live send now requires `ENABLE_LIVE_SEND=true` and the draft row status `human_approved`.
 - Current OAuth status: one existing `gmail_accounts` row is present for `31***@gmail.com`; neither `kwood12802@gmail.com` nor `akwood1@mines.edu` is connected as of 2026-05-14. Historical reply/bounce backfill for Kohler's two mailboxes is blocked until those exact accounts are reconnected through `/api/google/connect`.
 - Current outbound sync status: `sent_messages` has 33 server-side records from historical outbound rows, split into 8 email sends and 25 physical letters.
-- Current reply/bounce backfill status: `scripts/gmail_imap_backfill.py` used the existing `GMAIL_USER=kwood12802@gmail.com` app password to read Gmail through IMAP for March 1-May 14, 2026. It imported 4 delivery-failure bounces and no human replies.
-- Reply/dashboard UI: `/replies` and `/analytics` exist and read from `sent_messages`, `email_threads`, and `email_messages`; they currently show 33 outbound records, 4 bounces, 0 human replies, and a 12.1% bounce rate.
+- Current reply/bounce backfill status: `scripts/gmail_imap_backfill.py` used the existing `GMAIL_USER=kwood12802@gmail.com` app password to read Gmail through IMAP for March 1-May 14, 2026. It scanned 28 contact emails and 24 company domains, skipped 5 automated ConMed career-site reminders, and imported 4 delivery-failure bounces plus 1 TruStile out-of-office auto-reply. No human/actionable replies were found.
+- Reply/dashboard UI: `/replies` and `/analytics` exist and read from `sent_messages`, `email_threads`, and `email_messages`; they currently show 33 outbound records, 5 stored email events, 4 bounces, 1 out-of-office, 0 human replies, and a 12.1% bounce rate.
 - Missing: Gmail draft creation route and a successful Kohler-mailbox OAuth reconnect.
 
 ## Scheduler/Cron Assumptions
@@ -135,7 +135,7 @@ Observed key names only, values intentionally redacted:
 - Open Roles now displays 161 screened jobs across 105 companies from 185 tracked relevant/open sandbox jobs, but still lacks direct actions for find contacts, create draft, mark applied, and monitor.
 - RocketReach flow exists as direct routes, not yet behind a provider interface.
 - Gmail reply backfill/classification route and storage exist. OAuth backfill is still blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected in `gmail_accounts`, but IMAP backfill works with the existing Gmail app password for `kwood12802@gmail.com`.
-- Metrics dashboard now exists at `/analytics`, with current real data from 33 outbound records plus 4 imported bounce records.
+- Metrics dashboard now exists at `/analytics`, with current real data from 33 outbound records plus 5 imported Gmail events.
 - Production promotion requires schema decisions and environment review.
 
 ## Security Flagging Assessment

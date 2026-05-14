@@ -31,7 +31,7 @@ All seven tables have Row Level Security enabled and are intended for server-sid
 
 True sandbox backfill completed for `role_fit_scores` with 185 current relevant open jobs.
 
-True sandbox Gmail response tables are present. `sent_messages` contains 33 historical outbound records; IMAP backfill imported 4 bounced messages into `email_threads` and `email_messages`. OAuth reply backfill is still blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected through Gmail OAuth.
+True sandbox Gmail response tables are present. `sent_messages` contains 33 historical outbound records; IMAP backfill imported 5 matched Gmail events into `email_threads` and `email_messages`: 4 bounces and 1 out-of-office auto-reply. OAuth reply backfill is still blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected through Gmail OAuth.
 
 Still proposed for later approval:
 
@@ -90,7 +90,7 @@ Sandbox Vercel env check on 2026-05-14:
 - Try live send with `ENABLE_LIVE_SEND` unset; confirm 403.
 - Try live send with non-`human_approved` status; confirm 409.
 - Run careers ingest in dry-run mode before enabling production cron behavior.
-- Reconnect Gmail through `/api/google/connect`; run `POST /api/gmail/backfill-responses` with `dry_run=true` before any real response backfill.
+- Reconnect Gmail through `/api/google/connect`; run `POST /api/gmail/backfill-responses` with `dry_run=true` before any real response backfill. Confirm the dry run reports only exact-contact replies, bounces, or same-company/domain replies with outreach evidence.
 
 ## Data Validation Queries
 
