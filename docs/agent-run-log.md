@@ -684,32 +684,86 @@
 
 **Next Codex prompt**
 
-```text
-Continue Phase 13+ work on kohler-outreach-claude-sandbox. Specifically:
+> ⚠️ **Superseded.** The next-session prompt is in
+> `docs/SESSION_HANDOFF_NEXT.md` after the schema audit.
 
-1. Migrate the three legacy RocketReach call sites to use
-   `getContactProvider()` from src/lib/contactProviders/registry.ts so
-   role_type / is_mines_alumni / is_possible_pe get populated everywhere.
-   Files to touch: src/app/api/find-email/route.ts,
-   src/app/api/research-contacts/route.ts, src/app/api/cron/research/route.ts.
+### Phase 1 (REDONE) — Live Supabase schema audit
 
-2. Add a per-company panel that lists scored jobs, surfaces recommended
-   action, and offers one-click "Find contacts" / "Create draft" buttons
-   that call /api/contacts/enrich-company and /api/outreach/create-draft.
-   Land it on src/app/company/[companyname]/page.tsx alongside the
-   existing letter draft.
+**Why this section exists**
+- The original Phase 1 was a grep-based inventory of the application
+  code. It produced `docs/sandbox-current-state.md`, which captured the
+  shape of the *application* but not of the *database*.
+- The user flagged this as a load-bearing problem before it caused a
+  production incident: scaffolded migrations on parallel-universe schema.
+- Phases 2-10 of this session were all built on top of that
+  parallel-universe schema. Several routes and helpers will fail against
+  the live database. They are still committed and useful as design
+  intent, but the next session must reconcile them.
 
-3. Hook src/lib/jobIngest/persist.ts to upsert role_fit_scores for every
-   new job_listings insert, so the command-center always has fresh
-   scores without a manual rescore.
+**Inspected (live, via Supabase MCP)**
+- Project `acwgirrldntjpzrhqmdh` (KOHLER OS, postgres 17, us-west-2,
+  status ACTIVE_HEALTHY). Confirmed via `list_organizations`,
+  `list_projects`, `get_project`.
+- `list_tables` verbose for the public schema — 33 tables.
+- `execute_sql` against `pg_indexes`, `pg_constraint`, and
+  `query_to_xml`-based row counts.
+- `list_migrations` — 30 applied (naming `YYYYMMDDHHMMSS_name`).
+- `list_extensions` — `pg_cron`, `pg_net`, `pgvector`, `pgcrypto`,
+  `uuid-ossp`, `pg_stat_statements`, `hypopg`, `index_advisor`,
+  `supabase_vault`, `pg_graphql` are all installed.
+- `get_advisors security` — flags 6 SECURITY DEFINER views (ERROR), 14
+  RLS-disabled public tables (ERROR), 3 always-true RLS policies (WARN),
+  7 mutable function search_paths (WARN), `vector` extension in
+  public (WARN), and leaked-password protection disabled (WARN).
+- `pg_views` definitions for the six SECURITY DEFINER views
+  (`relevant_roles`, `tier_1_4_contacts`, `reachout_final_letters`,
+  `pile_a_with_jobs`, `pile_a_relevant_jobs`, `pile_b_no_jobs`).
+- `env_vault` keys (project=`kohler-outreach`, 12 entries) — confirms
+  this database IS the live one for the app.
 
-4. Add vercel.json cron entry for /api/gmail/sync-incremental at
-   "30 13 * * *" (7:30 AM MDT) once Phase 9 backfill confirms
-   classification quality on real mail.
+**Changed**
+- Created `docs/supabase-schema-baseline.md` — full live schema dump for
+  every table the outreach pipeline touches, plus diff vs. each draft
+  migration and a "code that will fail" list.
+- Quarantined `supabase/migrations/0001..0005_*.sql` to
+  `supabase/migrations/_drafts/*.sql.draft` so no migration runner
+  picks them up.
+- Wrote `supabase/migrations/_drafts/README.md` explaining each
+  collision and the rules for the next session's reconciliation.
+- Marked the prior verification-report status of "Q1/Q2/Q3 working" as
+  optimistic — the runtime tests passed but the routes would fail
+  against the live database. See updated verification-report.md.
 
-5. Add the per-company funnel timeline to /dashboard
-   (jobs → contacts → drafts → sent → reply → application).
+**Tests / checks**
+- All 94 unit-test cases still pass (they don't touch Supabase). The
+  failure mode is at runtime against live tables.
+- No new tests added in this audit step — the audit is observational.
 
-Keep everything additive. Maintain docs/agent-run-log.md, the
-verification report, and the production promotion plan as you go.
-```
+**Result**
+- Next session has a deterministic source of truth for every column,
+  index, and constraint it needs to reckon with.
+- The five draft migrations sit safely outside the migration runner.
+- The most surprising finding: `role_fit_scores` already exists in
+  production with **273 rows of data**, written by an out-of-band SQL
+  that bypassed the migration log. Same story for `outreach_actions`,
+  `job_sources`, `sync_runs`. The grep-based inventory had no way to
+  see these.
+
+**Remaining work — handed to next session**
+- See `docs/SESSION_HANDOFF_NEXT.md`. One reconciled migration per
+  session, in the order suggested there.
+
+**Assumptions made**
+1. KOHLER OS (`acwgirrldntjpzrhqmdh`) is the live database for
+   `kohler-outreach`. Verified by `env_vault` rows for project
+   `kohler-outreach` containing `KOHLER_SUPABASE_URL`/`KOHLER_SUPABASE_KEY`.
+2. The separate Supabase project `nwsjgppkfducaikxsyvk` named
+   "Kohler Outreach Sandbox" is NOT the live database for this app.
+   Reconciliation here targets KOHLER OS only.
+3. Out-of-band tables (`role_fit_scores` etc.) reflect intentional
+   prior work, not corruption — reconciliation should preserve their
+   schema, not replace it.
+4. Security advisors (RLS, SECURITY DEFINER views, mutable
+   search_path) are documented but **out of scope** for this session.
+   Touching them risks breaking the existing app; they belong on the
+   security backlog.

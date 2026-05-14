@@ -1,5 +1,14 @@
 # Production Promotion Plan
 
+> ⚠️ **DO NOT promote anything from `supabase/migrations/_drafts/`
+> as written.** The 2026-05-14 schema audit found that four of the
+> five tables already exist in production with different shapes
+> (`role_fit_scores` has 273 rows). See
+> [`docs/supabase-schema-baseline.md`](supabase-schema-baseline.md)
+> for the live truth. The promotion order below is the *intent* —
+> the *actual* migrations must be re-derived against the baseline,
+> as instructed in `docs/SESSION_HANDOFF_NEXT.md`.
+
 > Phase 12 — release path for the Phase 2-10 work in this sandbox.
 > Every change is additive and ENABLE_LIVE_SEND is the only behavior
 > that requires deliberate human action to enable.
