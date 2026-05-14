@@ -21,7 +21,7 @@ import { requireApiSecret, requireCronSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { adapterRegistry } from "@/lib/jobIngest/registry";
 import { persistNormalizedJobs } from "@/lib/jobIngest/persist";
-import { errorSyncRun, finishSyncRun, startSyncRun } from "@/lib/syncRuns";
+import { errorSyncRun, finishSyncRun, startSyncRun, type SyncRunStatus } from "@/lib/syncRuns";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -124,7 +124,10 @@ export async function POST(req: NextRequest) {
 
   const handle = await startSyncRun({
     sourceType: adapter.sourceType,
-    triggeredBy: body.dryRun ? "manual" : "adapter",
+    provider: adapter.sourceType,
+    companyname: companyRow!.companyname,
+    triggerType: body.dryRun ? "manual" : "adapter",
+    dryRun: !!body.dryRun,
     params: { company_id: companyRow!.id, companyname: companyRow!.companyname, limit: body.limit ?? null },
   });
 
@@ -142,9 +145,17 @@ export async function POST(req: NextRequest) {
     if (body.dryRun) {
       await finishSyncRun(
         handle,
-        fetchResult.errors.length > 0 ? "partial" : "completed",
-        { inserted: 0, updated: 0, skipped: fetchResult.jobs.length, errors: fetchResult.errors.length },
-        { warnings: fetchResult.warnings, result: { dryRun: true, fetched: fetchResult.jobs.length } }
+        fetchResult.errors.length > 0 ? "completed_with_errors" : "completed",
+        {
+          companiesChecked: 1,
+          jobsFound: fetchResult.jobs.length,
+          jobsSkipped: fetchResult.jobs.length,
+        },
+        {
+          errors: fetchResult.errors,
+          warnings: fetchResult.warnings,
+          result: { dryRun: true, fetched: fetchResult.jobs.length },
+        }
       );
       return NextResponse.json({
         ok: true,
@@ -162,10 +173,10 @@ export async function POST(req: NextRequest) {
       fetchResult.jobs
     );
 
-    const status =
+    const status: SyncRunStatus =
       fetchResult.errors.length > 0 || persistErrors.length > 0
         ? counts.inserted + counts.updated > 0
-          ? "partial"
+          ? "completed_with_errors"
           : "error"
         : "completed";
 
@@ -173,13 +184,15 @@ export async function POST(req: NextRequest) {
       handle,
       status,
       {
-        inserted: counts.inserted,
-        updated: counts.updated,
-        skipped: counts.skipped,
-        errors: counts.errors + fetchResult.errors.length,
+        companiesChecked: 1,
+        jobsFound: fetchResult.jobs.length,
+        jobsInserted: counts.inserted,
+        jobsUpdated: counts.updated,
+        jobsSkipped: counts.skipped,
       },
       {
-        warnings: [...fetchResult.warnings, ...persistErrors],
+        errors: [...fetchResult.errors, ...persistErrors],
+        warnings: fetchResult.warnings,
         result: { fetched: fetchResult.jobs.length, ...counts },
       }
     );

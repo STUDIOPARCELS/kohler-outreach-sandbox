@@ -54,6 +54,15 @@ async function fetchSyncRunSummary(): Promise<{
     }
 
     const latestRow = data[0] as Record<string, unknown>;
+    // Map both shapes:
+    //   sync_runs: jobs_inserted/jobs_updated (int), errors (jsonb array)
+    //   job_ingest_runs: jobs_extracted (int), companies_created (int), error_text (string)
+    const errorsField = latestRow.errors;
+    const errorsCount = Array.isArray(errorsField)
+      ? errorsField.length
+      : typeof errorsField === "number"
+        ? (errorsField as number)
+        : (latestRow.error_count as number | null) ?? null;
     const latest: SyncRunSummary = {
       source_type:
         (latestRow.source_type as string | null) ??
@@ -66,22 +75,28 @@ async function fetchSyncRunSummary(): Promise<{
         null,
       finished_at: (latestRow.finished_at as string | null) ?? null,
       inserted:
-        typeof latestRow.inserted === "number"
-          ? (latestRow.inserted as number)
-          : (latestRow.jobs_new as number | null) ?? null,
+        typeof latestRow.jobs_inserted === "number"
+          ? (latestRow.jobs_inserted as number)
+          : typeof latestRow.inserted === "number"
+            ? (latestRow.inserted as number)
+            : (latestRow.jobs_extracted as number | null) ?? null,
       updated:
-        typeof latestRow.updated === "number"
-          ? (latestRow.updated as number)
-          : (latestRow.jobs_updated as number | null) ?? null,
-      errors:
-        typeof latestRow.errors === "number"
-          ? (latestRow.errors as number)
-          : (latestRow.error_count as number | null) ?? null,
+        typeof latestRow.jobs_updated === "number"
+          ? (latestRow.jobs_updated as number)
+          : typeof latestRow.updated === "number"
+            ? (latestRow.updated as number)
+            : null,
+      errors: errorsCount,
     };
 
     const lastOk = data.find((row) => {
       const status = (row as Record<string, unknown>).status;
-      return status === "completed" || status === "ok" || status === "success";
+      return (
+        status === "completed" ||
+        status === "completed_with_errors" ||
+        status === "ok" ||
+        status === "success"
+      );
     }) as Record<string, unknown> | undefined;
 
     return {

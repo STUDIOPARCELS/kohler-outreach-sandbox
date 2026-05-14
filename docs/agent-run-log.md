@@ -767,3 +767,158 @@
    search_path) are documented but **out of scope** for this session.
    Touching them risks breaking the existing app; they belong on the
    security backlog.
+
+### Session A — `sync_runs` helper reconciled, smoke-tested live
+
+**Inspected**
+- Re-introspected `sync_runs` and `companies` shape via
+  `mcp__…__list_tables verbose=true` (no drift since the audit).
+- Confirmed `acwgirrldntjpzrhqmdh` (KOHLER OS) is what the local app
+  hits via `KOHLER_SUPABASE_URL` in `.env.local`.
+
+**Changed**
+- Rewrote `src/lib/syncRuns.ts` end-to-end to match the live schema:
+  - `SyncRunHandle.id: string | null` (uuid, was `number`).
+  - `SyncRunCounts` uses camelCase `companiesChecked`, `jobsFound`,
+    `jobsRelevant`, `jobsInserted`, `jobsUpdated`, `jobsSkipped` —
+    no `closed`, no `int errors count`.
+  - `SyncRunExtras` introduces `errors: string[]` (jsonb array) plus
+    `warnings`, `result`, `errorText` which fold into the live
+    `metadata jsonb` column (those columns don't exist as their own).
+  - `startSyncRun` now accepts `provider`, `companyname`,
+    `triggerType`, `dryRun`, and writes the live column names.
+  - Added `normalizeSyncRunStatus("partial") → "completed_with_errors"`
+    so existing call sites can migrate gradually if needed.
+- Patched `src/app/api/jobs/sync-source/route.ts`:
+  - passes `provider`, `companyname`, `triggerType`, `dryRun` at
+    `startSyncRun` time;
+  - status mapping replaces `"partial"` with the live enum value
+    `"completed_with_errors"`;
+  - counts pass `companiesChecked: 1, jobsFound, jobsInserted,
+    jobsUpdated, jobsSkipped`;
+  - errors pushed as the `errors` jsonb array (was an int count).
+- Patched `src/app/api/jobs/sync-all/route.ts` analogously, plus
+  tracks `companiesChecked` and `jobsFound` running totals through
+  the loop so the live counters get accurate values.
+- Patched `src/app/api/runtime-diagnostics/route.ts` to:
+  - read `jobs_inserted` / `jobs_updated` (live names) before falling
+    back to the older int-named columns;
+  - count `errors` from the jsonb array length, not as an int field;
+  - treat `completed_with_errors` as a successful run for
+    `lastSuccessfulIngestAt` purposes.
+
+**Tests / checks**
+- `npx tsc --noEmit` → clean.
+- All 7 unit-test suites pass: 94/94. (No new tests added — Session
+  A is a schema-shape fix, not a logic change. Future Session A+
+  could add a `sync-runs.test.mjs` mocking the supabase client.)
+- **Live smoke test** (against KOHLER OS):
+  ```bash
+  POST /api/jobs/sync-source
+    { source_type: "mock_ats", company_id: 7, dryRun: true }
+  → 200 { ok: true, dryRun: true, adapter: "mock_ats",
+          company: "PAE Consulting Engineers", fetched: 2, … }
+  ```
+  Resulting row in `sync_runs`:
+  ```json
+  {
+    "id": "82afeeea-ba54-4b62-bff4-f7bb0f3eff14",
+    "source_type": "mock_ats",
+    "provider": "mock_ats",
+    "companyname": "PAE Consulting Engineers",
+    "status": "completed",
+    "trigger_type": "manual",
+    "dry_run": true,
+    "duration_ms": 129,
+    "companies_checked": 1,
+    "jobs_found": 2,
+    "jobs_inserted": 0,
+    "jobs_updated": 0,
+    "jobs_skipped": 2,
+    "errors": [],
+    "metadata": { "result": { "dryRun": true, "fetched": 2 } }
+  }
+  ```
+- `/api/runtime-diagnostics` now returns
+  `ingest.runsTable = "sync_runs"` (was falling back to
+  `job_ingest_runs`) and surfaces the row above as `latestRun` and
+  `lastSuccessfulIngestAt`. Env badge will display this when
+  expanded.
+
+**Result**
+- Adapter sync runs are now persisted correctly to KOHLER OS.
+- The `partial` status bug is gone — live enum value
+  `completed_with_errors` is used.
+- Env badge / dashboard surface real-time sync metadata.
+
+**Remaining work**
+- Session B (next): reconcile `role_fit_scores` upsert in
+  `src/app/api/jobs/rescore/route.ts`. Live unique key is
+  `(job_listing_id text, score_version)`, not `(job_id,
+  candidate_profile_id)`. 273 rows of existing data must not be
+  lost.
+- Drive-by finding flagged for Session D: runtime-diagnostics warned
+  `column job_listings.date_posted does not exist` — the live column
+  is `posted_date`. Trivial one-line fix; bundling it into Session D
+  (job_listings provenance) since that's the context.
+
+**Assumptions made**
+1. `metadata.params/result/warnings/error_text` is the right place
+   for the data the prior helper had as separate columns. Reasonable
+   because none of those columns exist on live `sync_runs`.
+2. The dry-run row with `companyname="PAE Consulting Engineers"`
+   left in `sync_runs` is fine to keep as a verification artifact.
+   It's `dry_run=true`, so no `job_listings` rows were created.
+3. CRON_SECRET isn't in env_vault for `kohler-outreach`, so
+   `requireCronSecret` returns null in dev — fine; cron-auth path
+   is exercised separately in production.
+
+### Session B handoff
+
+**Goal:** make `src/app/api/jobs/rescore/route.ts` upsert into the
+live `role_fit_scores` table without losing the 273 existing rows.
+
+**Live shape (verified 2026-05-14):**
+- PK: `id uuid`
+- Identity: `(job_listing_id text, score_version text)` UNIQUE
+- Columns the route must populate: `companyname`, `source`,
+  `external_job_key`, `score_version` (default `'kohler-fit-v1'`),
+  the six sub-scores, `overall_score`, `recommended_action` (check
+  enum already matches Phase 5 design), `explanation_summary text`,
+  `explanation_json jsonb`.
+- Note: `job_listing_id` is **text**, not int. Stringify
+  `job_listings.id` when writing.
+
+**Code changes needed:**
+1. `src/app/api/jobs/rescore/route.ts`:
+   - Drop the `candidate_profile_id` field from the upsert payload.
+   - Change `onConflict: "job_id,candidate_profile_id"` →
+     `onConflict: "job_listing_id,score_version"`.
+   - Rename `job_id` → `job_listing_id` and stringify the int:
+     `String(jobRow.id)`.
+   - Add `score_version: "kohler-fit-v1"`.
+   - Add `companyname`, `source`, `external_job_key` from the
+     joined job_listings row.
+   - Optionally add `explanation_summary` derived from
+     `explanation_json.notes.join("; ")`.
+
+**No migration needed.** Table already exists with all required
+columns.
+
+**Smoke test plan:**
+1. `select count(*) from role_fit_scores where score_version =
+   'kohler-fit-v1';` should return 273 before any writes.
+2. Run `POST /api/jobs/rescore { job_id: <one of the 383 job_listings
+   ids>, dry_run: true }` first to inspect the computed score.
+3. Run again without `dry_run` and confirm the row is upserted (count
+   stays the same if already present, increments by 1 if new).
+4. Spot-check one or two rows for `score_version = 'kohler-fit-v1'`
+   and verify the sub-score values match what `scoreJobForKohler`
+   produces in the unit test.
+
+**Open question for Session B (decide & document, do not block):**
+Should the new code REPLACE the 273 existing rows (re-score all of
+them with the current algorithm) or LEAVE them and only score new
+rows? The safe call: leave them alone unless a `force_rescore=true`
+flag is passed. That preserves existing scores Kohler may have used
+to make decisions. Bulk re-score becomes its own conscious action.

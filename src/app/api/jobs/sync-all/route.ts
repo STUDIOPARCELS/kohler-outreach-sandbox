@@ -21,7 +21,7 @@ import { requireApiSecret, requireCronSecret } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { adapterRegistry, detectAdapterFromCareersUrl } from "@/lib/jobIngest/registry";
 import { persistNormalizedJobs } from "@/lib/jobIngest/persist";
-import { errorSyncRun, finishSyncRun, startSyncRun } from "@/lib/syncRuns";
+import { errorSyncRun, finishSyncRun, startSyncRun, type SyncRunStatus } from "@/lib/syncRuns";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -85,7 +85,9 @@ export async function POST(req: NextRequest) {
 
   const handle = await startSyncRun({
     sourceType: null,
-    triggeredBy: "cron",
+    provider: "multi",
+    triggerType: "cron",
+    dryRun: !!body.dryRun,
     params: {
       source_types: Array.from(sourceTypeFilter ?? []),
       max_companies: maxCompanies,
@@ -96,6 +98,9 @@ export async function POST(req: NextRequest) {
   const totals = { inserted: 0, updated: 0, skipped: 0, errors: 0 };
   const perSource: Record<string, { fetched: number; inserted: number; updated: number; skipped: number; errors: number }> = {};
   const warnings: string[] = [];
+  const errorMessages: string[] = [];
+  let companiesChecked = 0;
+  let jobsFound = 0;
 
   try {
     for (const company of companies ?? []) {
@@ -104,6 +109,7 @@ export async function POST(req: NextRequest) {
       if (!detected) continue;
       if (sourceTypeFilter && !sourceTypeFilter.has(detected.sourceType)) continue;
 
+      companiesChecked++;
       const stats = (perSource[detected.sourceType] ??= {
         fetched: 0,
         inserted: 0,
@@ -123,7 +129,9 @@ export async function POST(req: NextRequest) {
           limit: body.limit,
         });
         stats.fetched += result.jobs.length;
+        jobsFound += result.jobs.length;
         warnings.push(...result.warnings);
+        errorMessages.push(...result.errors);
 
         if (body.dryRun) {
           stats.skipped += result.jobs.length;
@@ -142,36 +150,47 @@ export async function POST(req: NextRequest) {
         totals.updated += counts.updated;
         totals.skipped += counts.skipped;
         totals.errors += counts.errors + result.errors.length;
-        warnings.push(...persistErrors);
+        errorMessages.push(...persistErrors);
       } catch (err) {
         const msg = `${detected.sourceType} for ${(company as { companyname: string }).companyname} threw: ${(err as Error).message}`;
-        warnings.push(msg);
+        errorMessages.push(msg);
         stats.errors++;
         totals.errors++;
       }
     }
 
-    await finishSyncRun(
-      handle,
+    const status: SyncRunStatus =
       totals.errors > 0
         ? totals.inserted + totals.updated > 0
-          ? "partial"
+          ? "completed_with_errors"
           : "error"
-        : "completed",
-      totals,
-      { warnings, result: { perSource } }
+        : "completed";
+
+    await finishSyncRun(
+      handle,
+      status,
+      {
+        companiesChecked,
+        jobsFound,
+        jobsInserted: totals.inserted,
+        jobsUpdated: totals.updated,
+        jobsSkipped: totals.skipped,
+      },
+      { errors: errorMessages, warnings, result: { perSource } }
     );
 
     return NextResponse.json({
       ok: totals.errors === 0,
       totals,
       perSource,
+      companiesChecked,
+      jobsFound,
       warningsCount: warnings.length,
       warnings: warnings.slice(0, 30),
     });
   } catch (err) {
     const msg = (err as Error).message ?? String(err);
-    await errorSyncRun(handle, msg, warnings);
+    await errorSyncRun(handle, msg, errorMessages, warnings);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }
