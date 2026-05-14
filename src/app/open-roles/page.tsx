@@ -217,6 +217,30 @@ const NICHE_COLORS: Record<string, { bg: string; headerBg: string; border: strin
 
 const DEFAULT_COLORS = NICHE_COLORS["Real Estate / Facilities"];
 
+const FIT_SCORE_BANDS = [
+  {
+    label: "Strong",
+    range: "45+",
+    detail: "Multiple target signals, usually mechanical + location/niche and few seniority risks.",
+    className: "bg-blue-600 text-white",
+  },
+  {
+    label: "Good",
+    range: "35-44",
+    detail: "Clear mechanical fit with supporting evidence, but not enough PE/entry/niche signals.",
+    className: "bg-blue-100 text-blue-700",
+  },
+  {
+    label: "Possible",
+    range: "25-34",
+    detail: "Worth monitoring; has one or two useful signals or a risk like senior-level wording.",
+    className: "bg-slate-100 text-slate-700",
+  },
+] as const;
+
+const FIT_WEIGHT_SUMMARY =
+  "Weights: skills 25%, PE path 20%, entry level 16%, niche 16%, location 13%, prior relevance 10%, Mines signal 5%; senior/non-target wording subtracts from the score.";
+
 function srcLabel(s: string) { return SRC_LABELS[s] || s; }
 
 function relTime(iso: string | undefined) {
@@ -421,43 +445,62 @@ export default function OpenRolesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-5">
-        <input
-          type="text"
-          placeholder="Search company..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 outline-none"
-        />
-        <select
-          value={minFit}
-          onChange={(e) => {
-            setMinFit(e.target.value);
-            setExpanded(null);
-            setRoles([]);
-          }}
-          title="Minimum Kohler fit ranking from visible job evidence"
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
-        >
-          <option value="0">Any Fit</option>
-          <option value="25">Possible+</option>
-          <option value="35">Good+</option>
-          <option value="45">Strong</option>
-        </select>
-        <select
-          value={nicheFilter}
-          onChange={(e) => {
-            setNicheFilter(e.target.value);
-            setExpanded(null);
-            setRoles([]);
-          }}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
-        >
-          <option value="">All Niches</option>
-          {nicheOptions.map((niche) => (
-            <option key={niche} value={niche}>{niche}</option>
-          ))}
-        </select>
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] gap-2 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input
+            type="text"
+            placeholder="Search company..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-400 outline-none"
+          />
+          <select
+            value={minFit}
+            onChange={(e) => {
+              setMinFit(e.target.value);
+              setExpanded(null);
+              setRoles([]);
+            }}
+            title="Minimum Kohler fit ranking from visible job evidence"
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
+          >
+            <option value="0">Any Fit</option>
+            <option value="25">Possible+</option>
+            <option value="35">Good+</option>
+            <option value="45">Strong</option>
+          </select>
+          <select
+            value={nicheFilter}
+            onChange={(e) => {
+              setNicheFilter(e.target.value);
+              setExpanded(null);
+              setRoles([]);
+            }}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white shadow-sm"
+          >
+            <option value="">All Niches</option>
+            {nicheOptions.map((niche) => (
+              <option key={niche} value={niche}>{niche}</option>
+            ))}
+          </select>
+        </div>
+        <div className="rounded-xl border border-blue-100 bg-white shadow-sm px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fit guide</span>
+            {FIT_SCORE_BANDS.map((band) => (
+              <span
+                key={band.label}
+                title={band.detail}
+                className={`rounded-full px-2 py-1 text-[10px] font-bold ${band.className}`}
+              >
+                {band.label} {band.range}
+              </span>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] leading-snug text-slate-500">
+            Ranking from job text, location, PE-track language, Kohler skills, niche, and Mines evidence. {FIT_WEIGHT_SUMMARY}
+          </p>
+        </div>
       </div>
 
       {loading ? (

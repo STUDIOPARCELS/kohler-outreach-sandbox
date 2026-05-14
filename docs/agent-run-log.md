@@ -119,3 +119,13 @@
 - Result: Gmail analytics tables are applied in true sandbox with RLS enabled and zero rows. Focused tests and TypeScript pass. Gmail OAuth smoke test is blocked by Google `invalid_grant`, and the protected backfill route correctly returns 401 reconnect guidance without writes. Dry-run/real backfill cannot scan historical Gmail until Gmail is reconnected through `/api/google/connect`. `npm run build` timed out/hung in this local workspace after the code changes; TypeScript did not report errors. Local dev server is running at `http://localhost:3000`, and `/open-roles` returns 200.
 - Remaining work: reconnect Gmail, then run `POST /api/gmail/backfill-responses` with `dry_run=true` for 90 days; if counts look sane, run it again with `dry_run=false` and build response dashboard cards.
 - Assumptions made: Gmail reply backfill should store metadata/snippets server-side only and should never send email. Existing `reachout_company_inserts` remains the source for historical email/letter outreach matching.
+
+## 2026-05-14 - Open Roles Fit Guide
+
+- What was inspected: `/open-roles` filter layout, score band thresholds in `src/app/open-roles/page.tsx`, and score weighting in `src/lib/kohlerFitScore.ts`.
+- What changed: added a compact fit guide next to the Open Roles filters explaining `Strong 45+`, `Good 35-44`, `Possible 25-34`, and the main weighting inputs for the Kohler fit ranking.
+- Files changed: `src/app/open-roles/page.tsx`, `docs/agent-run-log.md`.
+- Tests/checks run: `npx tsc --noEmit --pretty false`, `npm run test:fit`, Browser smoke at `http://localhost:3000/open-roles`.
+- Result: TypeScript and fit tests passed. Browser check shows the fit guide visible under the filters at the current viewport with no overlap.
+- Remaining work: add a deeper scoring detail drawer only if users need row-level score breakdowns beyond the current tooltip and guide.
+- Assumptions made: the fit score should remain a compact ranking aid in the UI, not a percent-style grade.
