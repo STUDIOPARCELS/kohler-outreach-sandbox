@@ -88,15 +88,53 @@ recreate.
 | `reply-classification.test.mjs` | 11 | 11 |
 | **Total** | **94** | **94** |
 
-## Status update after Sessions A + F (2026-05-14, post-audit)
+## Status update after ALL reconciliations (2026-05-15)
 
-| # | Question | Status | Change |
+All six schema reconciliations (A–F) are complete. Every route now
+matches the live KOHLER OS schema and has been smoke-tested against
+the live database.
+
+| # | Question | Status | Evidence |
 | - | --- | --- | --- |
-| 1 | Which target companies have new roles? | partial | unchanged |
-| 2 | Which roles fit Kohler best? | partial | unchanged |
-| 3 | Which roles support his PE-track path? | partial | unchanged |
-| 4 | Who is the best person to contact? | partial | unchanged |
-| 5 | What is the next best action? | **partial → improving** | Session F unlocked auto-import of Gmail replies (production cron); `/replies` page now shows classified inbound mail. |
+| 1 | Which target companies have new roles? | **working** | `/command-center` reads live `job_listings` (275 relevant), adapter sync via `/api/jobs/sync-source` writes provenance columns (Session D verified). |
+| 2 | Which roles fit Kohler best? | **working** | 275 jobs scored `kohler-fit-v2` in `role_fit_scores`; `/command-center` sorts by `overall_score`. Top: Stanley Consultants 46. |
+| 3 | Which roles support his PE-track path? | **working** | `pe_track_score` persisted per job; command-center exposes it; `recommended_action='pe_track_outreach'` routes to the PE template. |
+| 4 | Who is the best person to contact? | **working** | `contacts` enrichment columns live (`role_type`, `is_mines_alumni`, `is_possible_pe`, `email_confidence`); `/api/contacts/enrich-company` verified writing them. |
+| 5 | What is the next best action? | **working** | `/api/outreach/create-draft` produces `outreach_actions` + `email_drafts`/`letters`; approve + mark-applied reconciled; Gmail draft path gated by `ENABLE_LIVE_SEND`. |
+
+### Reconciliation sessions — all complete
+
+| Session | Scope | Outcome |
+| --- | --- | --- |
+| A | `sync_runs` helper | reconciled to live columns; verified with mock_ats dry-run |
+| B | `role_fit_scores` / rescore | `kohler-fit-v2`; 275 rows scored, 273 v1 preserved |
+| C | `contacts` enrichment | migration applied; `contactname`/`linkedin` mapping fixed |
+| D | `job_listings` provenance | `source_url`/`normalized_hash`/`closed_at` added; persist verified |
+| E | outreach workflow | 4 tables created; create-draft/approve/mark-applied reconciled |
+| F | Gmail reply ingestion | 2,182 messages backfilled via IMAP; `/replies` + `/analytics` live |
+
+### Migrations applied to KOHLER OS this engagement
+
+All recorded in the repo under `supabase/migrations/` with the
+production `YYYYMMDDHHMMSS` naming:
+- `20260514195717_add_email_messages_for_gmail_reply_ingest.sql`
+- `20260515172159_add_contacts_enrichment_columns.sql`
+- `20260515172421_add_job_listings_provenance_columns.sql`
+- `20260515174500_add_outreach_workflow_tables.sql`
+
+### Known gaps / polish items (non-blocking)
+
+- **No production deployment** — code is on GitHub (`claude-sandbox`
+  branch) but no Vercel project exists. Local-only at `localhost:3000`.
+- **Mines mailbox not pulled** — outreach replies to `akwood1@mines.edu`
+  need a Mines app password to backfill (Gmail catch-all only catches
+  ~10% via Reply-All / clients that ignore Reply-To).
+- **Reply classifier** mislabels some marketing email (filtered in UI).
+- **`pickTemplate`** picks the template from `recommended_action`, so
+  an email-channel draft can get a physical-letter body. Decouple in a
+  future pass.
+- **Email-alias cross-reference** — exact-email match misses aliases
+  (`ctiedemann` vs `chad.tiedemann` at the same company).
 
 **Session A** reconciled `sync_runs` writes — adapter sync routes
 now record runs correctly to KOHLER OS (mock_ats dryRun verified
