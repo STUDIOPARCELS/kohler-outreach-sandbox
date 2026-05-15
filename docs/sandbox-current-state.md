@@ -92,7 +92,8 @@ True sandbox live schema source of truth:
 - Current OAuth status: one existing `gmail_accounts` row is present for `31***@gmail.com`; neither `kwood12802@gmail.com` nor `akwood1@mines.edu` is connected as of 2026-05-14. Historical reply/bounce backfill for Kohler's two mailboxes is blocked until those exact accounts are reconnected through `/api/google/connect`.
 - Current outbound sync status: `sent_messages` has 33 server-side records from historical outbound rows, split into 8 email sends and 25 physical letters.
 - Current reply/bounce backfill status: `scripts/gmail_imap_backfill.py` used the existing `GMAIL_USER=kwood12802@gmail.com` app password to read Gmail through IMAP for March 1-May 14, 2026. It scanned 28 contact emails and 24 company domains, skipped 5 automated ConMed career-site reminders, and imported 4 delivery-failure bounces plus 1 TruStile out-of-office auto-reply. No human/actionable replies were found.
-- Reply/dashboard UI: `/replies` and `/analytics` exist and read from `sent_messages`, `email_threads`, and `email_messages`; they currently show 33 outbound records, 5 stored email events, 4 bounces, 1 out-of-office, 0 human replies, and a 12.1% bounce rate. `/replies` also includes a manual letter-reply form for responses Kohler receives outside a readable mailbox.
+- Reply/dashboard UI: `/replies` and `/analytics` exist and read from `sent_messages`, `email_threads`, and `email_messages`; they currently show 33 outbound records, 5 stored email events, 4 bounces, 1 out-of-office, 0 human replies, and a 12.1% bounce rate. `/replies` also includes a manual letter-reply form for responses Kohler receives outside a readable mailbox and a suppressed bounced-email panel.
+- Bounce suppression: `/api/send-email` and `/api/approve-followup` derive blocked recipients from `email_messages.classification = 'bounce'` and return 409 before Gmail SMTP if a future send targets one of those addresses.
 - Missing: Gmail draft creation route and a successful Kohler-mailbox OAuth reconnect.
 
 ## Scheduler/Cron Assumptions
@@ -151,6 +152,7 @@ Current mitigation in this run:
 
 - Government aggregate polling is opt-in with `ENABLE_GOVERNMENT_JOB_SOURCES=true`.
 - Live Gmail send is opt-in with `ENABLE_LIVE_SEND=true` plus `human_approved` draft status.
+- Bounced email addresses are blocked from future live sends until replaced or verified.
 - Automatic RocketReach contact-enrichment cron is opt-in with `ENABLE_CONTACT_ENRICHMENT=true`.
 - Runtime diagnostics expose safety-gate state in the UI. Use `NEXT_PUBLIC_APP_ENV=sandbox` or `KOHLER_DEPLOY_TARGET=sandbox` in the sandbox deployment for an explicit sandbox badge.
 - No bypassing auth, CAPTCHAs, login walls, robots controls, or private systems was added.

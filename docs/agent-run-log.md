@@ -169,3 +169,13 @@
 - Result: Kohler can now manually add a reply received from a physical letter without direct access to `akwood1@mines.edu`. The entry is stored in existing reply tables as `metadata.channel = "letter"` and will count as a letter reply in analytics. No manual reply test data was inserted.
 - Remaining work: add bounced-contact suppression before future outreach and optionally add edit/delete controls for manual letter replies.
 - Assumptions made: manual letter replies should not require a new database table yet; existing reply tables are sufficient if metadata clearly marks `source = manual_letter_reply` and `channel = letter`.
+
+## 2026-05-15 - Bounce Suppression
+
+- What was inspected: `/api/send-email`, `/api/approve-followup`, `email_messages` bounce metadata, `/api/replies`, and rendered `/replies`.
+- What changed: added `src/lib/bounceSuppression.ts`; added a `test:bounce` script; made live-send routes block recipients with prior bounces before Gmail SMTP; expanded `/api/replies` and `/replies` with a suppressed bounced-email panel.
+- Files changed: `src/lib/bounceSuppression.ts`, `src/app/api/send-email/route.ts`, `src/app/api/approve-followup/route.ts`, `src/app/api/replies/route.ts`, `src/app/replies/page.tsx`, `scripts/bounce-suppression.test.mjs`, `package.json`, `docs/architecture.md`, `docs/sandbox-current-state.md`, `docs/verification-report.md`, `docs/production-promotion-plan.md`, `docs/agent-run-log.md`.
+- Tests/checks run: `npm run test:bounce`, `npx tsc --noEmit --pretty false`, `npm run test:gmail`, `npm run test:schema`, `GET /api/replies`, known-bounce `POST /api/send-email` smoke, and browser smoke for `/replies`.
+- Result: `/replies` shows four suppressed bounced addresses. A send attempt to a known bounced address returns 409 with delivery-failure evidence before live-send or Gmail SMTP logic can run.
+- Remaining work: add a replacement-contact workflow for suppressed companies and optionally a verified override path for corrected addresses.
+- Assumptions made: suppression can be derived from bounce records without a schema change; replacing/verifying the email should happen by changing the recipient address rather than bypassing suppression.

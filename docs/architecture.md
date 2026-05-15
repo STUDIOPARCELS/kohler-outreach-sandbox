@@ -43,6 +43,7 @@ Company targets
 - `src/lib/runtimeEnvironment.ts`: server-safe environment detection and parser/safety metadata.
 - `src/lib/kohlerFitScore.ts`: Kohler-specific job fit scoring and recommended next action.
 - `src/lib/gmailResponseBackfill.ts`: Gmail reply classification, email normalization, and outreach matching helpers.
+- `src/lib/bounceSuppression.ts`: derives suppressed recipients from imported bounce records and blocks future live sends to bounced addresses.
 - `src/lib/outreachSafety.ts`: live-send approval gates.
 - `src/lib/roleFitScoreStore.ts`: persistence for Kohler fit scores in `role_fit_scores`, with graceful missing-table fallback.
 - `src/lib/syncRunStore.ts`: persistence for ingest attempts in `sync_runs`, with graceful missing-table fallback.
@@ -67,11 +68,13 @@ Company targets
 - `GET /api/replies` is app-origin protected and returns imported reply/bounce records plus classification counts.
 - `POST /api/replies/manual-letter` is app-origin protected and lets Kohler manually add a response received from a physical letter. It writes a manual `email_threads`/`email_messages` pair with `metadata.channel = "letter"` and no Gmail access requirement.
 - `GET /api/analytics` is app-origin protected and returns response-rate cards from `sent_messages`, `email_threads`, and `email_messages`.
+- `/api/send-email` and `/api/approve-followup` check bounce suppression before Gmail SMTP and return 409 if the recipient has a prior delivery failure.
 
 ## Safety Defaults
 
 - Live send is disabled unless `ENABLE_LIVE_SEND=true`.
 - Draft status must be `human_approved` before live SMTP send.
+- Bounced recipient emails are suppressed from future live SMTP sends until replaced or verified.
 - Government aggregate polling is disabled unless `ENABLE_GOVERNMENT_JOB_SOURCES=true`.
 - Automatic RocketReach contact-enrichment cron is disabled unless `ENABLE_CONTACT_ENRICHMENT=true`.
 - Runtime diagnostics must not return secrets or full provider credentials.

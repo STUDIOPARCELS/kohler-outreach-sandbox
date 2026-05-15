@@ -92,6 +92,7 @@ Sandbox Vercel env check on 2026-05-14:
 - Expand a company in Open Roles; confirm fit score, PE score, source, and next action render.
 - Try live send with `ENABLE_LIVE_SEND` unset; confirm 403.
 - Try live send with non-`human_approved` status; confirm 409.
+- Try live send to a known bounced email; confirm 409 bounce-suppression response before Gmail SMTP.
 - Run careers ingest in dry-run mode before enabling production cron behavior.
 - Reconnect Gmail through `/api/google/connect`; run `POST /api/gmail/backfill-responses` with `dry_run=true` before any real response backfill. Confirm the dry run reports only exact-contact replies, bounces, or same-company/domain replies with outreach evidence.
 - Add a manual letter reply from `/replies` using a known sent-letter row; confirm `/analytics` increments `Letter replies`, then delete the test entry if this was a production smoke test.

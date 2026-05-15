@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { findBouncedRecipients } from "@/lib/bounceSuppression";
 import { isHumanApprovedDraftStatus, isLiveSendEnabled, liveSendDisabledMessage } from "@/lib/outreachSafety";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
@@ -23,6 +24,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Missing required fields (letterId, to, body)" },
         { status: 400 }
+      );
+    }
+
+    const bouncedRecipients = await findBouncedRecipients(to);
+    if (bouncedRecipients.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Blocked: recipient has a prior delivery failure. Replace or verify this email before sending.",
+          bouncedRecipients,
+        },
+        { status: 409 }
       );
     }
 

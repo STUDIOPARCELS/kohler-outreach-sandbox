@@ -21,6 +21,7 @@ interface ReplyMessage {
 interface ReplyResponse {
   messages: ReplyMessage[];
   letterOptions: LetterOption[];
+  bouncedContacts: BouncedContact[];
   counts: {
     sent: number;
     threads: number;
@@ -29,6 +30,14 @@ interface ReplyResponse {
     bounces: number;
     byClassification: Record<string, number>;
   };
+}
+
+interface BouncedContact {
+  email: string;
+  companyname: string | null;
+  contactName: string | null;
+  receivedAt: string | null;
+  reason: string | null;
 }
 
 interface LetterOption {
@@ -159,6 +168,29 @@ export default function RepliesPage() {
             <Metric label="Actionable" value={counts?.actionable || 0} />
             <Metric label="Bounces" value={counts?.bounces || 0} />
           </div>
+
+          {(data?.bouncedContacts.length || 0) > 0 && (
+            <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-4 shadow-sm">
+              <div className="mb-3 flex flex-col gap-1">
+                <h2 className="text-sm font-bold text-red-950">Suppressed Bounced Emails</h2>
+                <p className="text-xs text-red-800">
+                  These addresses had delivery failures and are blocked from future live sends until replaced or verified.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {data?.bouncedContacts.map((contact) => (
+                  <div key={contact.email} className="rounded-xl border border-red-100 bg-white px-3 py-2">
+                    <p className="break-all text-sm font-bold text-slate-900">{contact.email}</p>
+                    <p className="text-xs text-slate-600">
+                      {contact.companyname || "Unknown company"}
+                      {contact.contactName ? ` · ${contact.contactName}` : ""}
+                    </p>
+                    <p className="mt-1 text-xs text-red-700">{contact.reason || "Delivery failure"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <form onSubmit={saveManualReply} className="mb-5 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
             <div className="mb-3 flex flex-col gap-1">

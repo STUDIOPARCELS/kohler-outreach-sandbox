@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { loadBouncedContacts } from "@/lib/bounceSuppression";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
     { count: sentCount },
     { count: threadCount },
     { data: letterOptions, error: letterOptionsError },
+    bouncedContacts,
   ] = await Promise.all([
     supabaseAdmin
       .from("email_messages")
@@ -37,6 +39,7 @@ export async function GET(req: NextRequest) {
       .eq("channel", "letter")
       .order("sent_at", { ascending: false, nullsFirst: false })
       .limit(250),
+    loadBouncedContacts(),
   ]);
 
   if (messagesError) {
@@ -51,6 +54,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     messages: rows,
     letterOptions: letterOptions || [],
+    bouncedContacts,
     counts: {
       sent: sentCount || 0,
       threads: threadCount || 0,
