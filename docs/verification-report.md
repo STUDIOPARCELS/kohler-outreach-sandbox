@@ -53,6 +53,7 @@ Date: 2026-05-14
 - Open Roles API smoke: passed; `/api/open-roles-list` returns 161 screened jobs across 105 companies after command-center filtering.
 - Browser UI smoke: passed at `http://localhost:3000/open-roles`; page shows `SANDBOX`, safety gates off, sandbox Supabase project ref, 161 visible jobs, 105 visible companies, and relevance-aware Fit/PE chips across MEP, government, construction, aerospace, and manufacturing groups.
 - Open Roles action smoke: passed in the local browser. Expanding a company shows `Contacts & draft`, each expanded job keeps the external `Open` action, and each job has a `Draft` link to the company outreach workspace.
+- Analytics navigation smoke: passed in the local browser. Reply, bounce, and letter-reply cards link to `/replies`, and the bounce warning includes an `Open bounce repair queue` link.
 - `npm run lint`: not completed because the project has no ESLint config and Next.js opened its interactive setup prompt.
 
 ## Current Known Risks

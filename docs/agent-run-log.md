@@ -209,3 +209,13 @@
 - Result: Open Roles is closer to a command center because a high-fit job can now jump directly to the company contact/draft workspace without searching elsewhere.
 - Remaining work: add actual mark-applied and monitor actions, and consider a dedicated find-contacts trigger once contact enrichment is ready.
 - Assumptions made: these action links should navigate only; they should not create drafts or send outreach until a human chooses that from the company workspace.
+
+## 2026-05-15 - Analytics Repair Navigation
+
+- What was inspected: `src/app/analytics/page.tsx`, `/api/analytics`, and rendered `/analytics`.
+- What changed: made reply, bounce, and letter-reply metric cards link to `/replies`; added a bounce-warning link to the bounce repair queue.
+- Files changed: `src/app/analytics/page.tsx`, `docs/sandbox-current-state.md`, `docs/verification-report.md`, `docs/agent-run-log.md`.
+- Tests/checks run: `npx tsc --noEmit --pretty false` and browser smoke for `http://localhost:3000/analytics`.
+- Result: the analytics dashboard now points users directly to the place where bounced addresses can be repaired and letter replies can be entered.
+- Remaining work: add company/job timeline links after application and monitor actions have a stable storage contract.
+- Assumptions made: analytics navigation should not perform writes; it should only route users to the relevant workflow.

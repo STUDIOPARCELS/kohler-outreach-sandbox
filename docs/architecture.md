@@ -68,6 +68,7 @@ Company targets
 - `GET /api/replies` is app-origin protected and returns imported reply/bounce records plus classification counts. It also derives same-company replacement contact candidates for bounced emails from existing `contacts` rows.
 - `/replies` can apply a replacement candidate through the existing `/api/draft` route. This updates/creates a draft-contact row only and does not send email.
 - `/open-roles` links expanded company and job rows back to `/company/[companyname]` so contact review and draft work remain centralized in the company workspace.
+- `/analytics` links reply and bounce metrics back to `/replies` so bounce repair and manual reply entry remain one click from the dashboard.
 - `POST /api/replies/manual-letter` is app-origin protected and lets Kohler manually add a response received from a physical letter. It writes a manual `email_threads`/`email_messages` pair with `metadata.channel = "letter"` and no Gmail access requirement.
 - `GET /api/analytics` is app-origin protected and returns response-rate cards from `sent_messages`, `email_threads`, and `email_messages`.
 - `/api/send-email` and `/api/approve-followup` check bounce suppression before Gmail SMTP and return 409 if the recipient has a prior delivery failure.

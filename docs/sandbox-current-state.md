@@ -136,7 +136,7 @@ Observed key names only, values intentionally redacted:
 - Open Roles now displays 161 screened jobs across 105 companies from 185 tracked relevant/open sandbox jobs. Expanded company cards include `Contacts & draft` links and job rows include `Draft` links back to the company outreach workspace; mark-applied and monitor actions are still not implemented.
 - RocketReach flow exists as direct routes, not yet behind a provider interface.
 - Gmail reply backfill/classification route and storage exist. OAuth backfill is still blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected in `gmail_accounts`, but IMAP backfill works with the existing Gmail app password for `kwood12802@gmail.com`.
-- Metrics dashboard now exists at `/analytics`, with current real data from 33 outbound records plus 5 imported Gmail events. It separates email replies from manual letter replies when those are added.
+- Metrics dashboard now exists at `/analytics`, with current real data from 33 outbound records plus 5 imported Gmail events. It separates email replies from manual letter replies when those are added, and links reply/bounce metrics directly to `/replies` for repair and manual entry.
 - Production promotion requires schema decisions and environment review.
 
 ## Security Flagging Assessment

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useToast } from "@/components/Toast";
 
 interface AnalyticsResponse {
@@ -68,11 +69,11 @@ export default function AnalyticsPage() {
         <>
           <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Metric label="Outbound synced" value={cards.outboundSynced} sub={`${cards.emailSent} email · ${cards.lettersSent} letters`} />
-            <Metric label="Replies" value={cards.repliesReceived} sub={`${cards.actionableReplies} actionable`} />
+            <Metric label="Replies" value={cards.repliesReceived} sub={`${cards.actionableReplies} actionable`} href="/replies" />
             <Metric label="Positive" value={cards.positiveReplies} sub={`${cards.positiveResponseRate}% positive rate`} />
-            <Metric label="Bounces" value={cards.bounces} sub={`${cards.bounceRate}% bounce rate`} />
+            <Metric label="Bounces" value={cards.bounces} sub={`${cards.bounceRate}% bounce rate`} href="/replies" />
             <Metric label="Response rate" value={`${cards.responseRate}%`} sub={`${cards.threads} matched threads`} />
-            <Metric label="Letter replies" value={cards.letterReplies} sub={`${cards.emailReplies} email replies`} />
+            <Metric label="Letter replies" value={cards.letterReplies} sub={`${cards.emailReplies} email replies`} href="/replies" />
             <Metric label="Email sent" value={cards.emailSent} sub="from emailed_at" />
             <Metric label="Letters sent" value={cards.lettersSent} sub="printed/sent letters" />
           </div>
@@ -85,7 +86,10 @@ export default function AnalyticsPage() {
 
           {cards.repliesReceived === 0 && cards.bounces > 0 && (
             <div className="mb-5 rounded-2xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm text-amber-900">
-              Backfill found bounced emails but no human replies yet. These bounces should be cleaned before more outreach is sent.
+              Backfill found bounced emails but no human replies yet. These bounces should be cleaned before more outreach is sent.{" "}
+              <Link href="/replies" className="font-bold underline decoration-amber-400 underline-offset-2">
+                Open bounce repair queue.
+              </Link>
             </div>
           )}
 
@@ -135,13 +139,21 @@ export default function AnalyticsPage() {
   );
 }
 
-function Metric({ label, value, sub }: { label: string; value: number | string; sub: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+function Metric({ label, value, sub, href }: { label: string; value: number | string; sub: string; href?: string }) {
+  const className = "rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300 hover:shadow-md";
+  const content = (
+    <>
       <p className="text-2xl font-bold text-slate-900">{value}</p>
       <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-xs text-slate-500">{sub}</p>
-    </div>
+    </>
+  );
+  return href ? (
+    <Link href={href} className={className}>
+      {content}
+    </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 
