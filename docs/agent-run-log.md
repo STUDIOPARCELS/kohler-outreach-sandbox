@@ -179,3 +179,13 @@
 - Result: `/replies` shows four suppressed bounced addresses. A send attempt to a known bounced address returns 409 with delivery-failure evidence before live-send or Gmail SMTP logic can run.
 - Remaining work: add a replacement-contact workflow for suppressed companies and optionally a verified override path for corrected addresses.
 - Assumptions made: suppression can be derived from bounce records without a schema change; replacing/verifying the email should happen by changing the recipient address rather than bypassing suppression.
+
+## 2026-05-15 - Bounce Replacement Candidates
+
+- What was inspected: `/api/replies`, `/api/contacts`, `/api/alt-contacts`, the company detail route, current bounced message metadata, and rendered `/replies`.
+- What changed: expanded `/api/replies` to attach up to three same-company replacement contacts for each bounced email from existing `contacts` rows, excluding the bounced address; added replacement candidates and Review Company links to the suppressed bounced-email panel.
+- Files changed: `src/app/api/replies/route.ts`, `src/app/replies/page.tsx`, `docs/architecture.md`, `docs/sandbox-current-state.md`, `docs/verification-report.md`, `docs/agent-run-log.md`.
+- Tests/checks run: `npx tsc --noEmit --pretty false`, `GET /api/replies`, and browser smoke for `/replies`.
+- Result: `/replies` now shows replacement candidates for Xcimer Energy, Watson Mills, and YG Acoustics. Tharp Custom Cabinetry is clearly marked as having no alternate stored email.
+- Remaining work: add an apply-replacement action that updates the selected draft/contact after human review, or run contact enrichment for companies with no alternate.
+- Assumptions made: candidate replacement should be read-only until Kohler or Lisa chooses the new recipient; no database schema change is needed for the first repair queue.

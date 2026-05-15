@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useToast } from "@/components/Toast";
 
 interface ReplyMessage {
@@ -38,6 +39,13 @@ interface BouncedContact {
   contactName: string | null;
   receivedAt: string | null;
   reason: string | null;
+  replacementContacts?: ReplacementContact[];
+}
+
+interface ReplacementContact {
+  contactname: string | null;
+  title: string | null;
+  email: string | null;
 }
 
 interface LetterOption {
@@ -180,12 +188,42 @@ export default function RepliesPage() {
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {data?.bouncedContacts.map((contact) => (
                   <div key={contact.email} className="rounded-xl border border-red-100 bg-white px-3 py-2">
-                    <p className="break-all text-sm font-bold text-slate-900">{contact.email}</p>
-                    <p className="text-xs text-slate-600">
-                      {contact.companyname || "Unknown company"}
-                      {contact.contactName ? ` · ${contact.contactName}` : ""}
-                    </p>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="break-all text-sm font-bold text-slate-900">{contact.email}</p>
+                        <p className="text-xs text-slate-600">
+                          {contact.companyname || "Unknown company"}
+                          {contact.contactName ? ` · ${contact.contactName}` : ""}
+                        </p>
+                      </div>
+                      {contact.companyname && (
+                        <Link
+                          href={`/company/${encodeURIComponent(contact.companyname)}`}
+                          className="shrink-0 rounded-lg border border-red-100 px-2 py-1 text-xs font-bold text-red-800 hover:bg-red-50"
+                        >
+                          Review company
+                        </Link>
+                      )}
+                    </div>
                     <p className="mt-1 text-xs text-red-700">{contact.reason || "Delivery failure"}</p>
+                    {(contact.replacementContacts?.length || 0) > 0 ? (
+                      <div className="mt-2 space-y-1 border-t border-red-50 pt-2">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                          Replacement candidates
+                        </p>
+                        {contact.replacementContacts?.map((replacement) => (
+                          <p key={`${contact.email}-${replacement.email}`} className="text-xs text-slate-700">
+                            <span className="font-semibold text-slate-900">{replacement.contactname || "Unnamed contact"}</span>
+                            {replacement.title ? ` · ${replacement.title}` : ""}
+                            {replacement.email ? ` · ${replacement.email}` : ""}
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 border-t border-red-50 pt-2 text-xs text-slate-500">
+                        No alternate email is currently stored for this company.
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
