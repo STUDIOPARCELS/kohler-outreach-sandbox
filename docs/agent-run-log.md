@@ -159,3 +159,13 @@
 - Result: dry-run and real backfill scanned 28 contact emails and 24 company domains, skipped 5 ConMed career-site reminders, and imported 5 outreach-linked Gmail events: 4 bounces plus 1 TruStile out-of-office auto-reply. No human/actionable replies were found in `kwood12802@gmail.com` for March 1-May 14, 2026. True sandbox now has `sent_messages` 33, `email_threads` 5, and `email_messages` 5. Local `/analytics` and `/replies` visually show the updated counts.
 - Remaining work: clean bounced addresses before more outreach; connect `akwood1@mines.edu` or Gmail OAuth later if replies may have landed outside `kwood12802@gmail.com`.
 - Assumptions made: same-domain messages should only be imported when they have direct outreach evidence or a reply/auto-reply signal, and career-site reminders are not outreach replies even when they share a target company domain.
+
+## 2026-05-15 - Manual Letter Reply Intake
+
+- What was inspected: `/replies`, `/analytics`, `GET /api/replies`, `GET /api/analytics`, existing `sent_messages`, `email_threads`, and `email_messages` schema, plus the current outbound letter records.
+- What changed: added `POST /api/replies/manual-letter`; expanded `GET /api/replies` to return sent-letter options; added an Add Letter Reply form to `/replies`; added letter-reply and reply-channel metrics to `/analytics`.
+- Files changed: `src/app/api/replies/manual-letter/route.ts`, `src/app/api/replies/route.ts`, `src/app/replies/page.tsx`, `src/app/api/analytics/route.ts`, `src/app/analytics/page.tsx`, `docs/architecture.md`, `docs/sandbox-current-state.md`, `docs/verification-report.md`, `docs/production-promotion-plan.md`, `docs/agent-run-log.md`.
+- Tests/checks run: `npx tsc --noEmit --pretty false`, `npm run test:gmail`, `npm run test:schema`, `npm run build`, invalid `POST /api/replies/manual-letter` smoke test, `GET /api/replies`, and browser smoke for `/replies` and `/analytics`.
+- Result: Kohler can now manually add a reply received from a physical letter without direct access to `akwood1@mines.edu`. The entry is stored in existing reply tables as `metadata.channel = "letter"` and will count as a letter reply in analytics. No manual reply test data was inserted.
+- Remaining work: add bounced-contact suppression before future outreach and optionally add edit/delete controls for manual letter replies.
+- Assumptions made: manual letter replies should not require a new database table yet; existing reply tables are sufficient if metadata clearly marks `source = manual_letter_reply` and `channel = letter`.

@@ -31,7 +31,7 @@ Date: 2026-05-14
 ## API Routes
 
 - Company/contact/data: `/api/company`, `/api/contacts`, `/api/research-contacts`, `/api/alt-contacts`, `/api/find-email`, `/api/find-leads`, `/api/search-places`, `/api/company-descriptions`, `/api/backfill-addresses`, `/api/backfill-emails`, `/api/clean-emails`, `/api/merge-data`, `/api/data-audit`, `/api/delete-company`, `/api/restore-company`
-- Outreach/queue/email: `/api/draft`, `/api/template`, `/api/queue`, `/api/batch-status`, `/api/send-email`, `/api/approve-followup`, `/api/update-followup-email`, `/api/followup-candidates`, `/api/save-signature`, `/api/gmail/backfill-responses`, `/api/replies`, `/api/analytics`
+- Outreach/queue/email: `/api/draft`, `/api/template`, `/api/queue`, `/api/batch-status`, `/api/send-email`, `/api/approve-followup`, `/api/update-followup-email`, `/api/followup-candidates`, `/api/save-signature`, `/api/gmail/backfill-responses`, `/api/replies`, `/api/replies/manual-letter`, `/api/analytics`
 - Job intelligence: `/api/open-roles-list`, `/api/relevant-roles`, `/api/search-jobs`, `/api/import-ziprecruiter`, `/api/ingest/ziprecruiter`, `/api/ingest/careers`, `/api/jobs/rescore`
 - Auth/health/cron: `/api/google/connect`, `/api/google/callback`, `/api/health`, `/api/runtime-diagnostics`, `/api/cron/research`
 
@@ -92,7 +92,7 @@ True sandbox live schema source of truth:
 - Current OAuth status: one existing `gmail_accounts` row is present for `31***@gmail.com`; neither `kwood12802@gmail.com` nor `akwood1@mines.edu` is connected as of 2026-05-14. Historical reply/bounce backfill for Kohler's two mailboxes is blocked until those exact accounts are reconnected through `/api/google/connect`.
 - Current outbound sync status: `sent_messages` has 33 server-side records from historical outbound rows, split into 8 email sends and 25 physical letters.
 - Current reply/bounce backfill status: `scripts/gmail_imap_backfill.py` used the existing `GMAIL_USER=kwood12802@gmail.com` app password to read Gmail through IMAP for March 1-May 14, 2026. It scanned 28 contact emails and 24 company domains, skipped 5 automated ConMed career-site reminders, and imported 4 delivery-failure bounces plus 1 TruStile out-of-office auto-reply. No human/actionable replies were found.
-- Reply/dashboard UI: `/replies` and `/analytics` exist and read from `sent_messages`, `email_threads`, and `email_messages`; they currently show 33 outbound records, 5 stored email events, 4 bounces, 1 out-of-office, 0 human replies, and a 12.1% bounce rate.
+- Reply/dashboard UI: `/replies` and `/analytics` exist and read from `sent_messages`, `email_threads`, and `email_messages`; they currently show 33 outbound records, 5 stored email events, 4 bounces, 1 out-of-office, 0 human replies, and a 12.1% bounce rate. `/replies` also includes a manual letter-reply form for responses Kohler receives outside a readable mailbox.
 - Missing: Gmail draft creation route and a successful Kohler-mailbox OAuth reconnect.
 
 ## Scheduler/Cron Assumptions
@@ -135,7 +135,7 @@ Observed key names only, values intentionally redacted:
 - Open Roles now displays 161 screened jobs across 105 companies from 185 tracked relevant/open sandbox jobs, but still lacks direct actions for find contacts, create draft, mark applied, and monitor.
 - RocketReach flow exists as direct routes, not yet behind a provider interface.
 - Gmail reply backfill/classification route and storage exist. OAuth backfill is still blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected in `gmail_accounts`, but IMAP backfill works with the existing Gmail app password for `kwood12802@gmail.com`.
-- Metrics dashboard now exists at `/analytics`, with current real data from 33 outbound records plus 5 imported Gmail events.
+- Metrics dashboard now exists at `/analytics`, with current real data from 33 outbound records plus 5 imported Gmail events. It separates email replies from manual letter replies when those are added.
 - Production promotion requires schema decisions and environment review.
 
 ## Security Flagging Assessment

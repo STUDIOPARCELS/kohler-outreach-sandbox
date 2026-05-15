@@ -57,6 +57,12 @@ export async function GET(req: NextRequest) {
   const actionable = messages.filter((row) => ACTIONABLE.includes(row.classification));
   const positive = messages.filter((row) => POSITIVE.includes(row.classification));
   const bounces = messages.filter((row) => row.classification === "bounce");
+  const replyChannelCounts = replies.reduce<Record<string, number>>((counts, row) => {
+    const metadata = (row.metadata || {}) as { channel?: string };
+    const channel = metadata.channel || "unknown";
+    counts[channel] = (counts[channel] || 0) + 1;
+    return counts;
+  }, {});
 
   return NextResponse.json({
     cards: {
@@ -72,8 +78,11 @@ export async function GET(req: NextRequest) {
       responseRate: percent(replies.length, sent.length),
       positiveResponseRate: percent(positive.length, sent.length),
       bounceRate: percent(bounces.length, sent.length),
+      emailReplies: replyChannelCounts.email || 0,
+      letterReplies: replyChannelCounts.letter || 0,
     },
     byChannel: groupCount(sent, "channel"),
+    byReplyChannel: replyChannelCounts,
     byClassification: groupCount(messages, "classification"),
     latestReplies: messages.slice(0, 10),
     latestOutbound: sent.slice(0, 10),

@@ -17,8 +17,11 @@ interface AnalyticsResponse {
     responseRate: number;
     positiveResponseRate: number;
     bounceRate: number;
+    emailReplies: number;
+    letterReplies: number;
   };
   byChannel: Record<string, number>;
+  byReplyChannel: Record<string, number>;
   byClassification: Record<string, number>;
   latestReplies: Array<{ id: string; classification: string; received_at: string | null; metadata?: { companyname?: string | null } }>;
   latestOutbound: Array<{ id: string; channel: string; companyname: string | null; sent_at: string | null; status: string | null }>;
@@ -69,7 +72,7 @@ export default function AnalyticsPage() {
             <Metric label="Positive" value={cards.positiveReplies} sub={`${cards.positiveResponseRate}% positive rate`} />
             <Metric label="Bounces" value={cards.bounces} sub={`${cards.bounceRate}% bounce rate`} />
             <Metric label="Response rate" value={`${cards.responseRate}%`} sub={`${cards.threads} matched threads`} />
-            <Metric label="Raw outreach rows" value={cards.outreachRowsWithOutboundDates} sub="includes draft/timestamp anomalies" />
+            <Metric label="Letter replies" value={cards.letterReplies} sub={`${cards.emailReplies} email replies`} />
             <Metric label="Email sent" value={cards.emailSent} sub="from emailed_at" />
             <Metric label="Letters sent" value={cards.lettersSent} sub="printed/sent letters" />
           </div>
@@ -88,10 +91,12 @@ export default function AnalyticsPage() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Breakdown title="By Channel" rows={data.byChannel} />
-            <Breakdown title="By Reply Type" rows={data.byClassification} empty="No reply classifications yet" />
+            <Breakdown title="By Reply Channel" rows={data.byReplyChannel} empty="No reply channel data yet" />
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Breakdown title="By Reply Type" rows={data.byClassification} empty="No reply classifications yet" />
+
             <List title="Latest Outbound">
               {data.latestOutbound.length === 0 ? (
                 <p className="text-sm text-slate-500">No outbound records synced.</p>

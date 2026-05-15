@@ -18,7 +18,12 @@ export async function GET(req: NextRequest) {
 
   const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") || 100), 250);
 
-  const [{ data: messages, error: messagesError }, { count: sentCount }, { count: threadCount }] = await Promise.all([
+  const [
+    { data: messages, error: messagesError },
+    { count: sentCount },
+    { count: threadCount },
+    { data: letterOptions, error: letterOptionsError },
+  ] = await Promise.all([
     supabaseAdmin
       .from("email_messages")
       .select("id, gmail_message_id, gmail_thread_id, direction, from_email, subject, snippet, received_at, classification, is_auto_reply, metadata")
@@ -26,16 +31,26 @@ export async function GET(req: NextRequest) {
       .limit(limit),
     supabaseAdmin.from("sent_messages").select("*", { count: "exact", head: true }),
     supabaseAdmin.from("email_threads").select("*", { count: "exact", head: true }),
+    supabaseAdmin
+      .from("sent_messages")
+      .select("id, source_id, outreach_id, companyname, contact_email, subject, sent_at, metadata")
+      .eq("channel", "letter")
+      .order("sent_at", { ascending: false, nullsFirst: false })
+      .limit(250),
   ]);
 
   if (messagesError) {
     return NextResponse.json({ error: messagesError.message }, { status: 500 });
+  }
+  if (letterOptionsError) {
+    return NextResponse.json({ error: letterOptionsError.message }, { status: 500 });
   }
 
   const rows = messages || [];
 
   return NextResponse.json({
     messages: rows,
+    letterOptions: letterOptions || [],
     counts: {
       sent: sentCount || 0,
       threads: threadCount || 0,
