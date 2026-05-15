@@ -143,7 +143,8 @@ async function persistContact(
           .from("contacts")
           .select("id")
           .eq("companyname", c.company_name)
-          .ilike("full_name", c.full_name)
+          // Live column is `contactname`, NOT `full_name`.
+          .ilike("contactname", c.full_name)
           .limit(1)
       : { data: null, error: null };
 
@@ -153,9 +154,12 @@ async function persistContact(
     (findByName.data?.[0] as { id?: number } | undefined)?.id ??
     null;
 
+  // Map adapter field names → live `contacts` column names:
+  //   NormalizedContact.full_name    → contacts.contactname
+  //   NormalizedContact.linkedin_url → contacts.linkedin
   const baseFields = {
     companyname: c.company_name,
-    full_name: c.full_name,
+    contactname: c.full_name,
     title: c.title,
     email: c.email,
     role_type: c.role_type,
@@ -164,7 +168,7 @@ async function persistContact(
     is_mines_alumni: c.is_mines_alumni,
     is_possible_pe: c.is_possible_pe,
     email_confidence: c.email_confidence,
-    linkedin_url: c.linkedin_url,
+    linkedin: c.linkedin_url,
     provider_person_id: c.provider_person_id,
     provider_source: c.source,
     last_enriched_at: new Date().toISOString(),
