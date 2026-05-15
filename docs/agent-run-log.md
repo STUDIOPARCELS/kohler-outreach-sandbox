@@ -189,3 +189,13 @@
 - Result: `/replies` now shows replacement candidates for Xcimer Energy, Watson Mills, and YG Acoustics. Tharp Custom Cabinetry is clearly marked as having no alternate stored email.
 - Remaining work: add an apply-replacement action that updates the selected draft/contact after human review, or run contact enrichment for companies with no alternate.
 - Assumptions made: candidate replacement should be read-only until Kohler or Lisa chooses the new recipient; no database schema change is needed for the first repair queue.
+
+## 2026-05-15 - Draft Contact Replacement Action
+
+- What was inspected: existing `/api/draft` behavior, the company detail apply-contact flow, and the suppressed bounced-email UI.
+- What changed: added a `Use for draft` button to each replacement candidate in `/replies`. The action calls the existing draft route with company, contact name, title, and email, so it creates or updates a draft-contact record without sending email.
+- Files changed: `src/app/replies/page.tsx`, `docs/sandbox-current-state.md`, `docs/verification-report.md`, `docs/agent-run-log.md`.
+- Tests/checks run: `npx tsc --noEmit --pretty false` and browser smoke for `/replies`.
+- Result: `/replies` shows `Use for draft` actions for the alternate contacts. The buttons were not clicked during automated smoke testing because clicking intentionally writes a draft-contact change.
+- Remaining work: add a small confirmation modal before the write if this needs an extra guard, and run contact enrichment for Tharp Custom Cabinetry.
+- Assumptions made: using a replacement contact should remain a human click and must not trigger Gmail SMTP or live-send logic.

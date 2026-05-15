@@ -85,6 +85,7 @@ export default function RepliesPage() {
   const [data, setData] = useState<ReplyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [applyingReplacement, setApplyingReplacement] = useState<string | null>(null);
   const [manual, setManual] = useState({
     sentMessageId: "",
     classification: "positive_reply",
@@ -156,6 +157,30 @@ export default function RepliesPage() {
     }
   }
 
+  async function applyReplacement(companyname: string, replacement: ReplacementContact) {
+    if (!replacement.email) return;
+    setApplyingReplacement(`${companyname}:${replacement.email}`);
+    try {
+      const response = await fetch("/api/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyname,
+          contactname: replacement.contactname || replacement.email,
+          contact_title: replacement.title || "",
+          contact_email: replacement.email,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok || body.error) throw new Error(body.error || "Could not apply replacement contact.");
+      toast(`Draft contact set to ${replacement.email}.`);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Could not apply replacement contact.", "error");
+    } finally {
+      setApplyingReplacement(null);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl">
       <div className="mb-5 rounded-2xl bg-slate-900 px-5 py-5 text-white shadow-xl">
@@ -211,13 +236,31 @@ export default function RepliesPage() {
                         <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                           Replacement candidates
                         </p>
-                        {contact.replacementContacts?.map((replacement) => (
-                          <p key={`${contact.email}-${replacement.email}`} className="text-xs text-slate-700">
-                            <span className="font-semibold text-slate-900">{replacement.contactname || "Unnamed contact"}</span>
-                            {replacement.title ? ` · ${replacement.title}` : ""}
-                            {replacement.email ? ` · ${replacement.email}` : ""}
-                          </p>
-                        ))}
+                        {contact.replacementContacts?.map((replacement) => {
+                          const applyKey = `${contact.companyname}:${replacement.email}`;
+                          return (
+                            <div
+                              key={`${contact.email}-${replacement.email}`}
+                              className="flex flex-col gap-1 rounded-lg bg-slate-50 px-2 py-2 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <p className="text-xs text-slate-700">
+                                <span className="font-semibold text-slate-900">{replacement.contactname || "Unnamed contact"}</span>
+                                {replacement.title ? ` · ${replacement.title}` : ""}
+                                {replacement.email ? ` · ${replacement.email}` : ""}
+                              </p>
+                              {contact.companyname && replacement.email && (
+                                <button
+                                  type="button"
+                                  onClick={() => applyReplacement(contact.companyname!, replacement)}
+                                  disabled={applyingReplacement === applyKey}
+                                  className="w-fit rounded-lg bg-slate-900 px-2 py-1 text-[11px] font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {applyingReplacement === applyKey ? "Saving..." : "Use for draft"}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="mt-2 border-t border-red-50 pt-2 text-xs text-slate-500">
