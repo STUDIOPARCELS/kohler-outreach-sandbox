@@ -1,6 +1,12 @@
-// Phase 8 — approve a draft. Sets email_drafts.status = 'human_approved'
-// and outreach_actions.status = 'human_approved'. Phase 9 sends drafts
-// only when both are 'human_approved' AND ENABLE_LIVE_SEND === 'true'.
+// Session E — approve a draft. Sets email_drafts.status =
+// 'human_approved'. Phase 9 sends only when the draft is
+// 'human_approved' AND ENABLE_LIVE_SEND === 'true'.
+//
+// The linked outreach_actions row is marked 'completed' (its
+// action_type was 'create_draft' — the task of producing the draft is
+// done once a human approves it). Live outreach_actions.status enum is
+// pending|in_progress|completed|skipped|canceled — there is no
+// 'human_approved' value on that table.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAppOrigin } from "@/lib/auth";
@@ -9,7 +15,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 export const dynamic = "force-dynamic";
 
 interface RequestBody {
-  draft_id?: number;
+  draft_id?: string;
   approved_by?: string;
   subject?: string;
   body_text?: string;
@@ -52,7 +58,11 @@ export async function POST(req: NextRequest) {
   if (data?.outreach_action_id) {
     await supabaseAdmin
       .from("outreach_actions")
-      .update({ status: "human_approved", updated_at: new Date().toISOString() })
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", data.outreach_action_id);
   }
 

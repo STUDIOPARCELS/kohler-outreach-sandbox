@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 interface RequestBody {
   job_id?: number;
-  outreach_action_id?: number;
+  outreach_action_id?: string;
   companyname?: string;
   applied_via?: "web" | "recruiter" | "referral" | "letter";
   apply_url?: string | null;
@@ -44,10 +44,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "could not resolve company name" }, { status: 400 });
   }
 
+  // Live applications schema: job_listing_id (int FK), not job_id.
   const { data: insertRow, error } = await supabaseAdmin
     .from("applications")
     .insert({
-      job_id: body.job_id ?? null,
+      job_listing_id: body.job_id ?? null,
       outreach_action_id: body.outreach_action_id ?? null,
       companyname,
       applied_via: body.applied_via ?? "web",
@@ -59,22 +60,19 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    if (/does not exist/i.test(error.message)) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "applications table missing — apply supabase/migrations/0004_outreach_workflow.sql",
-        },
-        { status: 500 }
-      );
-    }
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
+  // outreach_actions.status enum: pending|in_progress|completed|
+  // skipped|canceled — mark 'completed' (the apply task is done).
   if (body.outreach_action_id) {
     await supabaseAdmin
       .from("outreach_actions")
-      .update({ status: "sent", updated_at: new Date().toISOString() })
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", body.outreach_action_id);
   }
 
