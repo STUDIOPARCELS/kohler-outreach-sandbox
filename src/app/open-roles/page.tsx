@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useToast } from "@/components/Toast";
 
 interface RoleRow {
@@ -612,6 +613,12 @@ export default function OpenRolesPage() {
                                   {row.best_source && <span>{srcLabel(row.best_source)}</span>}
                                   {row.best_last_seen_at && <span>seen {relTime(row.best_last_seen_at)}</span>}
                                   <span>{row.contact_count || 0} contacts · {row.email_count || 0} emails · {row.mines_alumni_count || 0} Mines alumni known</span>
+                                  <Link
+                                    href={`/company/${encodeURIComponent(row.companyname)}`}
+                                    className="ml-auto rounded-full bg-slate-900 px-2 py-1 text-[10px] font-bold text-white hover:bg-slate-800"
+                                  >
+                                    Contacts & draft
+                                  </Link>
                                 </div>
                                 {displayedRoles.map((role, index) => (
                                   <div key={index} className="px-4 py-3 border-b border-blue-100/70 last:border-b-0">
@@ -655,16 +662,24 @@ export default function OpenRolesPage() {
                                           )}
                                         </div>
                                       </div>
-                                      {role.url && (
-                                        <a
-                                          href={role.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="shrink-0 px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                      <div className="flex shrink-0 flex-col gap-1">
+                                        {role.url && (
+                                          <a
+                                            href={role.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-2.5 py-1 text-center text-[10px] font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                          >
+                                            Open
+                                          </a>
+                                        )}
+                                        <Link
+                                          href={`/company/${encodeURIComponent(row.companyname)}`}
+                                          className="px-2.5 py-1 text-center text-[10px] font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                                         >
-                                          Open
-                                        </a>
-                                      )}
+                                          Draft
+                                        </Link>
+                                      </div>
                                     </div>
                                   </div>
                                 ))}

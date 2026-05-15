@@ -52,6 +52,7 @@ Date: 2026-05-14
 - Runtime diagnostics smoke: passed; `/api/runtime-diagnostics` shows `appEnvironment=sandbox`, `supabaseProjectRef=nwsjgppkfducaikxsyvk`, 185 tracked jobs, 123 tracked companies, Gmail cursor set, safety gates off, and latest ingest run status from `job_ingest_runs.started_at`.
 - Open Roles API smoke: passed; `/api/open-roles-list` returns 161 screened jobs across 105 companies after command-center filtering.
 - Browser UI smoke: passed at `http://localhost:3000/open-roles`; page shows `SANDBOX`, safety gates off, sandbox Supabase project ref, 161 visible jobs, 105 visible companies, and relevance-aware Fit/PE chips across MEP, government, construction, aerospace, and manufacturing groups.
+- Open Roles action smoke: passed in the local browser. Expanding a company shows `Contacts & draft`, each expanded job keeps the external `Open` action, and each job has a `Draft` link to the company outreach workspace.
 - `npm run lint`: not completed because the project has no ESLint config and Next.js opened its interactive setup prompt.
 
 ## Current Known Risks

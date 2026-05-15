@@ -133,7 +133,7 @@ Observed key names only, values intentionally redacted:
 - No migrations yet for `contact_affiliations`, `outreach_campaigns`, `email_drafts`, `applications`, or `letters`.
 - Runtime diagnostics exist and careers sync now attempts optional `sync_runs` persistence.
 - Fit scoring exists as a server utility and Open Roles response enrichment. `POST /api/jobs/rescore` defaults to dry-run and has successfully persisted 185 true-sandbox rows into `role_fit_scores`.
-- Open Roles now displays 161 screened jobs across 105 companies from 185 tracked relevant/open sandbox jobs, but still lacks direct actions for find contacts, create draft, mark applied, and monitor.
+- Open Roles now displays 161 screened jobs across 105 companies from 185 tracked relevant/open sandbox jobs. Expanded company cards include `Contacts & draft` links and job rows include `Draft` links back to the company outreach workspace; mark-applied and monitor actions are still not implemented.
 - RocketReach flow exists as direct routes, not yet behind a provider interface.
 - Gmail reply backfill/classification route and storage exist. OAuth backfill is still blocked until `kwood12802@gmail.com` and/or `akwood1@mines.edu` is connected in `gmail_accounts`, but IMAP backfill works with the existing Gmail app password for `kwood12802@gmail.com`.
 - Metrics dashboard now exists at `/analytics`, with current real data from 33 outbound records plus 5 imported Gmail events. It separates email replies from manual letter replies when those are added.

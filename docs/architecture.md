@@ -67,6 +67,7 @@ Company targets
 - `POST /api/gmail/backfill-responses` is protected by `API_SECRET` and defaults to dry-run. It syncs historical outbound rows into `sent_messages`, then matches Gmail replies to `reachout_company_inserts` by exact contact email or non-generic company domain with outreach evidence, skips automated career-site noise, and stores `email_threads`/`email_messages` only when `dry_run=false`.
 - `GET /api/replies` is app-origin protected and returns imported reply/bounce records plus classification counts. It also derives same-company replacement contact candidates for bounced emails from existing `contacts` rows.
 - `/replies` can apply a replacement candidate through the existing `/api/draft` route. This updates/creates a draft-contact row only and does not send email.
+- `/open-roles` links expanded company and job rows back to `/company/[companyname]` so contact review and draft work remain centralized in the company workspace.
 - `POST /api/replies/manual-letter` is app-origin protected and lets Kohler manually add a response received from a physical letter. It writes a manual `email_threads`/`email_messages` pair with `metadata.channel = "letter"` and no Gmail access requirement.
 - `GET /api/analytics` is app-origin protected and returns response-rate cards from `sent_messages`, `email_threads`, and `email_messages`.
 - `/api/send-email` and `/api/approve-followup` check bounce suppression before Gmail SMTP and return 409 if the recipient has a prior delivery failure.

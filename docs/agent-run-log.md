@@ -199,3 +199,13 @@
 - Result: `/replies` shows `Use for draft` actions for the alternate contacts. The buttons were not clicked during automated smoke testing because clicking intentionally writes a draft-contact change.
 - Remaining work: add a small confirmation modal before the write if this needs an extra guard, and run contact enrichment for Tharp Custom Cabinetry.
 - Assumptions made: using a replacement contact should remain a human click and must not trigger Gmail SMTP or live-send logic.
+
+## 2026-05-15 - Open Roles Action Links
+
+- What was inspected: `src/app/open-roles/page.tsx`, `/api/open-roles-list`, `/api/relevant-roles`, and rendered Open Roles expanded company cards.
+- What changed: added `Contacts & draft` links to expanded company cards and `Draft` links beside each expanded job's external `Open` action.
+- Files changed: `src/app/open-roles/page.tsx`, `docs/sandbox-current-state.md`, `docs/verification-report.md`, `docs/agent-run-log.md`.
+- Tests/checks run: `npx tsc --noEmit --pretty false` and browser smoke for `http://localhost:3000/open-roles`.
+- Result: Open Roles is closer to a command center because a high-fit job can now jump directly to the company contact/draft workspace without searching elsewhere.
+- Remaining work: add actual mark-applied and monitor actions, and consider a dedicated find-contacts trigger once contact enrichment is ready.
+- Assumptions made: these action links should navigate only; they should not create drafts or send outreach until a human chooses that from the company workspace.
