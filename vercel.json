@@ -1,5 +1,4 @@
 {
-  "_comment": "Claude sandbox deploy. cron/research and ingest/careers are DISABLED here — they duplicate the production/Codex deploy against the shared KOHLER OS database, and cron/research spends RocketReach API credits. Only the Gmail reply sync runs (new in this build, no conflict). Re-add the others at production promotion if this becomes the production deploy.",
   "crons": [
     {
       "path": "/api/gmail/sync-incremental",
