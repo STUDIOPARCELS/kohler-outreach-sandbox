@@ -7,9 +7,20 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3001",
 ];
 
+function hostOf(value: string): string {
+  if (!value) return "";
+  try {
+    return new URL(value).host;
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Protect browser-facing API routes.
- * Validates that the request comes from our own app via Origin or Referer header.
+ * Allows: development; same-origin requests (the app calling its own
+ * API — always safe and works on any deployment URL); any *.vercel.app
+ * host; and the explicit ALLOWED_ORIGINS list.
  * Returns null if authorized, or a 403 NextResponse if not.
  */
 export function requireAppOrigin(req: NextRequest): NextResponse | null {
@@ -18,6 +29,21 @@ export function requireAppOrigin(req: NextRequest): NextResponse | null {
 
   const origin = req.headers.get("origin") || "";
   const referer = req.headers.get("referer") || "";
+
+  // Same-origin: the page and the API are on the same host. This is the
+  // app calling itself — definitionally safe — and it works regardless
+  // of what the deployment URL is (preview, sandbox, renamed project).
+  const requestHost = req.headers.get("host") || "";
+  const originHost = hostOf(origin);
+  const refererHost = hostOf(referer);
+  if (requestHost && (originHost === requestHost || refererHost === requestHost)) {
+    return null;
+  }
+
+  // Any Vercel deployment of this app (preview/sandbox URLs vary).
+  if (/\.vercel\.app$/i.test(originHost) || /\.vercel\.app$/i.test(refererHost)) {
+    return null;
+  }
 
   const isAllowed = ALLOWED_ORIGINS.some(
     (allowed) => origin === allowed || referer.startsWith(allowed)
