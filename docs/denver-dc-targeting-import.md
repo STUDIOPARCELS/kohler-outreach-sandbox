@@ -1,91 +1,112 @@
 # Denver Data-Center Contact Targeting — Import
 
-Import of the Denver / AI-infrastructure contact-targeting workbook
-(`0231594b-denver_data_center_contact_targeting.xlsx`) into the
-**Kohler Outreach Sandbox** Supabase project (`nwsjgppkfducaikxsyvk`).
+Two related workbook imports for the Denver / AI-infrastructure data-center
+buildout, both loaded into the **KOHLER OS** Supabase project
+(`acwgirrldntjpzrhqmdh`) — the database the deployed sandbox app
+(`kohler-outreach-sandbox-zxvm.vercel.app`) reads. Production
+(`kohler-outreach.vercel.app`) also reads this database, so the data is
+visible on both sites.
 
-Seed SQL: [`supabase/seed/denver_dc_targeting.sql`](../supabase/seed/denver_dc_targeting.sql)
-(idempotent — safe to re-run).
+All imported rows share `niche = 'Data Center Buildout'` so they are
+filterable as a single set, and every row carries a `[Denver DC Targeting]`
+or `[75-Companies enrichment]` tag in `notes` for traceability / cleanup.
 
 ## What was loaded
 
+### Workbook 1: `0231594b-denver_data_center_contact_targeting.xlsx`
+Seed SQL: [`supabase/seed/denver_dc_targeting.sql`](../supabase/seed/denver_dc_targeting.sql)
+
 | | Count |
 | --- | --- |
-| Contacts (named individuals) | 90 |
-| Companies | 26 referenced — 19 newly inserted, 7 already existed |
-| Contacts with a LinkedIn profile URL | 55 |
+| Contacts (named individuals) | **90** |
+| Companies referenced | 26 |
+| Contacts with a LinkedIn profile URL | 53 |
 | Contacts with an email | **0 — see Enrichment below** |
 
-The workbook's "Contact Targets" sheet has 200 rows. Only the **90 named
-individuals** were loaded. Deliberately excluded:
-
-- **75** `[Find named person]` placeholder rows ("Role-based target to
-  identify") — not real people.
-- **34** team / inbox / hiring-lane rows (e.g. "DPR Mission Critical team",
-  `careers@rmhgroup.com`) — not individuals.
-- **1** partial name (CT-112, "Mike [Colorado Controls Construction
-  leader]").
+The "Contact Targets" sheet has 200 rows. Only the 90 named individuals
+were loaded. Excluded: 75 `[Find named person]` placeholders, 34
+team/inbox/hiring-lane rows (e.g. "DPR Mission Critical team"), and 1
+partial name (CT-112).
 
 3 of the 90 (Gary Orazio, Tim Chiddix, Rachel Barrett at Swanson Rink)
-already existed in the DB; those rows were kept and tagged rather than
-duplicated.
+already existed in the DB and were tagged rather than duplicated.
+
+### Workbook 2: `e93482e5-denver_data_center_75_companies_simplified.xlsx`
+Seed SQL: [`supabase/seed/denver_dc_75_companies.sql`](../supabase/seed/denver_dc_75_companies.sql)
+
+| | Count |
+| --- | --- |
+| Companies in the workbook | **75** |
+| New inserts into KOHLER OS | 41 |
+| Existing companies re-niched to `Data Center Buildout` (prior niche preserved in notes) | 8 |
+| Existing `Data Center Buildout` companies enriched with address / about / careers URL | 26 |
+| Final count of `niche = 'Data Center Buildout'` companies in KOHLER OS | **75** |
+
+Each company gets: `mailing_address1` / `mailing_city` / `mailing_state` /
+`mailing_zip` (parsed from the workbook address when feasible), `company_about`
+(the "what they actually do" column), `careers_url`, and a `notes` block
+with drive time from 80226, employee count, and category.
 
 ## Field mapping
 
 - `contacts.contactname` / `title` / `linkedin` ← workbook name, title,
   and Public Source URL (only when it is a `linkedin.com/in/` profile).
 - `contacts.email` ← left **NULL**; `email_searched` ← **false**.
-- `contacts.notes` ← workbook targeting metadata (priority, outreach
-  score, target lane, why-this-target, best ask, role keywords, source
-  links), prefixed `[Denver DC Targeting CT-xxx]`.
-- `companies.niche` / `careers_url` ← workbook category and careers URL;
-  `companies.notes` prefixed `[Denver DC Targeting]`.
+- `contacts.notes` ← workbook targeting metadata, prefixed
+  `[Denver DC Targeting CT-xxx]`.
+- `companies.niche` ← `'Data Center Buildout'` for all 75.
+- `companies.notes` ← `[Denver DC Targeting]` block and/or
+  `[75-Companies enrichment]` block; `[Prior niche: X]` appended where
+  an earlier niche was replaced.
+- `companies.company_about` ← the workbook's "What they actually do".
+- `companies.mailing_*` ← parsed from the workbook address.
 
-Every imported row carries the literal tag `Denver DC Targeting` in
-`notes`, so the set is easy to query or remove:
+Easy queries:
 
 ```sql
-select * from contacts  where notes like '%Denver DC Targeting%';
-select * from companies where notes like '%Denver DC Targeting%';
+-- All 75 Data Center Buildout companies
+select companyname, mailing_city, careers_url from companies
+ where niche = 'Data Center Buildout' order by companyname;
+
+-- All 90 targeting contacts
+select companyname, contactname, title, linkedin from contacts
+ where notes like '%Denver DC Targeting%' order by companyname;
 ```
 
 ## Enrichment — attaching real emails
 
 The workbook contains **no email addresses**. All 90 contacts are queued
-for enrichment (`email = NULL`). Enrichment runs through the app's
-RocketReach route — it cannot be run from a Claude Code session because
-that environment has no outbound network and no RocketReach key.
+for enrichment (`email = NULL`, `email_searched = false`). Enrichment
+runs through the app's RocketReach route — it cannot be run from this
+Claude Code session because that environment has no outbound network and
+no RocketReach key.
 
 Route: `POST /api/backfill-emails` (`src/app/api/backfill-emails/route.ts`)
 
 - Auth: header `X-API-SECRET: <API_SECRET>`.
-- Body: `{ "limit": 20 }` (default 20, max 50). It selects contacts whose
-  email is null/empty, looks each up via RocketReach, and writes
+- Body: `{ "limit": 20 }` (default 20, max 50). It selects contacts
+  whose email is null/empty, looks each up via RocketReach, and writes
   `email` (plus `linkedin`/`phone` when found).
 - It processes ~20 per call with a 2s delay each, so **call it ~5 times**
-  to cover all 90 (it also picks up any other email-less contacts in the
-  same database).
-
-Example:
+  to cover all 90.
 
 ```bash
-curl -X POST https://<sandbox-app-host>/api/backfill-emails \
+curl -X POST https://kohler-outreach-sandbox-zxvm.vercel.app/api/backfill-emails \
   -H "X-API-SECRET: $API_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"limit": 50}'
 ```
 
-### Prerequisite — database wiring
-
-`/api/backfill-emails` enriches whichever database the deployed app is
-connected to (`KOHLER_SUPABASE_URL` / `KOHLER_SUPABASE_KEY`). For it to
-enrich these rows, the deployed sandbox app must point at the **Kohler
-Outreach Sandbox** project (`nwsjgppkfducaikxsyvk`). If it currently
-points at the shared KOHLER OS project, update the sandbox deployment's
-env vars first — otherwise the lookups will run against the wrong data.
+Because the deployed sandbox reads KOHLER OS, this enriches the same rows
+that production reads — there is no separate sandbox database to wire up.
 
 ## Where to see it in the app
 
-Once the app is pointed at this database, the imported records appear in
-the existing UI: companies on `/outreach-list` and their contacts on the
-`/company/[companyname]` detail pages.
+Live at **<https://kohler-outreach-sandbox-zxvm.vercel.app/>** (and at
+`https://kohler-outreach.vercel.app/` since both read KOHLER OS):
+
+- `/outreach-list` — filter the niche dropdown to `Data Center Buildout`
+  to see all 75 companies grouped together.
+- `/company/<name>` — per-company detail with the new address, careers
+  URL, "about", and the imported contacts.
+- `/queue` — once enrichment fills emails, draft outreach as usual.
