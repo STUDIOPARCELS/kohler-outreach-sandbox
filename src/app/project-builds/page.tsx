@@ -18,22 +18,17 @@ import {
 /* ── In-page section anchors (engineering command-center nav) ── */
 const SECTIONS: { id: string; label: string }[] = [
   { id: "overview", label: "Overview" },
-  { id: "project-cards", label: "Project Cards" },
+  { id: "projects", label: "Projects" },
   { id: "real-world-value", label: "Real-World Value" },
   { id: "build-complexity", label: "Build Complexity" },
   { id: "time-estimate", label: "Time Estimate" },
   { id: "skill-coverage", label: "Skill Coverage" },
   { id: "universal-deliverables", label: "Deliverables" },
   { id: "build-sequence", label: "Build Sequence" },
-  { id: "project-detail", label: "Project Detail" },
   { id: "portfolio-positioning", label: "Positioning" },
 ];
 
 const MAX_HOURS = Math.max(...PROJECT_BUILDS.map((p) => p.hoursHigh));
-
-function categoryFor(project: ProjectBuild): SkillCategory[] {
-  return project.categories;
-}
 
 /** Skills (from the coverage matrix) that include a given project. */
 function skillsForProject(projectId: string): string[] {
@@ -75,7 +70,7 @@ export default function ProjectBuildsPage() {
   const toast = useToast();
   const [filter, setFilter] = useState<(typeof PROJECT_FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string>(PROJECT_BUILDS[0].id);
 
   const visibleProjects = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -86,10 +81,16 @@ export default function ProjectBuildsPage() {
     });
   }, [filter, search]);
 
-  function openDetail(id: string) {
-    setExpandedId(id);
+  const effectiveActiveId = visibleProjects.some((p) => p.id === activeId) ? activeId : visibleProjects[0]?.id;
+  const activeProject = PROJECT_BUILDS.find((p) => p.id === effectiveActiveId) || null;
+
+  /** Jump to a project's tab from rankings, the hours chart, or the build sequence — clears any active filter/search so the tab is guaranteed visible. */
+  function selectProject(id: string) {
+    setFilter("All");
+    setSearch("");
+    setActiveId(id);
     if (typeof document !== "undefined") {
-      const el = document.getElementById(`detail-${id}`);
+      const el = document.getElementById("projects");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
@@ -218,82 +219,57 @@ export default function ProjectBuildsPage() {
         </div>
       </div>
 
-      {/* ── Project Cards ── */}
-      <section id="project-cards" className="scroll-mt-4">
+      {/* ── Projects (tabbed — one project at a time, no stacked scroll) ── */}
+      <section id="projects" className="scroll-mt-4">
         <SectionHeading
           index="02"
-          title="Project Cards"
-          subtitle={`${visibleProjects.length} of ${PROJECT_BUILDS.length} projects shown`}
+          title="Projects"
+          subtitle={`${visibleProjects.length} of ${PROJECT_BUILDS.length} projects shown · select a tab for its full engineering brief`}
         />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleProjects.map((p) => (
-            <article
-              key={p.id}
-              className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
-            >
-              <div className="border-b border-slate-100 bg-gradient-to-r from-slate-900 to-slate-700 px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-sm font-bold leading-snug text-white">{p.title}</h3>
-                  <span className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold text-white">
-                    #{p.originalNumber}
-                  </span>
-                </div>
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {categoryFor(p).map((c) => (
-                    <span key={c} className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-200">
-                      {c}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-4">
-                <p className="text-xs leading-relaxed text-slate-600">{p.purpose}</p>
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <Stat label="Est. hours" value={`${p.hoursLow}–${p.hoursHigh}`} />
-                  <Stat label="Real-world use" value={p.realWorldUse} />
-                  <Stat label="Difficulty" value={p.difficulty} />
-                  <Stat label="Cost" value={p.cost} />
-                </div>
-                <div className="rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
-                  <span className="font-semibold text-slate-700">Primary output: </span>
-                  {p.primaryOutput}
-                </div>
-                <div className="mt-auto flex items-center gap-2">
+        {visibleProjects.length === 0 ? (
+          <p className="rounded-2xl border border-slate-200 bg-white py-10 text-center text-sm text-slate-400 shadow-sm">
+            No projects match this filter and search.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {visibleProjects.map((p) => {
+                const active = p.id === effectiveActiveId;
+                return (
                   <button
-                    onClick={() => openDetail(p.id)}
-                    className="flex-1 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700"
+                    key={p.id}
+                    onClick={() => setActiveId(p.id)}
+                    className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold shadow-sm transition-colors ${
+                      active
+                        ? "bg-slate-900 text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
                   >
-                    Open details
+                    <span className={active ? "text-slate-400" : "text-slate-400"}>#{p.originalNumber}</span>
+                    {p.shortTitle}
                   </button>
-                  <button
-                    onClick={() => copyResume(p.resumeLine, p.shortTitle)}
-                    title="Copy resume line"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Copy resume line
-                  </button>
-                </div>
+                );
+              })}
+            </div>
+            {activeProject && (
+              <div className="mt-3">
+                <ProjectPanel project={activeProject} onCopyResume={() => copyResume(activeProject.resumeLine, activeProject.shortTitle)} />
               </div>
-            </article>
-          ))}
-          {visibleProjects.length === 0 && (
-            <p className="col-span-full py-10 text-center text-sm text-slate-400">
-              No projects match this filter and search.
-            </p>
-          )}
-        </div>
+            )}
+          </>
+        )}
       </section>
 
       {/* ── Real-World Value Ranking ── */}
       <section id="real-world-value" className="scroll-mt-4">
         <SectionHeading index="03" title="Real-World Value Ranking" subtitle="How closely each project mirrors paid engineering work" />
-        <RankingTable rows={REAL_WORLD_RANKING} scoreMax={5} onSelect={openDetail} />
+        <RankingTable rows={REAL_WORLD_RANKING} scoreMax={5} onSelect={selectProject} />
       </section>
 
       {/* ── Build Complexity Ranking ── */}
       <section id="build-complexity" className="scroll-mt-4">
         <SectionHeading index="04" title="Build Complexity Ranking" subtitle="Relative build effort and integration difficulty" />
-        <RankingTable rows={COMPLEXITY_RANKING} scoreMax={5} onSelect={openDetail} barTone="amber" />
+        <RankingTable rows={COMPLEXITY_RANKING} scoreMax={5} onSelect={selectProject} barTone="amber" />
       </section>
 
       {/* ── Time Estimate Summary ── */}
@@ -306,7 +282,7 @@ export default function ProjectBuildsPage() {
               .map((p) => (
                 <div key={p.id} className="flex items-center gap-3">
                   <button
-                    onClick={() => openDetail(p.id)}
+                    onClick={() => selectProject(p.id)}
                     className="w-40 shrink-0 truncate text-left text-xs font-medium text-slate-700 hover:text-slate-900 sm:w-52"
                     title={p.title}
                   >
@@ -426,7 +402,7 @@ export default function ProjectBuildsPage() {
                 {step.step}
               </span>
               <button
-                onClick={() => openDetail(step.projectId)}
+                onClick={() => selectProject(step.projectId)}
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
               >
                 <p className="text-sm font-semibold text-slate-800">{step.project}</p>
@@ -437,25 +413,9 @@ export default function ProjectBuildsPage() {
         </ol>
       </section>
 
-      {/* ── Project Detail ── */}
-      <section id="project-detail" className="scroll-mt-4">
-        <SectionHeading index="09" title="Project Detail" subtitle="Expand any project for its full engineering brief" />
-        <div className="space-y-3">
-          {PROJECT_BUILDS.map((p) => (
-            <ProjectDetail
-              key={p.id}
-              project={p}
-              expanded={expandedId === p.id}
-              onToggle={() => setExpandedId(expandedId === p.id ? null : p.id)}
-              onCopyResume={() => copyResume(p.resumeLine, p.shortTitle)}
-            />
-          ))}
-        </div>
-      </section>
-
       {/* ── Final Portfolio Positioning ── */}
       <section id="portfolio-positioning" className="scroll-mt-4">
-        <SectionHeading index="10" title="Final Portfolio Positioning" subtitle="How this six-project set reads to a hiring manager" />
+        <SectionHeading index="09" title="Final Portfolio Positioning" subtitle="How this six-project set reads to a hiring manager" />
         <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-700 p-5 text-slate-100 shadow-sm sm:p-7">
           <p className="text-sm leading-relaxed text-slate-200">
             This portfolio is a deliberate six-project arc: it opens with a fast parametric CAD win, proves
@@ -527,11 +487,11 @@ function MetricCard({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function TabStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-slate-50 px-2 py-1.5">
+    <div className="rounded-lg border border-white/10 bg-white/10 px-2.5 py-1.5 backdrop-blur-sm">
       <p className="text-[9px] uppercase tracking-wide text-slate-400">{label}</p>
-      <p className="text-[11px] font-semibold text-slate-700">{value}</p>
+      <p className="text-[11px] font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -614,91 +574,88 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function ProjectDetail({
-  project,
-  expanded,
-  onToggle,
-  onCopyResume,
-}: {
-  project: ProjectBuild;
-  expanded: boolean;
-  onToggle: () => void;
-  onCopyResume: () => void;
-}) {
-  return (
-    <div id={`detail-${project.id}`} className="scroll-mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <button onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">
-            #{project.originalNumber}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-slate-800">{project.title}</p>
-            <p className="truncate text-[11px] text-slate-500">
-              {project.hoursLow}–{project.hoursHigh} hrs · {project.realWorldUse} value · {project.bestSignal}
-            </p>
-          </div>
-        </div>
-        <svg
-          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${expanded ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {expanded && (
-        <div className="space-y-4 border-t border-slate-100 px-4 py-4">
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <Field label="Objective" value={project.purpose} />
-            <Field label="Real-world use" value={`${project.realWorldUse} — ${project.realWorldNote}`} />
-            <Field label="Portfolio-grade build definition" value={project.portfolioVersion} />
-            <Field label="Simplest credible version" value={project.simplestVersion} />
-            <Field label="Hiring signal" value={project.hiringSignal} />
-            <Field label="Estimated hours" value={`${project.hoursLow}–${project.hoursHigh} hours · ${project.difficulty} · ${project.cost} cost`} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            <DetailList title="Engineering principles" items={project.engineeringPrinciples} />
-            <DetailList title="Claude Code outputs" items={project.claudeOutputs} />
-            <DetailList title="Data fields" items={project.dataFields} />
-            <DetailList title="Dashboard panels" items={project.dashboardPanels} />
-            <DetailList title="Required parts" items={project.requiredParts} />
-            <DetailList title="Required materials" items={project.requiredMaterials} />
-            <DetailList title="Required tools" items={project.requiredTools} />
-            <DetailList title="Nice-to-have parts" items={project.niceParts} />
-            <DetailList title="Nice-to-have materials" items={project.niceMaterials} />
-            <DetailList title="Nice-to-have tools" items={project.niceTools} />
-            <DetailList title="Final deliverables" items={project.deliverables} />
-          </div>
-
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-emerald-700">Resume line</p>
-                <p className="text-xs leading-relaxed text-slate-700">{project.resumeLine}</p>
-              </div>
-              <button
-                onClick={onCopyResume}
-                className="no-print shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg bg-slate-50 px-3 py-2">
       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-0.5 text-xs leading-relaxed text-slate-700">{value}</p>
+    </div>
+  );
+}
+
+/** Full single-project brief shown beneath the active tab — combines what used to be a card + an accordion into one scrollable panel. */
+function ProjectPanel({ project, onCopyResume }: { project: ProjectBuild; onCopyResume: () => void }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-900 to-slate-700 px-5 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold leading-snug text-white sm:text-lg">{project.title}</h3>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {project.categories.map((c) => (
+                <span key={c} className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-200">
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+          <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold text-white">
+            Original #{project.originalNumber}
+          </span>
+        </div>
+        <p className="mt-3 max-w-2xl text-xs leading-relaxed text-slate-300">{project.purpose}</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <TabStat label="Est. hours" value={`${project.hoursLow}–${project.hoursHigh}`} />
+          <TabStat label="Real-world use" value={project.realWorldUse} />
+          <TabStat label="Difficulty" value={project.difficulty} />
+          <TabStat label="Cost" value={project.cost} />
+        </div>
+      </div>
+
+      <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+          <span className="font-semibold text-slate-700">Primary output: </span>
+          {project.primaryOutput}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <Field label="Objective" value={project.purpose} />
+          <Field label="Real-world use" value={`${project.realWorldUse} — ${project.realWorldNote}`} />
+          <Field label="Portfolio-grade build definition" value={project.portfolioVersion} />
+          <Field label="Simplest credible version" value={project.simplestVersion} />
+          <Field label="Hiring signal" value={project.hiringSignal} />
+          <Field label="Estimated hours" value={`${project.hoursLow}–${project.hoursHigh} hours · ${project.difficulty} · ${project.cost} cost`} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <DetailList title="Engineering principles" items={project.engineeringPrinciples} />
+          <DetailList title="Claude Code outputs" items={project.claudeOutputs} />
+          <DetailList title="Data fields" items={project.dataFields} />
+          <DetailList title="Dashboard panels" items={project.dashboardPanels} />
+          <DetailList title="Required parts" items={project.requiredParts} />
+          <DetailList title="Required materials" items={project.requiredMaterials} />
+          <DetailList title="Required tools" items={project.requiredTools} />
+          <DetailList title="Nice-to-have parts" items={project.niceParts} />
+          <DetailList title="Nice-to-have materials" items={project.niceMaterials} />
+          <DetailList title="Nice-to-have tools" items={project.niceTools} />
+          <DetailList title="Final deliverables" items={project.deliverables} />
+        </div>
+
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-emerald-700">Resume line</p>
+              <p className="text-xs leading-relaxed text-slate-700">{project.resumeLine}</p>
+            </div>
+            <button
+              onClick={onCopyResume}
+              className="no-print shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700"
+            >
+              Copy resume line
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

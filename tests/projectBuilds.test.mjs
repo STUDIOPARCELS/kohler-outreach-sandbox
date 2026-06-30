@@ -90,19 +90,29 @@ test("nav links include /project-builds with desktop and mobile labels", () => {
 test("the page includes all core dashboard sections", () => {
   const sections = [
     "Overview",
-    "Project Cards",
+    "Projects",
     "Real-World Value Ranking",
     "Build Complexity Ranking",
     "Time Estimate Summary",
     "Skill Coverage Matrix",
     "Universal Deliverables",
     "Recommended Build Sequence",
-    "Project Detail",
     "Final Portfolio Positioning",
   ];
   for (const s of sections) {
     assert.ok(pageSource.includes(s), `page is missing the "${s}" section`);
   }
+});
+
+test("projects render as tabs, not a stacked accordion", () => {
+  // one project shown at a time via tab selection, not all six expanded in a list
+  assert.match(pageSource, /activeId/);
+  assert.match(pageSource, /setActiveId/);
+  assert.match(pageSource, /ProjectPanel/);
+  // the old per-project accordion anchor/toggle pattern is gone
+  assert.doesNotMatch(pageSource, /detail-\$\{project\.id\}/);
+  assert.doesNotMatch(pageSource, /onToggle/);
+  assert.doesNotMatch(pageSource, /Open details/);
 });
 
 test("the page wires the required interactions", () => {
