@@ -618,7 +618,7 @@ function ProjectPanel({ project, onCopyResume }: { project: ProjectBuild; onCopy
           {project.primaryOutput}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
           <Field label="Objective" value={project.purpose} />
           <Field label="Real-world use" value={`${project.realWorldUse} — ${project.realWorldNote}`} />
           <Field label="Portfolio-grade build definition" value={project.portfolioVersion} />
@@ -627,7 +627,7 @@ function ProjectPanel({ project, onCopyResume }: { project: ProjectBuild; onCopy
           <Field label="Estimated hours" value={`${project.hoursLow}–${project.hoursHigh} hours · ${project.difficulty} · ${project.cost} cost`} />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 lg:grid-cols-3">
           <DetailList title="Engineering principles" items={project.engineeringPrinciples} />
           <DetailList title="Claude Code outputs" items={project.claudeOutputs} />
           <DetailList title="Data fields" items={project.dataFields} />
