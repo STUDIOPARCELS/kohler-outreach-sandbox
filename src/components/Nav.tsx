@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-const links = [
+const links: { href: string; label: string; mobileLabel?: string }[] = [
   { href: "/outreach-list", label: "Outreach List" },
   { href: "/queue", label: "Queue" },
   { href: "/template", label: "Template" },
   { href: "/open-roles", label: "Open Roles" },
+  { href: "/project-builds", label: "Project Builds", mobileLabel: "Builds" },
   { href: "/replies", label: "Replies" },
   { href: "/analytics", label: "Analytics" },
 ];
@@ -65,7 +66,7 @@ export default function Nav() {
                   : "text-gray-300 hover:bg-gray-800"
               }`}
             >
-              {l.label}
+              {l.mobileLabel || l.label}
             </Link>
           ))}
         </div>
