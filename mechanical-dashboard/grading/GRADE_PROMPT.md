@@ -1,5 +1,9 @@
 # Grading Prompt for Mechanical Build Dashboard Site
 
+> Amended 2026-07-01 per site owner: real-world photos are no longer required.
+> The required visual is a dimensioned CAD-style engineering drawing of the
+> exact build. The two photo criteria below were updated accordingly.
+
 Grade the provided static HTML dashboard site (the full source code or live version) on these five criteria. For each criterion, assign a score out of 10 with a brief justification (1-2 sentences). Include specific examples/quotations from the code or UI where relevant. At the end, give an overall letter grade (A-F) and 1-2 sentences on the biggest strength and biggest weakness.
 
 Be brutally direct and factual. No hedging or corporate language. Focus only on the specified criteria. Ignore unrelated aspects.
@@ -9,11 +13,11 @@ Be brutally direct and factual. No hedging or corporate language. Focus only on 
 1. **Truth**: 
    - Does the content avoid hype, inflated language, fake precision, unsubstantiated claims, or "AI slop" (e.g., vague "show", "demonstrate", "portfolio storytelling", "hiring signals", over-optimistic self-grades)?
    - Is everything presented as it actually is for building/testing (no disguised non-materials like data files, no OR-options, no per-project padding tools like "Code editor")?
-   - Are photos real-world images of the actual built items (not placeholders, stock, or generated)?
+   - Are the visuals dimensioned CAD-style engineering drawings of the exact items being built (not placeholders, stock images, decorative art, or fake photos), with every dimension taken from the build data?
 
 2. **Completeness**:
    - For each project, does it fully specify: exact parts with quantities where known, materials, shop tools, assembly sequence/steps, critical measurements (with numbers/units), engineering principles, estimated time/cost, real-world use, and proof deliverables?
-   - Are there actual real-world photos of the built hardware (first thing visible in each bento box)?
+   - Is a dimensioned engineering drawing of the exact build the first thing visible in each bento box?
    - Is the data actionable enough for an engineer to buy parts, cut material, run the test, or measure the same day?
 
 3. **Understandability**:
