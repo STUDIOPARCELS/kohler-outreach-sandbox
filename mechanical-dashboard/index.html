@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Builds</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 20px;
+  }
+  header h1 { font-size: 26px; font-weight: 650; color: #f1f5f9; letter-spacing: -0.01em; }
+  header .sub { margin-top: 6px; font-size: 13px; color: #94a3b8; }
+  #printBtn {
+    flex: none;
+    background: none;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #printBtn:hover { border-color: #64748b; color: #f1f5f9; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: #f8fafc;
+    color: #0f172a;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .card:hover, .card:has(.title-btn:focus-visible) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  }
+  .title-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-weight: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .title-btn:focus-visible { outline: 2px solid #475569; outline-offset: 2px; border-radius: 2px; }
+
+  .photo {
+    height: 175px;
+    background: #e2e8f0;
+    position: relative;
+    flex: none;
+  }
+  .photo.no-photo { height: 96px; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+  .photo .ph-note {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 13px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .card h2 { font-size: 16.5px; font-weight: 650; line-height: 1.3; }
+  .purpose { font-size: 13.5px; color: #334155; }
+
+  .metrics {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 0;
+  }
+  .metric { flex: 1; }
+  .metric + .metric { border-left: 1px solid #e2e8f0; padding-left: 10px; }
+  .metric .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+  .metric .v { font-size: 13px; font-weight: 650; margin-top: 2px; }
+
+  .use { font-size: 13px; color: #334155; }
+  .use b { font-weight: 650; }
+  .desc {
+    font-size: 13px;
+    color: #475569;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  .principles { font-size: 12.5px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 9px; margin-top: auto; }
+  .principles .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; display: block; margin-bottom: 2px; }
+  .open-cue { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.78);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+    z-index: 10;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #f8fafc;
+    color: #0f172a;
+    border-radius: 10px;
+    max-width: 760px;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+  .modal .photo { height: 260px; }
+  .modal .photo.no-photo { height: 96px; }
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 0;
+    background: rgba(15, 23, 42, 0.65);
+    color: #f8fafc;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .modal-body { padding: 22px 26px 28px; }
+  .modal-body h2 { font-size: 20px; font-weight: 650; margin-bottom: 6px; }
+  .modal-body .purpose { font-size: 14px; margin-bottom: 14px; }
+
+  .statline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    background: #eef2f7;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 13.5px;
+  }
+  .statline b { font-weight: 650; }
+  .statline .k { color: #64748b; }
+
+  .msec { margin-bottom: 16px; }
+  .msec h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+  .msec ul, .msec ol { padding-left: 20px; font-size: 13.5px; color: #1e293b; }
+  .msec li { margin-bottom: 3px; }
+  .msec p { font-size: 13.5px; color: #1e293b; }
+  .msec pre {
+    background: #eef2f7;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #1e293b;
+    overflow-x: auto;
+  }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+  @media (max-width: 640px) { .cols2 { grid-template-columns: 1fr; } }
+
+  /* Print */
+  #print-sheet { display: none; }
+  @media print {
+    body { background: #fff; color: #000; }
+    .wrap, .modal-overlay { display: none; }
+    #print-sheet { display: block; padding: 0; font-size: 12px; color: #000; }
+    #print-sheet h1 { font-size: 18px; margin-bottom: 2px; }
+    #print-sheet .psub { font-size: 11px; color: #444; margin-bottom: 14px; }
+    .pproj { border: 1px solid #999; border-radius: 6px; padding: 12px 14px; margin-bottom: 12px; }
+    .pproj h2 { font-size: 14px; margin-bottom: 3px; break-after: avoid; }
+    .pproj .pline { margin-bottom: 6px; }
+    .pproj h3 { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; margin: 7px 0 2px; color: #333; break-after: avoid; }
+    .pproj ul, .pproj ol { padding-left: 18px; margin: 0; }
+    .pproj li { margin-bottom: 1px; break-inside: avoid; }
+    .pproj .psec { break-inside: avoid; }
+    .pproj pre { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 9.5px; line-height: 1.4; border: 1px solid #ccc; border-radius: 4px; padding: 6px 8px; margin: 2px 0 0; white-space: pre-wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Project Builds</h1>
+      <div class="sub">Parts &bull; Materials &bull; Tools &bull; Time &bull; Principles &bull; Real-World Use</div>
+    </div>
+    <button id="printBtn" type="button">Print</button>
+  </header>
+  <div class="grid" id="grid"><noscript>This page renders its project cards with JavaScript. Enable JavaScript to view the six build specs.</noscript></div>
+</div>
+
+<div class="modal-overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" type="button" aria-label="Close">&times;</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<div id="print-sheet"></div>
+
+<script>
+const PROJECTS = [
+  {
+    "title": "Front Suspension Pickup-Point Survey with Plumb-Bob Floor Grid",
+    "shortTitle": "Pickup-Point Survey",
+    "purpose": "Measure the front suspension pickup-point coordinates of one car accurately enough to compute its roll-center height and anti-dive percentage.",
+    "physicalBuild": "A 36 x 72 in painter's-tape grid at 6 in pitch laid on the garage floor under the front axle of a car leveled on four 3-ton jack stands with the front wheels removed. Three 8 oz plumb bobs hang from magnet hooks on one side's lower-control-arm (LCA) and ball-joint points at a time and drop to within 1/8 in of the grid. The two strut top-mount studs, which have no clear drop path, transfer down via a straightedge laid across each strut tower. Six caliper-measured MDF datum blocks (pairs of 2, 4, and 6 in) stack under a torpedo level to transfer Z heights.",
+    "proofOutput": "A coordinate table of all 8 pickup points in mm: X and Y read to 1/16 in (1.6 mm) from the tape and converted once, LCA and ball-joint Z to 1 mm from the block stack, strut-top Z to 2 mm from the tower straightedge datum. Plus a 1:5 scale front-view sketch with the strut-axis perpendicular, the extended LCA line, the constructed instant center, the roll-center height in mm above ground, and the anti-dive percentage computed from the side-view LCA pivot-axis inclination, the measured wheelbase, and a CG height assumed at 20 in and stated on the sheet.",
+    "cost": "$60-90",
+    "estimatedHours": 6,
+    "realWorldUse": "3/5 practical use — the coordinates are the prerequisite for any informed spring, sway-bar, or roll-center change, but the survey happens once per car and the taped grid is disposable.",
+    "image": "assets/photos/suspension-pickup-points.jpg",
+    "requiredParts": [
+      "3x steel plumb bobs, 8 oz, machined point, 6 ft line",
+      "3x neodymium hook magnets, 3/4 in dia, 25 lb pull"
+    ],
+    "requiredMaterials": [
+      "2x rolls 1 in blue painter's tape, 60 yd",
+      "1x piece 3/4 in MDF, 12 x 24 in (ripped into six datum blocks)",
+      "1x 12-pack composite shims, 8 in (jack-stand leveling)",
+      "1x 4 oz bottle blue marking chalk"
+    ],
+    "requiredTools": [
+      "25 ft tape measure, 1/16 in graduations",
+      "8 in digital caliper, 0.01 mm resolution",
+      "48 in box level",
+      "Torpedo level",
+      "Chalk line",
+      "Framing square",
+      "Circular saw",
+      "2-ton floor jack",
+      "4x 3-ton jack stands",
+      "1/2 in drive breaker bar, 19 mm lug socket",
+      "Fine-point black permanent marker"
+    ],
+    "principles": [
+      "Gravity as vertical datum",
+      "Explicit coordinate frame",
+      "Measure at ride height",
+      "Error budgeting via symmetry",
+      "Instant-center construction"
+    ],
+    "assemblySteps": [
+      "With the car on the ground, measure and record the fender-lip-to-hub-center distance on both front corners (the ride-height reference for every later measurement), the front track width hub-center to hub-center, and the wheelbase on both sides to 1/8 in.",
+      "Snap a chalk baseline on the floor and lay a 36 x 72 in painter's-tape grid at 6 in pitch; square it with an 18-24-30 in 3-4-5 triangle and confirm the two grid diagonals match within 1/16 in.",
+      "Rip the MDF into six datum blocks (pairs 2, 4, and 6 in wide) with the circular saw, caliper each block's standing height to 0.05 mm, and write the measured value on the block face.",
+      "Lift the front end, set the car on four 3-ton jack stands centered over the grid, remove both front wheels with the breaker bar, and shim the stands until the rocker pinch welds read level side to side within 1/8 in on the 48 in box level.",
+      "Place the floor jack under one LCA and raise it until the fender-to-hub distance matches the ride-height reference within 2 mm, putting that ball joint at its static position; repeat on the other side before measuring that corner.",
+      "Hang the three plumb bobs from magnet hooks on one side's LCA inner front bushing bolt, LCA inner rear bushing bolt, and ball-joint nut, let each settle to 1/8 in above the floor, and mark the tips on the tape; repeat on the other side.",
+      "For each strut top-mount stud, which has no clear drop path, lay a straightedge across the strut tower, plumb down from its overhanging end, and record the measured horizontal offset from stud to plumb line.",
+      "Measure X and Y of every mark from the chalk baseline to 1/16 in; measure Z of each LCA and ball-joint point to 1 mm with stacked datum blocks plus the caliper for the remainder, and take strut-top Z to 2 mm from the straightedge datum.",
+      "Tabulate all 8 points and remeasure any left-right pair that disagrees by more than 3 mm.",
+      "Draw the front view at 1:5 scale: construct the perpendicular to the strut axis at the top mount, extend the LCA line to intersect it at the instant center, and project from the instant center through the tire contact patch (wheel centerline on the ground line, located from the measured track width) to get roll-center height.",
+      "Compute anti-dive from the side-view inclination of the LCA inner pivot axis at 65% front brake bias, the measured wheelbase, and the stated 20 in CG-height assumption."
+    ],
+    "criticalMeasurements": [
+      "Grid squareness: 3-4-5 check with 18-24-30 in legs; diagonals of the 36 x 72 in grid equal within 1/16 in",
+      "Car level: rocker pinch-weld heights match left-right within 1/8 in across the roughly 60 in track",
+      "Ride-height restoration: fender-to-hub distance reproduced within 2 mm before marking each ball joint",
+      "Plumb-bob settle: tip 1/8 in above the floor, marked only when residual sway is under 1/32 in",
+      "Datum block heights: calipered to 0.05 mm and written on each block before use",
+      "Left-right mirror check: paired pickup points must agree within 3 mm or be remeasured",
+      "Wheelbase and front track measured to 1/8 in before lifting; CG height is an assumption (20 in, typical sedan), written on the results sheet, not a measurement"
+    ]
+  },
+  {
+    "title": "Caliper-Fit Wrench Tray for a 12-Piece 8-19 mm Combination Set",
+    "shortTitle": "Wrench Tray",
+    "purpose": "Hold a 12-piece 8-19 mm combination wrench set in individually fitted slots so a missing wrench is visible at a glance.",
+    "physicalBuild": "A plywood tray roughly 525 x 285 x 33 mm: a 12.7 mm Baltic birch base carrying two edge rails and 13 dividers, each divider 260 x 20 x 12.7 mm, glued and brad-pinned on edge to form 12 slots. Each slot is cut to the caliper-measured open-end head width of its wrench plus 1.5 mm clearance, ordered 8 mm to 19 mm left to right. Final tray length falls out of the layout math because slot widths come from measurement, not a template.",
+    "proofOutput": "Photo of the finished tray with all 12 wrenches (8-19 mm) seated in their slots, plus a 12-row table of nominal size, measured head width, and cut slot width, with worst slot deviation under 0.5 mm.",
+    "cost": "$40-60",
+    "estimatedHours": 4,
+    "realWorldUse": "4/5 practical use — sits on the bench and gets used every job, but the slots fit exactly one wrench set; replace the set and you rebuild the tray.",
+    "image": "assets/photos/tool-tray.jpg",
+    "requiredParts": [
+      "1x box 18-gauge x 25 mm brads, 1000 ct",
+      "4x self-adhesive rubber feet, 19 mm dia"
+    ],
+    "requiredMaterials": [
+      "1x sheet 12.7 mm (1/2 in) Baltic birch plywood, 610 x 1220 mm (24 x 48 in)",
+      "1x bottle Titebond II wood glue, 8 oz",
+      "2x sheets 120-grit sandpaper",
+      "2x sheets 220-grit sandpaper",
+      "1x pint Watco Danish oil, natural"
+    ],
+    "requiredTools": [
+      "0-150 mm digital calipers",
+      "Table saw",
+      "18-gauge brad nailer",
+      "Combination square",
+      "300 mm steel rule",
+      "Random-orbit sander",
+      "Fine-point black permanent marker"
+    ],
+    "principles": [
+      "Design from measurement",
+      "Clearance fit sizing",
+      "Tolerance stack-up control",
+      "Single-datum layout",
+      "Part-as-gauge fitting"
+    ],
+    "assemblySteps": [
+      "Measure the widest point of each of the 12 wrenches (the open-end head) with calipers to 0.1 mm, add 1.5 mm clearance to each, and write the 12 slot widths in a table.",
+      "Sum the 12 slot widths plus 13 divider thicknesses (12.7 mm each) to get the tray length (about 525 mm), then cut the base to that length by 285 mm wide on the table saw.",
+      "Rip 20 mm tall strips from the plywood, then crosscut 13 dividers at 260 mm and 2 edge rails to the base length.",
+      "From one datum end of the base, mark every divider position cumulatively with the steel rule and combination square — never divider-to-divider — using the slot-width table.",
+      "Glue and pin the two edge rails and the datum-end divider with 25 mm brads, then set each remaining divider in sequence, using its wrench as the spacing gauge against the previous divider.",
+      "Before the glue sets, drop every wrench into its slot and confirm it seats and lifts freely; nudge any tight divider and re-pin.",
+      "Sand to 220 grit, break all top edges, apply Danish oil, stick on the 4 rubber feet, and mark each slot with its wrench size in permanent marker."
+    ],
+    "criticalMeasurements": [
+      "Slot width = measured open-end head width + 1.5 mm clearance (a typical 19 mm wrench head measures about 40.5 mm, so its slot is cut 42.0 mm)",
+      "Interior slot length 260 mm (285 mm base width minus two 12.7 mm rails) — the 19 mm wrench is about 250 mm long, leaving 10 mm end clearance",
+      "Divider height 20 mm: tall enough to capture a roughly 10 mm thick wrench head, low enough to grip the beam",
+      "Cumulative layout error from the datum end under 0.5 mm across all 13 dividers",
+      "Brad length 25 mm: 20 mm through the divider plus 5 mm into the 12.7 mm base, no blow-through"
+    ]
+  },
+  {
+    "title": "Rigid vs Rubber-Isolated Phone Mount Drive Vibration Test",
+    "shortTitle": "Phone Mount Isolation Test",
+    "purpose": "Measure how much rubber grommet isolation cuts road vibration reaching a dash-mounted phone compared to an identical hard-bolted mount.",
+    "physicalBuild": "A 6 x 2 x 1/4 in aluminum base plate screws to two existing trim-screw points on the lower dash and carries two identical 5 in brackets cut from 1-1/2 x 1/8 in aluminum angle, each holding a spring-clamp phone holder. One bracket bolts metal-to-metal with two #10-24 screws; the other sits on rubber grommets in 3/8 in holes with nylon spacers inside the grommet bores, so the screws clamp the spacers and the bracket floats on rubber. The isolated mount targets a 15-20 Hz natural frequency with a 350 g phone — verified by the bump test in the assembly sequence, not assumed — putting inputs above 28 Hz into the isolation region.",
+    "proofOutput": "Overlaid plot of 1-second RMS acceleration vs time for the two logged runs over the same loop, showing which mount transmits less vibration and by how much, plus photos of both mounts installed on the dash plate.",
+    "cost": "$40-60",
+    "estimatedHours": 6,
+    "realWorldUse": "3/5 practical use — the grommet mount stays in the car as a working phone mount, but a $15 store-bought mount does that job; the rig earns its keep as a measurement fixture.",
+    "image": "assets/photos/phone-mount-test.jpg",
+    "requiredParts": [
+      "2x spring-clamp phone holders with 1/4-20 tripod socket",
+      "4x EPDM rubber grommets, 50A durometer, 1/4 in ID, 3/8 in panel hole, 1/8 in groove width, 5/16 in overall height (2 installed, 2 spares)",
+      "2x nylon spacers, 1/4 in OD x 0.194 in ID x 3/8 in long",
+      "2x #10-24 x 1/2 in stainless pan-head machine screws (rigid bracket)",
+      "2x #10-24 x 3/4 in stainless pan-head machine screws (isolated bracket)",
+      "2x #10 stainless flat washers",
+      "2x #10 fender washers, 7/32 in ID x 1 in OD",
+      "2x 1/4-20 x 1/2 in stainless pan-head machine screws (phone clamps to brackets)",
+      "2x #8 x 1 in pan-head sheet-metal screws (base plate to dash trim bosses)"
+    ],
+    "requiredMaterials": [
+      "1x 6061-T6 aluminum flat bar, 1/4 x 2 in x 36 in (base plate stock)",
+      "1x 6061-T6 aluminum angle, 1-1/2 x 1-1/2 x 1/8 in x 36 in (bracket stock)"
+    ],
+    "requiredTools": [
+      "Hacksaw, 24 TPI blade",
+      "Bench vise",
+      "3/8 in corded electric drill",
+      "Fractional drill bit set, 1/16-1/2 in",
+      "#25 (0.1495 in) tap drill bit",
+      "#10-24 tap with T-handle",
+      "Center punch",
+      "Flat mill file",
+      "0-150 mm digital calipers",
+      "Combination square",
+      "#2 Phillips screwdriver",
+      "Smartphone with Physics Toolbox Sensor Suite, accelerometer logging at 100 Hz",
+      "Laptop with spreadsheet software (RMS computation and overlay plot)"
+    ],
+    "principles": [
+      "Vibration isolation",
+      "Natural frequency tuning",
+      "Transmissibility ratio",
+      "Base excitation"
+    ],
+    "assemblySteps": [
+      "Cut one 6 in base plate from the 1/4 x 2 in flat bar and two 5 in brackets from the 1-1/2 in angle; file all cut edges.",
+      "Measure the lower-dash trim-screw spacing with calipers, drill two matching 3/16 in holes in the base plate, then drill and tap four #10-24 holes with the #25 bit — two per bracket position at 1 in spacing.",
+      "Drill the bracket feet: two 13/64 in holes in the rigid bracket, two 3/8 in holes in the isolated bracket, both at the same 1 in spacing, plus one 17/64 in hole in each vertical leg for the phone clamp.",
+      "Bolt a phone clamp to each vertical leg with a 1/4-20 x 1/2 in screw; bolt the rigid bracket to the plate metal-to-metal with 2x #10-24 x 1/2 in screws and flat washers.",
+      "Seat the grommets in the isolated bracket's 3/8 in holes, drop the 3/8 in nylon spacers into the grommet bores, and fasten with 2x #10-24 x 3/4 in screws and fender washers; confirm the bracket floats with zero metal-to-metal contact.",
+      "Screw the base plate to the dash with the 2x #8 screws and photograph both mounts installed.",
+      "Bump-test the isolated mount with the phone logging: flick the bracket and read the ring-down frequency from the trace; confirm 15-20 Hz with the phone installed.",
+      "Drive the same 2-mile loop at 30 mph twice — phone on the rigid mount, then on the isolated mount — logging at 100 Hz each run; compute 1-second RMS acceleration for both logs in the spreadsheet and overlay the traces."
+    ],
+    "criticalMeasurements": [
+      "Isolated-bracket grommet holes 3/8 in diameter; the grommet's 1/8 in groove width must match the 1/8 in bracket thickness",
+      "Nylon spacer 3/8 in long vs 5/16 in grommet height — the spacer stands 1/16 in proud so screw torque lands on the spacer, never crushing the rubber",
+      "Bump-test natural frequency of the loaded isolated mount 15-20 Hz; isolation begins above fn x 1.41, about 28 Hz",
+      "Tap drill #25 (0.1495 in) for #10-24 threads in the 1/4 in plate — 0.25 in of thread depth gives 6 engaged threads",
+      "Accelerometer sample rate 100 Hz, resolving vibration content to 50 Hz",
+      "Run-to-run control: identical 2-mile loop at 30 mph, tire pressures within 1 psi of placard on both runs"
+    ]
+  },
+  {
+    "title": "6-Ton Bottle Jack H-Frame Shop Press",
+    "shortTitle": "Bottle Jack Press",
+    "purpose": "Press bearings, bushings, and press-fit pins in and out with 12,000 lbf of controlled force instead of a hammer and drift.",
+    "physicalBuild": "A 42 in tall, 24 in wide welded H-frame (40 in uprights standing on 2 in tube feet): two 2 x 2 x 1/4 in square-tube uprights on 20 in tube feet, their tops sandwiched between a pair of C4 x 5.4 channels that react the ram load. A matching channel bed rides on two 3/4 in grade-8 threaded-rod pins set in 13/16 in holes drilled on 2 in centers, giving 12 in of height adjustment. The 6-ton bottle jack sits on a plate platform hung from two return springs; pumping the ram against the fixed thrust pad drives the platform's 1 in press nose down onto work supported by 1/2 in arbor bars on the channel bed.",
+    "proofOutput": "Photo sequence of a trailer-hub bearing race pressed out and the new race pressed in, plus a measurement table: race OD by outside micrometer and hub bore by telescoping gauge, both to 0.001 in, with the interference recorded (0.002-0.003 in is typical for this hub), race seating depth within 0.002 in of the shoulder by caliper depth rod, and dial-indicator mid-span deflection of the top channels at full load (calculated 0.007 in at 12,000 lbf).",
+    "cost": "$250-320",
+    "estimatedHours": 10,
+    "realWorldUse": "4/5 practical use — wheel bearings, U-joints, and bushings come up a few times a year and each otherwise means a $30 machine-shop trip; it sits idle between jobs.",
+    "image": "assets/photos/bottle-jack-press.jpg",
+    "requiredParts": [
+      "1x 6-ton hydraulic bottle jack, 8-1/2 in collapsed height, 4-1/2 in hydraulic stroke plus 2-1/2 in extension screw",
+      "2x 3/4-10 x 36 in grade-8 threaded rods (each cut to one 24 in bed pin)",
+      "8x 3/4-10 grade-8 hex nuts",
+      "8x 3/4 in hardened flat washers",
+      "2x extension springs, 3/4 in OD x 5 in free length, 20 lb max load (jack-platform return)",
+      "4x 1/4-20 x 3/4 in hex bolts with nuts (spring anchors)"
+    ],
+    "requiredMaterials": [
+      "1x 12 ft 2 x 2 x 1/4 in wall A500 steel square tube (cut: 2x 40 in uprights, 2x 20 in feet)",
+      "1x 10 ft C4 x 5.4 A36 steel channel (cut: 4x 24 in — top pair and bed pair)",
+      "1x 24 in A36 flat bar, 1/2 x 6 in (cut: 6 x 7 in jack platform, 6 x 5 in ram thrust pad)",
+      "1x 24 in A36 flat bar, 1/2 x 2 in (cut: 2x 8 in arbor bars)",
+      "1x 4 in 1018 round bar, 1 in dia (press nose)",
+      "1x 2 lb spool 0.035 in E71T-11 flux-core welding wire",
+      "1x hardwood block, 4 x 4 x 2 in (load test)",
+      "1x scrap 3/4 in plywood, 12 x 12 in (press shield)"
+    ],
+    "requiredTools": [
+      "120 V flux-core wire-feed welder",
+      "Auto-darkening welding helmet",
+      "4-1/2 in angle grinder with cutoff and flap discs",
+      "Benchtop drill press",
+      "13/16 in reduced-shank drill bit",
+      "4x 6 in C-clamps",
+      "Combination square",
+      "Framing square",
+      "Tape measure",
+      "Center punch",
+      "Ball-peen hammer",
+      "6 in digital calipers",
+      "Dial indicator with magnetic base",
+      "0-3 in outside micrometer set",
+      "Telescoping bore gauge set, 5/16-6 in",
+      "Welding gloves and jacket",
+      "Safety glasses"
+    ],
+    "principles": [
+      "Column buckling",
+      "Beam bending",
+      "Factor of safety",
+      "Double-shear pin joints",
+      "Fillet weld sizing"
+    ],
+    "assemblySteps": [
+      "Cut the steel: two 40 in uprights and two 20 in feet from the 2 x 2 x 1/4 in tube, four 24 in lengths of C4 x 5.4 channel, and the 1/2 in plates (6 x 7 in platform, 6 x 5 in thrust pad, two 2 x 8 in arbor bars).",
+      "Clamp the uprights side by side and drill seven 13/16 in hole pairs through both walls on the drill press, centers 2 in apart starting 8 in from the bottom end, holding alignment across the pair within 1/32 in.",
+      "Sandwich the upright tops between the two top channels with a 1-1/4 in gap between channel backs and 16-1/2 in clear between uprights; equalize the frame diagonals within 1/16 in and lay 1/4 in fillet welds, at least 6 in of total weld per corner.",
+      "Weld each upright centered on its 20 in foot, checking plumb both ways, then weld the 6 x 5 in thrust pad across the underside of the top channels.",
+      "Weld the 1 in round press nose to the center of the 6 x 7 in platform, drill 1/4 in spring-anchor holes in the platform corners and channel flanges, and hang the platform from the two return springs on the 1/4-20 bolts.",
+      "Set the bottle jack on the platform with its ram against the thrust pad, slide the two 24 in grade-8 rods through a hole pair, double-nut each end over washers, and rest the bed channels and arbor bars on the rods.",
+      "Load-test to relief: with safety glasses on and the 3/4 in plywood shield between you and the work, pump the jack against the hardwood block until the relief valve opens (nominally the rated 12,000 lbf; the actual relief setting is unmeasured), inspect every weld, and record top-channel mid-span deflection with the dial indicator (calculated 0.007 in).",
+      "Run the proof job: press the old bearing race out of a spare trailer hub with the arbor bars supporting the hub face and a shop towel wrapped around the race to contain fragments if it shatters, then press the new race in to the shoulder, measuring interference with the micrometer and bore gauge and seating depth with the caliper depth rod."
+    ],
+    "criticalMeasurements": [
+      "Upright buckling: 40 in unbraced 2 x 2 x 1/4 in tube has r = 0.72 in, KL/r = 55 — AISC inelastic buckling at Fy 46 ksi gives about 58,000 lbf critical per upright against 6,000 lbf applied, factor of safety near 10",
+      "Top crossmember bending: 12,000 lbf at mid-span of the 18.5 in upright centers = 55,500 in-lb; the paired C4 x 5.4 gives S = 3.86 in^3, so 14,400 psi against 36,000 psi yield — factor of safety 2.5",
+      "Bed pins: 3,000 lbf per rod end gives about 10,000 psi shear at the 3/4-10 thread root (about 11% of grade-8 shear capacity, taken as 0.6 x 150 ksi) and 16,000 psi bearing on a single 1/4 in tube wall (35% of A500 yield); first hole center no closer than 2 in to a tube end",
+      "Welds: 1/4 in fillets with at least 6 in of total length per upright-to-crossmember joint carry 22,000 lbf allowable against 6,000 lbf per joint",
+      "Pin holes aligned across both uprights within 1/32 in so the bed sits on both rods without rocking under load",
+      "Frame diagonals equal within 1/16 in before final welding and the ram plumb within 1 degree, keeping the 12,000 lbf axial in the uprights"
+    ]
+  },
+  {
+    "title": "Brake Rotor Temperature Study: Heat Buildup and Cooldown Under Repeated 40-0 mph Stops",
+    "shortTitle": "Rotor Temp Study",
+    "purpose": "Measure how much heat repeated 40-0 mph stops dump into a front brake rotor and how fast convective cooling pulls it back out.",
+    "physicalBuild": "An instrumented front-left brake corner: a 1 in square flat-black high-temperature paint patch on the rotor hat as a fixed infrared target, plus three 1/4 in wide Tempilaq stripes (300 °F, 400 °F, 500 °F) painted on the rotor's outer edge to record peak temperature. A two-cone braking course in an empty lot and a ruled clipboard log sheet complete the rig. One wheel-off session installs everything; nothing permanent is added to the car.",
+    "proofOutput": "Plot of rotor temperature vs stop number for 10 consecutive stops, a 15-minute cooldown curve of temperature vs time, and a photo of the three Tempilaq stripes whose melted and unmelted states bracket the peak rotor temperature.",
+    "cost": "$90-120",
+    "estimatedHours": 4,
+    "realWorldUse": "3/5 practical use — it measures the real thermal margin of your brakes before a mountain descent or trailer tow, but it is a one-weekend test you will rarely repeat.",
+    "image": "assets/photos/brake-rotor-temp.jpg",
+    "requiredParts": [
+      "3x 2 oz bottles Tempilaq temperature-indicating liquid: 300 °F, 400 °F, 500 °F",
+      "1x 11 oz aerosol VHT FlameProof flat black header paint, rated to 1,300 °F"
+    ],
+    "requiredMaterials": [
+      "1x 14 oz aerosol can brake parts cleaner",
+      "1x roll 1 in blue painter's tape, 60 yd",
+      "10x sheets 1/4 in grid graph paper",
+      "1x roll shop towels, 55 count"
+    ],
+    "requiredTools": [
+      "Infrared thermometer, adjustable emissivity, range to 1,022 °F",
+      "2-ton floor jack",
+      "2x 3-ton jack stands",
+      "1/2 in drive breaker bar, 19 mm lug socket",
+      "1/2 in drive torque wrench, 30-150 ft-lb",
+      "Stopwatch",
+      "2x orange traffic cones, 12 in tall",
+      "1x letter-size aluminum clipboard"
+    ],
+    "principles": [
+      "Kinetic energy to heat",
+      "Convective cooling",
+      "Thermal mass",
+      "Emissivity in IR measurement"
+    ],
+    "assemblySteps": [
+      "Chock the rear wheels, jack the front-left corner onto a jack stand, remove the wheel with the breaker bar, and clean the outboard rotor face and hat with brake cleaner.",
+      "Mask a 1 in square on the rotor hat with painter's tape, spray it with flat black header paint, then brush three 1/4 in wide Tempilaq stripes (300 °F, 400 °F, 500 °F) on the rotor's outer edge, 1 in apart; let everything dry 30 minutes.",
+      "Reinstall the wheel, torque the lug nuts to the vehicle's spec (80 ft-lb on this car), and confirm the IR thermometer has a clear sight line to the black hat patch through the wheel spokes.",
+      "Set the IR thermometer emissivity to 0.95 and check it against boiling water: it must read 212 °F within 5 °F.",
+      "Set the two cones 110 ft apart in the empty lot to mark brake application and expected stopping point, and rule the log sheet with columns for stop number, clock time, and temperature.",
+      "Run 10 consecutive 40-0 mph stops at a firm, repeatable pedal effort (about 0.5 g, stopping in roughly 110 ft) on a fixed 60 s cycle, taking an IR reading of the hat patch within 10 s of each stop from 12 in away; a second person takes the readings (running solo, start each 60 s cycle at the reading instead).",
+      "After stop 10, park the car and log the rotor temperature every 60 s for 15 minutes to capture the cooldown curve.",
+      "Pull the wheel, photograph the Tempilaq stripes to read peak temperature, then plot temperature vs stop number and cooldown temperature vs time on the graph paper."
+    ],
+    "criticalMeasurements": [
+      "Entry speed 40 mph indicated, held within 2 mph at brake application on every stop",
+      "IR reading taken within 10 s of full stop, from 12 in away, aimed only at the flat-black hat patch with emissivity set to 0.95",
+      "Tempilaq stripes 1/4 in wide on the rotor's outer edge only, never on the pad-swept face",
+      "Fixed 60 s cycle time between stops; cooldown logged every 60 s for 15 min after the final stop",
+      "Expected rise roughly 40 °F per stop: 232 kJ of kinetic energy at 40 mph for a 3,200 lb car, 70% taken by the front axle, about 81 kJ into each 8 kg rotor",
+      "Lug nuts torqued to the vehicle's spec (80 ft-lb on this car) after stripe application and rechecked after the test"
+    ]
+  },
+  {
+    "title": "OBD-II Drive Logger: 5 Hz ECU Data Capture with In-Car Laptop Deck",
+    "shortTitle": "OBD-II Drive Logger",
+    "purpose": "Log RPM, vehicle speed, coolant temperature, and throttle position from the ECU at 5 Hz over a fixed commute loop, then extract per-gear drive ratios and the thermostat opening temperature from the CSV.",
+    "physicalBuild": "A 16 x 14 in deck of 1/2 in Baltic birch plywood, faced with non-slip rubber liner and strapped to the passenger seat by threading the seatbelt through two 2.25 x 5/8 in slots cut in the deck. An ELM327 USB adapter plugs into the J1962 port under the driver's-side dash; its 4 ft captive cable plus the 6 ft extension are clipped along the lower dash trim and console side, 3 in clear of full pedal travel, over to the laptop strapped to the deck.",
+    "proofOutput": "One 5-column CSV of a 25-minute commute (about 7,500 rows at 5 Hz) plus two plots: speed and RPM vs time overlaid, and an RPM-vs-speed scatter with one straight band per gear whose slope is that gear's overall drive ratio; the coolant trace climbs from ambient and flattens in the 88-92 °C band where the thermostat opens.",
+    "cost": "$30-50",
+    "estimatedHours": 4,
+    "realWorldUse": "3/5 practical use — useful for chasing intermittent faults and verifying repairs with hard data, but a $20 Bluetooth dongle and a phone app cover casual checks.",
+    "image": "assets/photos/obd-logger.jpg",
+    "requiredParts": [
+      "1x ELM327 v1.5 USB OBD-II adapter, genuine FTDI FT232RL chip, 16-pin J1962 plug, 4 ft captive cable, run at 115200 baud",
+      "1x USB 2.0 A-male to A-female extension cable, 6 ft",
+      "8x adhesive-backed nylon cable clips, 3/8 in",
+      "12x nylon zip ties, 4 in, 18 lb rated",
+      "2x adhesive hook-and-loop straps, 1 x 12 in"
+    ],
+    "requiredMaterials": [
+      "1x piece 1/2 in Baltic birch plywood, 24 x 24 in (deck cut to 16 x 14 in)",
+      "1x roll non-slip rubber shelf liner, 20 in x 4 ft",
+      "1x 3 oz tube contact cement",
+      "2x sheets 120-grit sandpaper"
+    ],
+    "requiredTools": [
+      "Laptop with USB-A port, Python 3.11, and python-OBD 0.7.4",
+      "Jigsaw with fine-tooth wood blade",
+      "Cordless drill, 1/2 in twist bit",
+      "Random-orbit sander",
+      "Tape measure",
+      "Multimeter",
+      "Infrared thermometer",
+      "Flush-cut pliers"
+    ],
+    "principles": [
+      "Nyquist sampling criterion",
+      "Serial query latency budget",
+      "Linear fit extracts gear ratios",
+      "Thermal plateau detection"
+    ],
+    "assemblySteps": [
+      "Cut the plywood deck to 16 x 14 in, round the corners to 1 in radius with the jigsaw, and sand all edges with 120 grit.",
+      "Drill 1/2 in starter holes and jigsaw two belt slots, 2.25 x 5/8 in each, centers 10 in apart and 1.5 in from the deck's rear edge (seatbelt webbing is 1.9 in wide).",
+      "Glue the rubber shelf liner to the top face with contact cement and trim it flush after 30 minutes of cure.",
+      "With the ignition off, meter the OBD-II port: pin 16 to pin 4 must read 12.0-12.8 V before the adapter goes in.",
+      "Plug in the ELM327, join the 6 ft extension, and route the cable along the lower dash trim and console side with the 8 cable clips and zip ties, keeping 3 in minimum from full pedal travel; trim tie tails with flush-cut pliers.",
+      "Thread the passenger seatbelt through both deck slots, buckle it, cinch the deck tight to the seat cushion, and strap the laptop down with the two hook-and-loop straps.",
+      "Idle-test for 60 s running log.py (listing below): confirm it connects on the CAN protocol, all 4 parameter IDs (PIDs) return values, and the mean sample interval in drive.csv is 0.25 s or less.",
+      "Drive the fixed loop once, holding steady cruise in each gear for 10 s minimum, then plot speed and RPM vs time and the RPM-vs-speed scatter from the CSV."
+    ],
+    "criticalMeasurements": [
+      "OBD-II port pin 16 to pin 4: 12.0-12.8 V with ignition off, checked before first plug-in",
+      "USB cable standoff from pedal travel: 3 in minimum, verified by pressing each pedal to the floor",
+      "Belt slots: 2x 2.25 x 5/8 in, centers 10 in apart, 1.5 in from the deck rear edge, clearing the 1.9 in seatbelt webbing",
+      "Mean sample interval 0.20 s target (5 Hz) — 4 PIDs at 5 Hz is 20 queries/s, near a real ELM327's ceiling on 500 kbit CAN — reject the run if the 60 s idle log averages above 0.25 s and drop to RPM and speed only",
+      "In-gear RPM-vs-speed slope constant within 2% during steady cruise, one straight band per gear",
+      "Coolant plateau at 88-92 °C marks thermostat opening; ECT PID cross-checked against an IR reading at the thermostat housing, agreement within 5 °C"
+    ],
+    "script": "import csv, time, obd\n\nconn = obd.OBD(\"/dev/ttyUSB0\", baudrate=115200)  # auto-negotiates the CAN protocol\ncmds = [obd.commands.RPM, obd.commands.SPEED,\n        obd.commands.COOLANT_TEMP, obd.commands.THROTTLE_POS]\n\nwith open(\"drive.csv\", \"w\", newline=\"\") as f:\n    w = csv.writer(f)\n    w.writerow([\"t_s\", \"rpm\", \"speed_kph\", \"ect_c\", \"throttle_pct\"])\n    t0 = time.time()\n    while True:\n        vals = []\n        for c in cmds:\n            r = conn.query(c)  # a dropped response logs a blank cell, not a crash\n            vals.append(r.value.magnitude if not r.is_null() else \"\")\n        w.writerow([round(time.time() - t0, 2)] + vals)\n        f.flush()\n        time.sleep(max(0, 0.2 - ((time.time() - t0) % 0.2)))"
+  }
+];
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function photoHTML(p) {
+  return '<div class="photo"><div class="ph-note">[Real-world photo of built item]</div>' +
+    '<img src="' + esc(p.image) + '" alt="' + esc(p.shortTitle) + '" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'no-photo\')"></div>';
+}
+
+function list(items, tag) {
+  tag = tag || 'ul';
+  return '<' + tag + '>' + items.map(i => '<li>' + esc(i) + '</li>').join('') + '</' + tag + '>';
+}
+
+function cardHTML(p, i) {
+  return '<article class="card" data-i="' + i + '">' +
+    photoHTML(p) +
+    '<div class="card-body">' +
+      '<h2><button class="title-btn" type="button">' + esc(p.title) + '</button></h2>' +
+      '<p class="purpose">' + esc(p.purpose) + '</p>' +
+      '<div class="metrics">' +
+        '<div class="metric"><div class="k">Parts</div><div class="v">' + p.requiredParts.length + '</div></div>' +
+        '<div class="metric"><div class="k">Materials</div><div class="v">' + p.requiredMaterials.length + '</div></div>' +
+        '<div class="metric"><div class="k">Tools</div><div class="v">' + p.requiredTools.length + '</div></div>' +
+        '<div class="metric"><div class="k">Time</div><div class="v">' + p.estimatedHours + ' h</div></div>' +
+        '<div class="metric"><div class="k">Cost</div><div class="v">' + esc(p.cost) + '</div></div>' +
+      '</div>' +
+      '<div class="use"><b>' + esc(p.realWorldUse) + '</b></div>' +
+      '<p class="desc">' + esc(p.physicalBuild) + '</p>' +
+      '<div class="principles"><span class="k">Principles</span>' + p.principles.map(esc).join(' &middot; ') + '</div>' +
+      '<div class="open-cue">Full spec &#9656;</div>' +
+    '</div>' +
+  '</article>';
+}
+
+function modalHTML(p) {
+  return photoHTML(p) +
+    '<div class="modal-body">' +
+      '<h2 id="modalTitle">' + esc(p.title) + '</h2>' +
+      '<p class="purpose">' + esc(p.purpose) + '</p>' +
+      '<div class="statline">' +
+        '<span><span class="k">Use:</span> <b>' + esc(p.realWorldUse.split(' — ')[0]) + '</b></span>' +
+        '<span><span class="k">Time:</span> <b>' + p.estimatedHours + ' h</b></span>' +
+        '<span><span class="k">Cost:</span> <b>' + esc(p.cost) + '</b></span>' +
+      '</div>' +
+      '<div class="msec"><h3>Build Description</h3><p>' + esc(p.physicalBuild) + '</p></div>' +
+      '<div class="cols2">' +
+        '<div>' +
+          '<div class="msec"><h3>Parts</h3>' + list(p.requiredParts) + '</div>' +
+          '<div class="msec"><h3>Materials</h3>' + list(p.requiredMaterials) + '</div>' +
+        '</div>' +
+        '<div class="msec"><h3>Tools</h3>' + list(p.requiredTools) + '</div>' +
+      '</div>' +
+      '<div class="msec"><h3>Assembly Sequence</h3>' + list(p.assemblySteps, 'ol') + '</div>' +
+      '<div class="msec"><h3>Critical Measurements</h3>' + list(p.criticalMeasurements) + '</div>' +
+      (p.script ? '<div class="msec"><h3>Logging Script (log.py)</h3><pre>' + esc(p.script) + '</pre></div>' : '') +
+      '<div class="msec"><h3>Engineering Principles</h3><p>' + p.principles.map(esc).join(', ') + '</p></div>' +
+      '<div class="msec"><h3>Real-World Use</h3><p>' + esc(p.realWorldUse) + '</p></div>' +
+      '<div class="msec"><h3>Proof / Deliverables</h3><p>' + esc(p.proofOutput) + '</p></div>' +
+    '</div>';
+}
+
+function printProjHTML(p) {
+  function psec(title, body) { return '<div class="psec"><h3>' + title + '</h3>' + body + '</div>'; }
+  return '<div class="pproj">' +
+    '<h2>' + esc(p.title) + '</h2>' +
+    '<div class="pline">' + esc(p.purpose) + ' &mdash; ' + esc(p.realWorldUse) + ' &mdash; ' + p.estimatedHours + ' h &mdash; ' + esc(p.cost) + '</div>' +
+    psec('Build Description', '<div>' + esc(p.physicalBuild) + '</div>') +
+    psec('Parts', list(p.requiredParts)) +
+    psec('Materials', list(p.requiredMaterials)) +
+    psec('Tools', list(p.requiredTools)) +
+    psec('Assembly Sequence', list(p.assemblySteps, 'ol')) +
+    psec('Critical Measurements', list(p.criticalMeasurements)) +
+    (p.script ? psec('Logging Script (log.py)', '<pre>' + esc(p.script) + '</pre>') : '') +
+    psec('Principles', '<div>' + p.principles.map(esc).join(', ') + '</div>') +
+    psec('Proof / Deliverables', '<div>' + esc(p.proofOutput) + '</div>') +
+  '</div>';
+}
+
+document.getElementById('grid').innerHTML = PROJECTS.map(cardHTML).join('');
+document.getElementById('print-sheet').innerHTML =
+  '<h1>Project Builds</h1><div class="psub">Parts &bull; Materials &bull; Tools &bull; Time &bull; Principles &bull; Real-World Use</div>' +
+  PROJECTS.map(printProjHTML).join('');
+
+const overlay = document.getElementById('overlay');
+const modalContent = document.getElementById('modalContent');
+let lastFocus = null;
+
+function openModal(i) {
+  modalContent.innerHTML = modalHTML(PROJECTS[i]);
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  lastFocus = document.activeElement;
+  document.getElementById('modalClose').focus();
+}
+function closeModal() {
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  if (lastFocus) lastFocus.focus();
+}
+
+document.getElementById('grid').addEventListener('click', e => {
+  if (String(window.getSelection())) return; // let users copy part specs off cards
+  const card = e.target.closest('.card');
+  if (card) openModal(+card.dataset.i);
+});
+document.getElementById('modalClose').addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (!overlay.classList.contains('open')) return;
+  if (e.key === 'Escape') { closeModal(); return; }
+  if (e.key === 'Tab') {
+    const focusables = overlay.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"])');
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+    else if (!overlay.contains(document.activeElement)) { first.focus(); e.preventDefault(); }
+  }
+});
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
