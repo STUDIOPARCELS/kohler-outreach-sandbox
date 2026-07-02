@@ -1,5 +1,6 @@
 import { requireCronSecret } from "@/lib/auth";
 import { mustWrite } from "@/lib/dbGuard";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,25 +11,6 @@ const DELAY_MS = 2000;
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
-}
-
-// PostgREST caps un-ranged selects at 1000 rows. Without pagination the scan
-// silently truncates and the cron re-searches companies whose contacts fell
-// past the cap (duplicate contacts, wasted RocketReach credits).
-async function fetchAllRows<T>(table: string, columns: string): Promise<T[]> {
-  const pageSize = 1000;
-  const rows: T[] = [];
-  for (let start = 0; ; start += pageSize) {
-    const { data, error } = await supabaseAdmin
-      .from(table)
-      .select(columns)
-      .order("id", { ascending: true })
-      .range(start, start + pageSize - 1);
-    if (error) throw new Error(`${table} scan: ${error.message}`);
-    rows.push(...((data || []) as T[]));
-    if (!data || data.length < pageSize) break;
-  }
-  return rows;
 }
 
 async function searchAndSave(companyname: string): Promise<{
@@ -261,8 +243,16 @@ export async function GET(req: NextRequest) {
   let allCompanies: Array<{ companyname: string }>;
   let contactRows: Array<{ companyname: string; contactname: string | null }>;
   try {
-    allCompanies = await fetchAllRows<{ companyname: string }>("companies", "companyname");
-    contactRows = await fetchAllRows<{ companyname: string; contactname: string | null }>("contacts", "companyname, contactname");
+    allCompanies = await fetchAllRows<{ companyname: string }>(
+      (from, to) =>
+        supabaseAdmin.from("companies").select("companyname").order("id", { ascending: true }).range(from, to),
+      "companies scan"
+    );
+    contactRows = await fetchAllRows<{ companyname: string; contactname: string | null }>(
+      (from, to) =>
+        supabaseAdmin.from("contacts").select("companyname, contactname").order("id", { ascending: true }).range(from, to),
+      "contacts scan"
+    );
   } catch (err) {
     return NextResponse.json(
       { error: `Failed to load companies/contacts: ${err instanceof Error ? err.message : String(err)}` },

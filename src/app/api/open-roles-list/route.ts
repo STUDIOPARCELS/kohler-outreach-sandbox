@@ -1,57 +1,76 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { fetchAllRows } from "@/lib/fetchAllRows";
 import { shouldShowJobInCommandCenter } from "@/lib/jobCommandCenter";
 import { getReliableJobUrl } from "@/lib/jobLinks";
 import { scoreJobForKohler } from "@/lib/kohlerFitScore";
 import { computeOutreachScore } from "@/lib/outreachScore";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { normalizeNiche } from "@/lib/targeting";
+import { unstable_cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
-  const authError = requireAppOrigin(req); if (authError) return authError;
-  const sourceFilter = req.nextUrl.searchParams.get("source");
+export const dynamic = "force-dynamic";
 
-  let query = supabaseAdmin
-    .from("job_listings")
-    .select("companyname, company_id, title, location, job_url, apply_url, source, ingest_status, is_relevant, match_score, relevance_reason, first_seen_at, last_seen_at, times_seen")
-    .in("ingest_status", ["new", "open"])
-    .eq("is_relevant", true);
+interface JobRow {
+  companyname: string;
+  company_id: number | null;
+  title: string | null;
+  location: string | null;
+  job_url: string | null;
+  apply_url: string | null;
+  source: string | null;
+  ingest_status: string | null;
+  is_relevant: boolean | null;
+  match_score: number | null;
+  relevance_reason: string | null;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  times_seen: number | null;
+}
 
-  if (sourceFilter === "career_pages") {
-    query = query.in("source", ["jsonld_careers", "career_links_careers"]);
-  } else if (sourceFilter === "government") {
-    query = query.in("source", ["governmentjobs_email", "governmentjobs_direct", "usajobs"]);
-  } else if (sourceFilter && sourceFilter !== "all") {
-    query = query.eq("source", sourceFilter);
-  }
+async function buildOpenRolesList(sourceFilter: string | null) {
+  const allJobs = await fetchAllRows<JobRow>(
+    (from, to) => {
+      let query = supabaseAdmin
+        .from("job_listings")
+        .select("companyname, company_id, title, location, job_url, apply_url, source, ingest_status, is_relevant, match_score, relevance_reason, first_seen_at, last_seen_at, times_seen")
+        .in("ingest_status", ["new", "open"])
+        .eq("is_relevant", true);
 
-  const { data: allJobs, error } = await query;
+      if (sourceFilter === "career_pages") {
+        query = query.in("source", ["jsonld_careers", "career_links_careers"]);
+      } else if (sourceFilter === "government") {
+        query = query.in("source", ["governmentjobs_email", "governmentjobs_direct", "usajobs"]);
+      } else if (sourceFilter && sourceFilter !== "all") {
+        query = query.eq("source", sourceFilter);
+      }
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
+      return query.order("id", { ascending: true }).range(from, to);
+    },
+    "job_listings scan"
+  );
 
-  const prelimJobs = (allJobs || []).map((job) => ({ ...job, reliable_url: getReliableJobUrl(job) }));
+  const prelimJobs = allJobs.map((job) => ({ ...job, reliable_url: getReliableJobUrl(job) }));
 
   // Enrich with companies table data where available, then apply niche exclusions.
   const namesForDetails = Array.from(new Set(prelimJobs.map((job) => job.companyname).filter(Boolean)));
-  const { data: companyDetails } = namesForDetails.length > 0
-    ? await supabaseAdmin
-        .from("companies")
-        .select("companyname, tier, city, niche, mailing_zip, careers_url")
-        .in("companyname", namesForDetails)
-    : { data: [] };
+  const [{ data: companyDetails }, { data: contacts }] = namesForDetails.length > 0
+    ? await Promise.all([
+        supabaseAdmin
+          .from("companies")
+          .select("companyname, tier, city, niche, mailing_zip, careers_url")
+          .in("companyname", namesForDetails),
+        supabaseAdmin
+          .from("contacts")
+          .select("companyname, contactname, title, email, linkedin, notes")
+          .in("companyname", namesForDetails),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   const detailMap = new Map<string, { tier: number; city: string; niche: string; mailing_zip: string | null; careers_url: string | null }>();
   for (const c of companyDetails || []) {
     detailMap.set(c.companyname, { tier: c.tier, city: c.city, niche: c.niche, mailing_zip: c.mailing_zip, careers_url: c.careers_url });
   }
-
-  const { data: contacts } = namesForDetails.length > 0
-    ? await supabaseAdmin
-        .from("contacts")
-        .select("companyname, contactname, title, email, linkedin, notes")
-        .in("companyname", namesForDetails)
-    : { data: [] };
 
   const contactMap = new Map<string, {
     contact_count: number;
@@ -91,18 +110,30 @@ export async function GET(req: NextRequest) {
     titleMap.set(job.companyname, titles);
   }
 
-  const jobs = prelimJobs.filter((job) => {
-    const niche = normalizeNiche(detailMap.get(job.companyname)?.niche, job.companyname, titleMap.get(job.companyname)?.join(" "));
-    const fit = scoreJobForKohler({
-      title: job.title,
-      companyname: job.companyname,
-      location: job.location,
-      source: job.source,
-      match_score: job.match_score,
-      is_relevant: job.is_relevant,
-      relevance_reason: job.relevance_reason,
-    });
+  // Score each job once and reuse the fit for both the visibility filter and
+  // the per-company rollup. Contact counts only influence recommended_action,
+  // and the filter only reads its "skip" value (a pure overall-score gate), so
+  // including them here does not change which jobs are shown.
+  const scoredJobs = prelimJobs.map((job) => {
+    const contactCounts = contactMap.get(job.companyname);
+    return {
+      job,
+      fit: scoreJobForKohler({
+        title: job.title,
+        companyname: job.companyname,
+        location: job.location,
+        source: job.source,
+        match_score: job.match_score,
+        is_relevant: job.is_relevant,
+        relevance_reason: job.relevance_reason,
+        contact_count: contactCounts?.contact_count,
+        email_count: contactCounts?.email_count,
+      }),
+    };
+  });
 
+  const visible = scoredJobs.filter(({ job, fit }) => {
+    const niche = normalizeNiche(detailMap.get(job.companyname)?.niche, job.companyname, titleMap.get(job.companyname)?.join(" "));
     return shouldShowJobInCommandCenter({
       title: job.title,
       companyname: job.companyname,
@@ -118,11 +149,13 @@ export async function GET(req: NextRequest) {
     }, fit);
   });
 
-  const jobsByCompany = new Map<string, typeof jobs>();
-  for (const job of jobs) {
-    const existing = jobsByCompany.get(job.companyname) || [];
-    existing.push(job);
-    jobsByCompany.set(job.companyname, existing);
+  const jobs = visible.map(({ job }) => job);
+
+  const jobsByCompany = new Map<string, typeof visible>();
+  for (const entry of visible) {
+    const existing = jobsByCompany.get(entry.job.companyname) || [];
+    existing.push(entry);
+    jobsByCompany.set(entry.job.companyname, existing);
   }
 
   const now = new Date();
@@ -184,21 +217,10 @@ export async function GET(req: NextRequest) {
       email_count: contactCounts.email_count,
       mines_alumni_count: contactCounts.mines_alumni_count,
     });
-    const scoredJobs = (jobsByCompany.get(name) || []).map((job) => ({
-      job,
-      fit: scoreJobForKohler({
-        title: job.title,
-        companyname: job.companyname,
-        location: job.location,
-        source: job.source,
-        match_score: job.match_score,
-        is_relevant: job.is_relevant,
-        relevance_reason: job.relevance_reason,
-        contact_count: contactCounts.contact_count,
-        email_count: contactCounts.email_count,
-      }),
-    })).sort((a, b) => b.fit.overall_score - a.fit.overall_score);
-    const best = scoredJobs[0];
+    const companyJobs = (jobsByCompany.get(name) || [])
+      .slice()
+      .sort((a, b) => b.fit.overall_score - a.fit.overall_score);
+    const best = companyJobs[0];
     return {
       companyname: name,
       tier: detail?.tier || 5,
@@ -220,7 +242,7 @@ export async function GET(req: NextRequest) {
     };
   }).sort((a, b) => b.best_overall_score - a.best_overall_score || b.outreach_score - a.outreach_score || b.roles - a.roles || a.companyname.localeCompare(b.companyname));
 
-  return NextResponse.json({
+  return {
     stats: {
       totalRoles,
       companies: companyMap.size,
@@ -233,5 +255,23 @@ export async function GET(req: NextRequest) {
       bySource,
     },
     companies: rows,
-  });
+  };
+}
+
+// Job data changes at cron cadence, not per view — serve it stale up to 60s.
+const getCachedOpenRolesList = unstable_cache(buildOpenRolesList, ["open-roles-list"], { revalidate: 60 });
+
+export async function GET(req: NextRequest) {
+  const authError = requireAppOrigin(req); if (authError) return authError;
+  const rawFilter = req.nextUrl.searchParams.get("source");
+  // "all" and absent produce the same query — normalize so they share a cache entry
+  const sourceFilter = rawFilter === "all" ? null : rawFilter;
+
+  try {
+    const payload = await getCachedOpenRolesList(sourceFilter);
+    return NextResponse.json(payload);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
