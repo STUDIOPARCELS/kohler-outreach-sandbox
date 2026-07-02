@@ -1,6 +1,6 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { findBouncedRecipients } from "@/lib/bounceSuppression";
-import { isHumanApprovedDraftStatus, isLiveSendEnabled, liveSendDisabledMessage } from "@/lib/outreachSafety";
+import { isFollowupSendableStatus, isLiveSendEnabled, liveSendDisabledMessage } from "@/lib/outreachSafety";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
@@ -54,9 +54,9 @@ export async function POST(req: NextRequest) {
     if (!approvedLetter) {
       return NextResponse.json({ error: "Draft not found for live send approval gate." }, { status: 404 });
     }
-    if (!isHumanApprovedDraftStatus(approvedLetter.status)) {
+    if (!isFollowupSendableStatus(approvedLetter.status)) {
       return NextResponse.json(
-        { error: "Draft must be marked human_approved before live Gmail send." },
+        { error: `Letter status "${approvedLetter.status}" is not eligible for a follow-up send. The letter must be marked sent/emailed first.` },
         { status: 409 }
       );
     }

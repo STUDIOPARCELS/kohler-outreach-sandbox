@@ -144,8 +144,8 @@ export default function FollowupsPage() {
     const followupNumber = stage === "followup2" ? 2 : 1;
     setSending(modalRow.id);
     try {
-      // Auto-save any edits before sending
-      try { await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyname: modalRow.companyname, contactname: modalRow.contactname, body_final: editBody }) }); } catch {}
+      // Follow-up edits are sent straight from state — never saved to body_final,
+      // which holds the ORIGINAL letter and must not be overwritten.
       const res = await fetch("/api/approve-followup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -413,12 +413,7 @@ export default function FollowupsPage() {
                   <StepDot filled={!!modalRow.followup2_at} label="Email 2" />
                 </div>
               </div>
-              <button onClick={async () => {
-                if (modalRow && editBody) {
-                  try { await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyname: modalRow.companyname, contactname: modalRow.contactname, body_final: editBody }) }); } catch {}
-                }
-                setConfirmSend(false); setModalRow(null);
-              }} className={`ml-4 p-2 rounded-lg transition-colors ${dark ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-100 text-gray-500"}`}>
+              <button onClick={() => { setConfirmSend(false); setModalRow(null); }} className={`ml-4 p-2 rounded-lg transition-colors ${dark ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-100 text-gray-500"}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -510,19 +505,11 @@ export default function FollowupsPage() {
                         <a href="/KOHLER_RESUME_2026.pdf" target="_blank" rel="noopener" className="text-[10px] text-sky-500 hover:text-sky-400 underline ml-1">(view PDF)</a>
                       </label>
                       <div className="flex gap-2">
-                        <button onClick={async () => {
-                          if (!modalRow) return;
-                          try {
-                            await fetch("/api/draft", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ companyname: modalRow.companyname, contactname: modalRow.contactname, body_final: editBody }),
-                            });
-                            toast("Draft saved");
-                          } catch { toast("Save failed", "error"); }
-                        }} className={`px-4 py-2.5 text-xs font-semibold rounded-xl transition-all border ${dark ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
-                          Save Draft
-                        </button>
+                        {/* No "Save Draft" button: reachout_company_inserts has no
+                            follow-up body column, and the old button saved the
+                            generated follow-up into body_final — destroying the
+                            original letter. Edits live in component state and are
+                            posted directly to /api/approve-followup on Send. */}
                         {confirmSend ? (
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-amber-600 font-semibold">Send to {modalRow.contact_email}?</span>
