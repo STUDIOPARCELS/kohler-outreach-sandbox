@@ -7,7 +7,7 @@
 - **Target:** `https://kohler-outreach.vercel.app/api/ingest/ziprecruiter`
 - **Auth:** `x-import-secret` header (value in Supabase `cron.job.command`)
 - **DST drift:** 1 hour (7 AM vs 8 AM) — accepted as operationally insignificant
-- **Vercel cron (`vercel.json`):** declares only `/api/cron/research` — ingest is pg_cron only
+- **Vercel cron (`vercel.json`):** declares two crons — `/api/cron/research` (daily `0 8 * * *`) and `/api/ingest/careers` (Tue/Fri `15 14 * * 2,5`); the ziprecruiter email ingest is pg_cron only
 
 ## Sandbox Career-Page Ingest
 

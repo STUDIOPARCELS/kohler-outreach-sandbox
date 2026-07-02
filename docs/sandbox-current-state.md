@@ -2,6 +2,11 @@
 
 Date: 2026-05-14
 
+> **Note (2026-07-02):** the table/row counts in this document (schema inventories,
+> `sync_runs`/`role_fit_scores`/Gmail analytics counts, Open Roles totals) are a
+> 2026-05-14 snapshot and are stale. Treat the live databases — not this file — as
+> the source of truth for counts.
+
 ## Baseline
 
 - Repo/deploy target: `kohler-outreach-sandbox`
@@ -12,7 +17,7 @@ Date: 2026-05-14
 - Framework/runtime: Next.js 14 App Router, React 18, TypeScript, Tailwind CSS
 - Database/client: Supabase service-role client in `src/lib/supabaseAdmin.ts`
 - External services referenced: Gmail OAuth/SMTP, RocketReach, Google Places, OpenAI, Anthropic, USAJOBS
-- Package scripts: `dev`, `build`, `start`, `lint`, `test:fit`, `test:gmail`, `test:schema`
+- Package scripts: `dev`, `build`, `start`, `lint`, `test:bounce`, `test:fit`, `test:freshness`, `test:gmail`, `test:schema`
 
 ## Pages
 

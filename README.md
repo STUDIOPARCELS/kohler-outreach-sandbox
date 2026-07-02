@@ -71,3 +71,26 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run dev` | Start development server |
 | `npm run build` | Production build |
 | `npm start` | Start production server |
+| `npm run test:fit` / `test:schema` / `test:gmail` / `test:bounce` / `test:freshness` | Node test suites (also run in CI) |
+
+## CI and the Nightly Freshness Probe
+
+Two GitHub Actions workflows live in `.github/workflows/`:
+
+- **`ci.yml`** — on every push and pull request: typecheck (`tsc --noEmit`),
+  the five test suites, and `next build`. Needs no secrets.
+- **`freshness.yml`** — daily at 15:00 UTC (after the 14:00 UTC ingest) plus
+  manual dispatch. Runs `scripts/check-freshness.mjs`, which fails when no
+  sync run completed in the last 48h, a `sync_runs` row is stuck in
+  `running` for over 2h, or `job_listings` shows no activity in 72h.
+
+The freshness probe needs two repository secrets. Add them under
+**repo Settings → Secrets and variables → Actions → New repository secret**:
+
+| Secret | Value |
+|--------|-------|
+| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | The project's service-role key |
+
+Until both secrets exist, the probe logs a "secrets not configured — skipping"
+notice and exits green instead of failing.
