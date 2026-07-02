@@ -27,7 +27,7 @@ export default function TemplatePage() {
     try {
       const [tRes, pRes] = await Promise.all([
         fetch("/api/template"),
-        fetch("/api/queue"),
+        fetch("/api/queue?full=1"),
       ]);
       const tData = await tRes.json();
       const pData = await pRes.json();

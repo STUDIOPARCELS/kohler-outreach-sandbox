@@ -87,7 +87,7 @@ function PrintLettersContent() {
   const load = useCallback(async () => {
     try {
       const [qRes, tplRes, pRes] = await Promise.all([
-        fetch(`/api/queue?ids=${ids.join(",")}`),
+        fetch(`/api/queue?full=1&ids=${ids.join(",")}`),
         fetch("/api/template"),
         fetch("/api/candidate-profile"),
       ]);

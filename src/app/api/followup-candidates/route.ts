@@ -4,15 +4,30 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// The select string is chosen at runtime (countsOnly), so postgrest-js can't
+// infer row types from it — declare what both shapes share.
+interface CandidateRow {
+  contact_email: string | null;
+  sent_at: string;
+  emailed_at: string | null;
+  followup2_at: string | null;
+  [key: string]: unknown;
+}
+
 export async function GET(req: NextRequest) {
   const authError = requireAppOrigin(req);
   if (authError) return authError;
 
   try {
+    // The dashboard only needs the two counter integers — don't ship every
+    // sent letter's body for that. The /followups page uses the full shape.
+    const countsOnly = req.nextUrl.searchParams.get("countsOnly") === "1";
     const { data, error } = await supabaseAdmin
       .from("reachout_company_inserts")
       .select(
-        "id, companyname, contactname, contact_title, contact_email, body_final, subject_final, status, printed_at, sent_at, emailed_at, followup2_at, created_at"
+        countsOnly
+          ? "contact_email, sent_at, emailed_at, followup2_at"
+          : "id, companyname, contactname, contact_title, contact_email, body_final, subject_final, status, printed_at, sent_at, emailed_at, followup2_at, created_at"
       )
       .not("sent_at", "is", null)
       .order("sent_at", { ascending: true });
@@ -21,7 +36,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const all = data || [];
+    const all = (data || []) as unknown as CandidateRow[];
     const withEmail = all.filter((r) => r.contact_email && r.contact_email.trim() !== "");
     const needsEmail = all.filter((r) => !r.contact_email || r.contact_email.trim() === "");
 
@@ -42,6 +57,12 @@ export async function GET(req: NextRequest) {
         if (now - new Date(r.sent_at).getTime() >= sevenDays) readyCount++;
         else pendingCount++;
       }
+    }
+
+    if (countsOnly) {
+      return NextResponse.json({
+        counts: { ready: readyCount, pending: pendingCount, total: all.length, needsEmail: needsEmail.length },
+      });
     }
 
     return NextResponse.json({

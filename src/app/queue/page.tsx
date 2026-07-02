@@ -27,8 +27,8 @@ export default function QueuePage() {
   const load = useCallback(async () => {
     try {
       const url = statusFilter
-        ? `/api/queue?status=${encodeURIComponent(statusFilter)}`
-        : "/api/queue";
+        ? `/api/queue?full=1&status=${encodeURIComponent(statusFilter)}`
+        : "/api/queue?full=1";
       const res = await fetch(url);
       const d = await res.json();
       if (d.error) throw new Error(d.error);

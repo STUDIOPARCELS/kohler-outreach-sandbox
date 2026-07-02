@@ -676,42 +676,50 @@ export default function HomePage() {
 
   /* ── Load template + letters + companies ── */
   const loadData = useCallback(async () => {
-    try {
-      const [tplRes, qRes, compRes] = await Promise.all([
-        fetch("/api/template"),
-        fetch("/api/queue"),
-        fetch("/api/outreach-list"),
-      ]);
-      const tplData = await tplRes.json();
-      const qData = await qRes.json();
-      const compData = await compRes.json();
+    // Fire everything at once. The grid unblocks as soon as the company list
+    // lands; letters, follow-up counts, and job stats fill in as they resolve.
+    const json = (url: string) => fetch(url).then((r) => r.json());
 
-      if (tplData && !tplData.error) setTemplate(tplData);
-      if (!qData.error && Array.isArray(qData)) {
-        const map = new Map<string, LetterRow[]>();
-        for (const l of qData) {
-          const existing = map.get(l.companyname) || [];
-          existing.push(l);
-          map.set(l.companyname, existing);
+    const companiesDone = json("/api/outreach-list")
+      .then((compData) => {
+        if (!compData.error) setCompanies(compData);
+      })
+      .catch((e: unknown) => toast((e as Error).message, "error"))
+      .finally(() => setCompaniesLoading(false));
+
+    const templateDone = json("/api/template")
+      .then((tplData) => {
+        if (tplData && !tplData.error) setTemplate(tplData);
+      })
+      .catch((e: unknown) => toast((e as Error).message, "error"));
+
+    const lettersDone = json("/api/queue")
+      .then((qData) => {
+        if (!qData.error && Array.isArray(qData)) {
+          const map = new Map<string, LetterRow[]>();
+          for (const l of qData) {
+            const existing = map.get(l.companyname) || [];
+            existing.push(l);
+            map.set(l.companyname, existing);
+          }
+          setLettersMap(map);
         }
-        setLettersMap(map);
-      }
-      if (!compData.error) setCompanies(compData);
+      })
+      .catch((e: unknown) => toast((e as Error).message, "error"));
 
-      // Fetch follow-up counts
-      try {
-        const fuRes = await fetch("/api/followup-candidates");
-        const fuData = await fuRes.json();
+    // Follow-up counts
+    const followupsDone = json("/api/followup-candidates?countsOnly=1")
+      .then((fuData) => {
         if (!fuData.error) {
           setFollowupReady(fuData.counts?.ready || (fuData.ready || []).length);
           setFollowupPending(fuData.counts?.pending || (fuData.upcoming || []).length);
         }
-      } catch { /* non-critical */ }
+      })
+      .catch(() => { /* non-critical */ });
 
-      // Fetch jobs stats from intake
-      try {
-        const jobsRes = await fetch("/api/open-roles-list");
-        const jobsData = await jobsRes.json();
+    // Jobs stats from intake
+    const jobsDone = json("/api/open-roles-list")
+      .then((jobsData) => {
         const companiesList = jobsData.companies || (Array.isArray(jobsData) ? jobsData : []);
         const stats = jobsData.stats;
         if (stats) {
@@ -727,12 +735,10 @@ export default function HomePage() {
           if (c.companyname && c.roles > 0) jcMap.set(c.companyname, c.roles);
         }
         setCompanyJobCounts(jcMap);
-      } catch { /* non-critical */ }
-    } catch (e: unknown) {
-      toast((e as Error).message, "error");
-    } finally {
-      setCompaniesLoading(false);
-    }
+      })
+      .catch(() => { /* non-critical */ });
+
+    await Promise.all([companiesDone, templateDone, lettersDone, followupsDone, jobsDone]);
   }, [toast]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -772,6 +778,17 @@ export default function HomePage() {
         for (const l of lettersData) {
           if (l.contactname) clMap.set(l.contactname, l);
         }
+        // /api/queue ships slim rows without body_final — swap in the full row
+        // from /api/draft so the saved letter body renders, not the template.
+        // If the queue fetch hasn't landed yet (grid no longer waits for it),
+        // pick the best letter from the fresh draft data directly.
+        const slim = getBestLetter(companyname);
+        const fullLetter = slim
+          ? lettersData.find((l: LetterRow) => l.id === slim.id)
+          : lettersData.find((l: LetterRow) => l.emailed_at)
+            || lettersData.find((l: LetterRow) => l.printed_at)
+            || lettersData[0];
+        if (fullLetter) setCurrentLetter(fullLetter);
       }
       setContactLetters(clMap);
 
@@ -779,8 +796,10 @@ export default function HomePage() {
         const realContacts = contData.filter((c: Contact) => c.contactname && c.contactname !== "(no results)");
         setContacts(realContacts);
 
-        // Auto-create draft if contacts exist but no letter
-        const existingLetter = getBestLetter(companyname);
+        // Auto-create draft if contacts exist but no letter — trust the fresh
+        // /api/draft response over the (possibly still loading) queue map
+        const existingLetter = getBestLetter(companyname)
+          || (Array.isArray(lettersData) && lettersData.length > 0 ? lettersData[0] : null);
         if (!existingLetter && realContacts.length > 0) {
           const bestContact = realContacts.find((c: Contact) => c.email) || realContacts[0];
           try {
@@ -973,7 +992,10 @@ export default function HomePage() {
           map.set(l.companyname, existing);
         }
         setLettersMap(map);
-        setCurrentLetter(map.get(companyname)?.[0] || null);
+        // slim /api/queue rows lack body_final; contactLetters holds full rows
+        const slim = map.get(companyname)?.[0] || null;
+        const full = slim?.contactname ? contactLetters.get(slim.contactname) : undefined;
+        setCurrentLetter(full && full.id === slim?.id ? full : slim);
       }
     } catch (e: unknown) {
       toast((e as Error).message, "error");
