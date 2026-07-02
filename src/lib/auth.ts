@@ -65,8 +65,16 @@ export function requireApiSecret(req: NextRequest): NextResponse | null {
  */
 export function requireCronSecret(req: NextRequest): NextResponse | null {
   const secret = process.env.CRON_SECRET;
-  // If no CRON_SECRET configured, allow (Vercel free tier doesn't always have it)
-  if (!secret) return null;
+  if (!secret) {
+    // Fail closed, same posture as requireApiSecret. An unset CRON_SECRET
+    // previously allowed anyone to trigger cron routes — and, worse, let
+    // Next.js statically cache the handler at build time because the
+    // request was never read, freezing the cron as a no-op.
+    return NextResponse.json(
+      { error: "CRON_SECRET not configured" },
+      { status: 500 }
+    );
+  }
 
   const provided = req.headers.get("authorization")?.replace("Bearer ", "") || "";
   if (provided !== secret) {

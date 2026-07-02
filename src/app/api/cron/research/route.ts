@@ -307,3 +307,7 @@ export async function GET(req: NextRequest) {
 export const POST = GET;
 
 export const maxDuration = 60;
+// Never statically cache this handler: a build-time render froze the cron
+// as a canned response, so scheduled runs did no work until a redeploy.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;

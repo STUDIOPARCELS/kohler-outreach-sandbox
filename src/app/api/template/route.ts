@@ -2,6 +2,11 @@ import { requireAppOrigin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
+// The GET below never reads the request, so Next.js statically cached it at
+// build time — template edits were invisible until the next deploy.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from("reachout_template")

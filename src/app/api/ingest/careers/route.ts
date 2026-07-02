@@ -53,10 +53,18 @@ interface CareerJob {
 }
 
 function checkSecret(req: NextRequest): boolean {
-  const secret = process.env.INGEST_SECRET || process.env.IMPORT_SECRET || process.env.CRON_SECRET;
-  if (!secret) return false;
+  // Accept a match against ANY configured secret. The old
+  // `INGEST || IMPORT || CRON` chain compared only the first configured
+  // value, so the Vercel cron (Bearer CRON_SECRET) was silently 403'd
+  // whenever INGEST_SECRET or IMPORT_SECRET was set to something else.
+  const secrets = [
+    process.env.INGEST_SECRET,
+    process.env.IMPORT_SECRET,
+    process.env.CRON_SECRET,
+  ].filter((s): s is string => Boolean(s));
+  if (secrets.length === 0) return false;
   const provided = req.headers.get("x-cron-secret") || req.headers.get("x-import-secret") || req.headers.get("authorization")?.replace("Bearer ", "") || "";
-  return provided === secret;
+  return secrets.includes(provided);
 }
 
 function slugify(name: string): string {
