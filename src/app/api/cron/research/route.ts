@@ -12,6 +12,25 @@ function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// PostgREST caps un-ranged selects at 1000 rows. Without pagination the scan
+// silently truncates and the cron re-searches companies whose contacts fell
+// past the cap (duplicate contacts, wasted RocketReach credits).
+async function fetchAllRows<T>(table: string, columns: string): Promise<T[]> {
+  const pageSize = 1000;
+  const rows: T[] = [];
+  for (let start = 0; ; start += pageSize) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .select(columns)
+      .order("id", { ascending: true })
+      .range(start, start + pageSize - 1);
+    if (error) throw new Error(`${table} scan: ${error.message}`);
+    rows.push(...((data || []) as T[]));
+    if (!data || data.length < pageSize) break;
+  }
+  return rows;
+}
+
 async function searchAndSave(companyname: string): Promise<{
   saved: number;
   error?: string;
@@ -239,23 +258,27 @@ export async function GET(req: NextRequest) {
   }
 
   // Get companies that have NO contacts yet
-  const { data: allCompanies } = await supabaseAdmin
-    .from("companies")
-    .select("companyname")
-    .order("companyname");
-
-  const { data: companiesWithContacts } = await supabaseAdmin
-    .from("contacts")
-    .select("companyname");
-
-  if (!allCompanies) {
-    return NextResponse.json({ error: "Failed to load companies" });
+  let allCompanies: Array<{ companyname: string }>;
+  let contactRows: Array<{ companyname: string; contactname: string | null }>;
+  try {
+    allCompanies = await fetchAllRows<{ companyname: string }>("companies", "companyname");
+    contactRows = await fetchAllRows<{ companyname: string; contactname: string | null }>("contacts", "companyname, contactname");
+  } catch (err) {
+    return NextResponse.json(
+      { error: `Failed to load companies/contacts: ${err instanceof Error ? err.message : String(err)}` },
+      { status: 500 }
+    );
   }
 
+  // "(no results)" tombstone rows mark companies already searched with no hits.
+  // contacts has no created_at column (docs/supabase-true-sandbox-schema-inventory.md),
+  // so tombstones cannot expire by age — pass ?refresh=true to ignore them and
+  // re-search those companies on demand.
+  const refresh = req.nextUrl.searchParams.get("refresh") === "true";
   const hasContact = new Set(
-    (companiesWithContacts || []).map((c: { companyname: string }) =>
-      c.companyname.toLowerCase().trim()
-    )
+    contactRows
+      .filter((c) => !(refresh && (c.contactname || "").trim() === "(no results)"))
+      .map((c) => c.companyname.toLowerCase().trim())
   );
 
   const needsContacts = allCompanies.filter(

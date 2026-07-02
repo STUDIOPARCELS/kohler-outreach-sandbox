@@ -1,3 +1,4 @@
+import { warnWrite } from "@/lib/dbGuard";
 import { getAuthedGmailClient } from "@/lib/googleAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isExcludedStaffingCompany, isExcludedTodayJobTitle, isNonEngineeringJobTitle } from "@/lib/targeting";
@@ -541,6 +542,18 @@ function scoreRelevance(title: string, location: string): RelevanceResult {
     relevance_reason: reasons.join("; ") || "no matching signals",
   };
 }
+/* ── Gmail history cursor ── */
+const MAX_HISTORY_PAGES = 10;
+
+// Gmail history ids are unsigned 64-bit decimal strings — compare by length
+// then lexicographically to avoid Number precision loss.
+function maxHistoryId(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  if (a.length !== b.length) return a.length > b.length ? a : b;
+  return a >= b ? a : b;
+}
+
 /* ── Company matching ── */
 interface CompanyRow { id: number; name: string; lower: string; }
 
@@ -604,15 +617,18 @@ export async function POST(req: NextRequest) {
 
   let runId: string | null = null;
   if (!dryRun) {
-    const { data: run } = await supabaseAdmin.from("job_ingest_runs").insert({
+    const { data: run, error: runInsertError } = await supabaseAdmin.from("job_ingest_runs").insert({
       status: isReplay ? "replay" : "running",
     }).select("id").single();
+    const runWarning = warnWrite("ziprecruiter: job_ingest_runs insert", { error: runInsertError });
+    if (runWarning) warnings.push(runWarning);
     runId = run?.id;
   }
 
   let messagesSeen = 0;
   let jobsExtracted = 0;
   let companiesCreated = 0;
+  let writeErrors = 0;
   const sourceStats: Record<string, number> = { ziprecruiter: 0, governmentjobs: 0 };
 
   try {
@@ -629,28 +645,43 @@ export async function POST(req: NextRequest) {
     const processedSet = new Set((processed || []).map((p) => p.gmail_message_id));
 
     let messageIds: string[] = [];
+    // The cursor is written only AFTER the message batch below has been
+    // processed — advancing it up front meant any mid-run crash permanently
+    // skipped those emails.
+    let nextCursor: string | null = null;
 
     if (isReplay) {
       messageIds = [replayMessageId!];
     } else if (account.last_history_id) {
       try {
-        const history = await gmail.users.history.list({
-          userId: "me",
-          startHistoryId: account.last_history_id,
-          historyTypes: ["messageAdded"],
-        });
-        const added = history.data.history?.flatMap((h) =>
-          h.messagesAdded?.map((m) => m.message?.id).filter(Boolean) || []
-        ) || [];
-        messageIds = added.filter((id): id is string => !!id);
-        if (history.data.historyId) {
-          await supabaseAdmin.from("gmail_accounts").update({
-            last_history_id: history.data.historyId,
-            updated_at: new Date().toISOString(),
-          }).eq("id", account.id);
+        let pageToken: string | undefined;
+        let exhausted = false;
+        let maxSeenRecordId: string | null = null;
+        let latestHistoryId: string | null = null;
+        for (let page = 0; page < MAX_HISTORY_PAGES; page++) {
+          const history = await gmail.users.history.list({
+            userId: "me",
+            startHistoryId: account.last_history_id,
+            historyTypes: ["messageAdded"],
+            pageToken,
+          });
+          for (const h of history.data.history || []) {
+            if (h.id) maxSeenRecordId = maxHistoryId(maxSeenRecordId, h.id);
+            for (const m of h.messagesAdded || []) {
+              if (m.message?.id) messageIds.push(m.message.id);
+            }
+          }
+          if (history.data.historyId) latestHistoryId = history.data.historyId;
+          pageToken = history.data.nextPageToken || undefined;
+          if (!pageToken) { exhausted = true; break; }
         }
+        messageIds = Array.from(new Set(messageIds));
+        // Exhausted: safe to jump to the mailbox's current historyId. Page cap
+        // hit: only advance past the history records actually collected so the
+        // remaining pages are picked up next run.
+        nextCursor = exhausted ? (latestHistoryId || maxSeenRecordId) : maxSeenRecordId;
       } catch (err: unknown) {
-        if ((err as { code?: number })?.code === 404) { account.last_history_id = null; }
+        if ((err as { code?: number })?.code === 404) { account.last_history_id = null; messageIds = []; }
         else throw err;
       }
     }
@@ -665,12 +696,7 @@ export async function POST(req: NextRequest) {
       messageIds = list.data.messages?.map((m) => m.id).filter((id): id is string => !!id) || [];
       if (messageIds.length > 0) {
         const firstMsg = await gmail.users.messages.get({ userId: "me", id: messageIds[0], format: "METADATA" });
-        if (firstMsg.data.historyId) {
-          await supabaseAdmin.from("gmail_accounts").update({
-            last_history_id: firstMsg.data.historyId,
-            updated_at: new Date().toISOString(),
-          }).eq("id", account.id);
-        }
+        if (firstMsg.data.historyId) nextCursor = firstMsg.data.historyId;
       }
     }
 
@@ -749,7 +775,7 @@ export async function POST(req: NextRequest) {
               ? getGovNiche(job.title, job.department || "")
               : "ZipRecruiter Intake";
 
-            const { data: newCo } = await supabaseAdmin.from("companies").insert({
+            const { data: newCo, error: companyInsertError } = await supabaseAdmin.from("companies").insert({
               companyname: canonicalName,
               company_key: slugify(canonicalName),
               city: "Denver",
@@ -760,6 +786,11 @@ export async function POST(req: NextRequest) {
                 : `Added from ZipRecruiter ingest. Job: ${job.title}`,
             }).select("id, companyname").single();
 
+            if (companyInsertError) {
+              writeErrors++;
+              const companyWarning = warnWrite(`ziprecruiter: company insert for ${canonicalName}`, { error: companyInsertError });
+              if (companyWarning) warnings.push(companyWarning);
+            }
             if (newCo) {
               companyId = newCo.id;
               companyList.push({ id: newCo.id, name: newCo.companyname, lower: newCo.companyname.toLowerCase() });
@@ -771,14 +802,19 @@ export async function POST(req: NextRequest) {
           const now = new Date().toISOString();
           const receivedAt = dateStr ? new Date(dateStr).toISOString() : now;
 
-          // Check if row exists for tracking updates
-          const { data: existing } = await supabaseAdmin.from("job_listings")
+          // Check if row exists for tracking updates. A failed lookup must not
+          // fall through to insert — that forks a duplicate row.
+          const { data: existing, error: lookupErr } = await supabaseAdmin.from("job_listings")
             .select("id, times_seen, first_seen_at")
             .eq("source", job.source)
             .eq("external_job_key", job.external_job_key)
             .maybeSingle();
 
-          if (existing) {
+          if (lookupErr) {
+            writeErrors++;
+            const lookupWarning = warnWrite(`ziprecruiter: job lookup ${job.external_job_key}`, { error: lookupErr });
+            if (lookupWarning) warnings.push(lookupWarning);
+          } else if (existing) {
             // Update existing row — preserve first_seen_at, bump last_seen_at and times_seen
             const { error: updateErr } = await supabaseAdmin.from("job_listings")
               .update({
@@ -790,7 +826,11 @@ export async function POST(req: NextRequest) {
               })
               .eq("id", existing.id);
 
-            if (!updateErr) {
+            if (updateErr) {
+              writeErrors++;
+              const updateWarning = warnWrite(`ziprecruiter: job update ${job.external_job_key}`, { error: updateErr });
+              if (updateWarning) warnings.push(updateWarning);
+            } else {
               jobsExtracted++;
               sourceStats[source]++;
               if (isReplay) {
@@ -835,7 +875,11 @@ export async function POST(req: NextRequest) {
               parser_version: 5,
             });
 
-            if (!insertErr) {
+            if (insertErr) {
+              writeErrors++;
+              const insertWarning = warnWrite(`ziprecruiter: job insert ${job.external_job_key}`, { error: insertErr });
+              if (insertWarning) warnings.push(insertWarning);
+            } else {
               jobsExtracted++;
               sourceStats[source]++;
               if (isReplay) {
@@ -857,14 +901,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Advance the Gmail cursor only now that the batch has been processed —
+    // and never on dry runs, which persist nothing.
+    if (!isReplay && !dryRun && nextCursor) {
+      const cursorWarning = warnWrite("ziprecruiter: gmail_accounts cursor update", await supabaseAdmin.from("gmail_accounts").update({
+        last_history_id: nextCursor,
+        updated_at: new Date().toISOString(),
+      }).eq("id", account.id));
+      if (cursorWarning) warnings.push(cursorWarning);
+    }
+
     if (runId) {
-      await supabaseAdmin.from("job_ingest_runs").update({
+      const finishWarning = warnWrite("ziprecruiter: job_ingest_runs finish update", await supabaseAdmin.from("job_ingest_runs").update({
         finished_at: new Date().toISOString(),
         messages_seen: messagesSeen,
         jobs_extracted: jobsExtracted,
         companies_created: companiesCreated,
-        status: isReplay ? "replay_completed" : "completed",
-      }).eq("id", runId);
+        status: isReplay ? "replay_completed" : writeErrors > 0 ? "completed_with_errors" : "completed",
+      }).eq("id", runId));
+      if (finishWarning) warnings.push(finishWarning);
     }
 
     const response: Record<string, unknown> = {
@@ -873,6 +928,7 @@ export async function POST(req: NextRequest) {
       parser_version: 5,      messages_seen: messagesSeen,
       jobs_extracted: jobsExtracted,
       companies_created: companiesCreated,
+      write_errors: writeErrors,
       sources: sourceStats,
     };
     if (isReplay || dryRun) response.replay = replayResults;
@@ -883,9 +939,9 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Ingest error:", message);
     if (runId) {
-      await supabaseAdmin.from("job_ingest_runs").update({
+      warnWrite("ziprecruiter: job_ingest_runs error update", await supabaseAdmin.from("job_ingest_runs").update({
         finished_at: new Date().toISOString(), status: "error", error_text: message,
-      }).eq("id", runId);
+      }).eq("id", runId));
     }
     return NextResponse.json({ error: message }, { status: 500 });
   }

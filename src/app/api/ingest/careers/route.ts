@@ -1,3 +1,4 @@
+import { warnWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isDirectJobUrl } from "@/lib/jobLinks";
 import { finishSyncRun, startSyncRun } from "@/lib/syncRunStore";
@@ -12,7 +13,11 @@ const FETCH_TIMEOUT_MS = 8000;
 const DEFAULT_COMPANY_LIMIT = 300;
 const MAX_COMPANY_LIMIT = 500;
 const COMPANY_FETCH_CONCURRENCY = 8;
-const CLOSED_POSTING_TEXT = /\b(?:job is no longer available|position has been filled|posting has expired|job has expired|no longer accepting applications|this job is closed|page not found|404)\b/i;
+const CLOSED_POSTING_TEXT = /\b(?:job is no longer available|position has been filled|posting has expired|job has expired|no longer accepting applications|this job is closed|page not found)\b/i;
+// A bare "404" matches asset hashes and SPA bundle noise, so it only counts
+// when adjacent to an error phrase (e.g. "404 - Not Found", "Error 404") in
+// the visible page text.
+const NOT_FOUND_404_TEXT = /\b404\b[^a-z0-9]{0,10}(?:error|not\s+found|page)|\b(?:error|page)[^a-z0-9]{0,10}404\b/i;
 
 type DirectCareerSource = "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "workable" | "workday" | "oracle" | "icims" | "jsonld" | "career_links";
 type AggregateJobSource = "builtin_colorado" | "governmentjobs_direct" | "usajobs";
@@ -163,13 +168,25 @@ async function fetchJsonPost<T>(url: string, body: unknown): Promise<T> {
   }
 }
 
-async function isActivePostingUrl(url: string): Promise<boolean> {
-  try {
-    const text = await fetchText(url);
-    return !CLOSED_POSTING_TEXT.test(text);
-  } catch {
-    return false;
+// "closed" means the page fetched OK and shows closure text. "unknown" means
+// the fetch errored/timed out/returned non-200 — transient failures used to
+// return false here and the caller flipped live rows to ingest_status:"closed",
+// making jobs vanish overnight. Only confirmed closures may close a row.
+async function checkPostingUrl(url: string): Promise<"active" | "closed" | "unknown"> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let text: string;
+    try {
+      text = await fetchText(url);
+    } catch {
+      continue; // one retry on fetch failure
+    }
+    // Strip scripts/styles/markup so closure text must appear in the
+    // visible-ish page text, not inside a JS bundle.
+    const visible = stripHtml(text);
+    if (CLOSED_POSTING_TEXT.test(visible) || NOT_FOUND_404_TEXT.test(visible)) return "closed";
+    return "active";
   }
+  return "unknown";
 }
 
 function stripHtml(input: string): string {
@@ -880,19 +897,29 @@ async function fetchCareerJobs(company: CompanyRow): Promise<{ jobs: CareerJob[]
 
 async function closeExistingJob(job: CareerJob): Promise<void> {
   const source = dbSourceFor(job.source);
-  await supabaseAdmin
-    .from("job_listings")
-    .update({ ingest_status: "closed", last_seen_at: new Date().toISOString() })
-    .eq("source", source)
-    .eq("external_job_key", job.external_job_key);
+  warnWrite(
+    `careers: close job ${job.external_job_key}`,
+    await supabaseAdmin
+      .from("job_listings")
+      .update({ ingest_status: "closed", last_seen_at: new Date().toISOString() })
+      .eq("source", source)
+      .eq("external_job_key", job.external_job_key)
+  );
 }
 
-async function upsertJob(job: CareerJob, company: CompanyRow, dryRun: boolean): Promise<"inserted" | "updated" | "dry_run" | "skipped"> {
+type UpsertAction = "inserted" | "updated" | "dry_run" | "skipped" | "write_error";
+
+async function upsertJob(job: CareerJob, company: CompanyRow, dryRun: boolean): Promise<UpsertAction> {
   const relevance = scoreTargetRole(job.title, job.location, job.description);
   if (!relevance.is_relevant) return "skipped";
   if (!isDirectJobUrl(job.job_url)) return "skipped";
-  if (!(await isActivePostingUrl(job.job_url))) {
+  const liveness = await checkPostingUrl(job.job_url);
+  if (liveness === "closed") {
     if (!dryRun) await closeExistingJob(job);
+    return "skipped";
+  }
+  if (liveness === "unknown") {
+    // Couldn't verify the posting — leave any existing row untouched.
     return "skipped";
   }
 
@@ -900,58 +927,68 @@ async function upsertJob(job: CareerJob, company: CompanyRow, dryRun: boolean): 
 
   const now = new Date().toISOString();
   const source = dbSourceFor(job.source);
-  const { data: existing } = await supabaseAdmin
+  const { data: existing, error: lookupError } = await supabaseAdmin
     .from("job_listings")
     .select("id, times_seen, first_seen_at")
     .eq("source", source)
     .eq("external_job_key", job.external_job_key)
     .maybeSingle();
-
-  if (existing) {
-    await supabaseAdmin
-      .from("job_listings")
-      .update({
-        last_seen_at: now,
-        times_seen: (existing.times_seen || 1) + 1,
-        salary: job.salary || undefined,
-        employment_type: job.employment_type || undefined,
-        job_url: job.job_url,
-        is_relevant: relevance.is_relevant,
-        match_score: relevance.match_score,
-        relevance_reason: relevance.relevance_reason,
-        ingest_status: "open",
-      })
-      .eq("id", existing.id);
-    return "updated";
+  if (lookupError) {
+    warnWrite(`careers: job lookup ${job.external_job_key}`, { error: lookupError });
+    return "write_error";
   }
 
-  await supabaseAdmin.from("job_listings").insert({
-    companyname: company.companyname,
-    company_id: company.id,
-    title: job.title,
-    salary: job.salary || null,
-    location: job.location || null,
-    employment_type: job.employment_type || null,
-    source,
-    external_job_key: job.external_job_key,
-    job_url: job.job_url,
-    received_at: now,
-    first_seen_at: now,
-    last_seen_at: now,
-    times_seen: 1,
-    is_relevant: relevance.is_relevant,
-    match_score: relevance.match_score,
-    relevance_reason: relevance.relevance_reason,
-    raw_payload: {
-      parserVersion: 1,
-      source: job.source,
-      careersUrl: company.careers_url,
-      raw: job.raw || null,
-    },
-    ingest_status: "new",
-    parser_version: 1,
-  });
-  return "inserted";
+  if (existing) {
+    const updateWarning = warnWrite(
+      `careers: job update ${job.external_job_key}`,
+      await supabaseAdmin
+        .from("job_listings")
+        .update({
+          last_seen_at: now,
+          times_seen: (existing.times_seen || 1) + 1,
+          salary: job.salary || undefined,
+          employment_type: job.employment_type || undefined,
+          job_url: job.job_url,
+          is_relevant: relevance.is_relevant,
+          match_score: relevance.match_score,
+          relevance_reason: relevance.relevance_reason,
+          ingest_status: "open",
+        })
+        .eq("id", existing.id)
+    );
+    return updateWarning ? "write_error" : "updated";
+  }
+
+  const insertWarning = warnWrite(
+    `careers: job insert ${job.external_job_key}`,
+    await supabaseAdmin.from("job_listings").insert({
+      companyname: company.companyname,
+      company_id: company.id,
+      title: job.title,
+      salary: job.salary || null,
+      location: job.location || null,
+      employment_type: job.employment_type || null,
+      source,
+      external_job_key: job.external_job_key,
+      job_url: job.job_url,
+      received_at: now,
+      first_seen_at: now,
+      last_seen_at: now,
+      times_seen: 1,
+      is_relevant: relevance.is_relevant,
+      match_score: relevance.match_score,
+      relevance_reason: relevance.relevance_reason,
+      raw_payload: {
+        parserVersion: 1,
+        source: job.source,
+        careersUrl: company.careers_url,
+        raw: job.raw || null,
+      },
+      ingest_status: "new",
+      parser_version: 1,
+    })
+  );
+  return insertWarning ? "write_error" : "inserted";
 }
 
 async function fetchAggregateJobs(): Promise<{ jobs: CareerJob[]; sources: JobSource[]; warnings: string[] }> {
@@ -988,19 +1025,22 @@ async function ensureCompanyForJob(job: CareerJob, dryRun: boolean): Promise<{ c
 
   const companyKey = slugify(job.companyname);
   const selectColumns = "id, companyname, city, niche, careers_url";
-  const { data: keyMatches } = await supabaseAdmin
+  const { data: keyMatches, error: keyError } = await supabaseAdmin
     .from("companies")
     .select(selectColumns)
     .eq("company_key", companyKey)
     .limit(1);
+  // A failed match lookup must not fall through to insert — that duplicates the company
+  if (keyError) throw new Error(`company key lookup failed for ${job.companyname}: ${keyError.message}`);
   const byKey = keyMatches?.[0] as CompanyRow | undefined;
   if (byKey) return { company: byKey, created: false };
 
-  const { data: nameMatches } = await supabaseAdmin
+  const { data: nameMatches, error: nameError } = await supabaseAdmin
     .from("companies")
     .select(selectColumns)
     .ilike("companyname", job.companyname)
     .limit(1);
+  if (nameError) throw new Error(`company name lookup failed for ${job.companyname}: ${nameError.message}`);
   const byName = nameMatches?.[0] as CompanyRow | undefined;
   if (byName) return { company: byName, created: false };
 
@@ -1102,6 +1142,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     inserted: 0,
     updated: 0,
     skipped: 0,
+    write_errors: 0,
     source_counts: {} as Record<string, number>,
   };
   const results: Array<{ company: string; careers_url: string | null; found: number; relevant: number; actions: Record<string, number>; sources: JobSource[]; warnings: string[]; sample: Array<{ title: string; location: string; url: string; source: string }> }> = [];
@@ -1113,6 +1154,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     let inserted = 0;
     let updated = 0;
     let skipped = 0;
+    let writeErrors = 0;
     let relevant = 0;
 
     for (const job of fetched.jobs) {
@@ -1124,6 +1166,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
       if (action === "updated") updated++;
       if (action === "skipped") skipped++;
       if (action === "dry_run") skipped++;
+      if (action === "write_error") writeErrors++;
       sourceCounts[job.source] = (sourceCounts[job.source] || 0) + 1;
     }
 
@@ -1134,6 +1177,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
         inserted,
         updated,
         skipped,
+        write_errors: writeErrors,
         source_counts: sourceCounts,
       },
       result: {
@@ -1157,6 +1201,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     summary.inserted += companyResult.summary.inserted;
     summary.updated += companyResult.summary.updated;
     summary.skipped += companyResult.summary.skipped;
+    summary.write_errors += companyResult.summary.write_errors;
     for (const [source, count] of Object.entries(companyResult.summary.source_counts)) {
       summary.source_counts[source] = (summary.source_counts[source] || 0) + count;
     }
@@ -1176,7 +1221,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
       if (relevance.is_relevant) summary.jobs_relevant++;
 
       const companyResult = relevance.is_relevant ? await ensureCompanyForJob(job, options.dryRun) : null;
-      let action: "inserted" | "updated" | "dry_run" | "skipped" = "skipped";
+      let action: UpsertAction = "skipped";
       if (companyResult) {
         const createdKey = slugify(companyResult.company.companyname);
         if (companyResult.created && !createdCompanyKeys.has(createdKey)) {
@@ -1190,6 +1235,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
       if (action === "updated") summary.updated++;
       if (action === "skipped") summary.skipped++;
       if (action === "dry_run") summary.skipped++;
+      if (action === "write_error") summary.write_errors++;
 
       const bucket = grouped.get(job.companyname) || { jobs: [], actions: {}, relevant: 0, warnings: [], sources: [], createdCompany: false };
       bucket.jobs.push(job);
@@ -1224,7 +1270,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     .flatMap((result) => result.warnings.map((warning) => ({ company: result.company, warning })))
     .slice(0, 50);
   await finishSyncRun(syncRun, {
-    status: warningErrors.length > 0 ? "completed_with_errors" : "completed",
+    status: warningErrors.length > 0 || summary.write_errors > 0 ? "completed_with_errors" : "completed",
     companiesChecked: summary.companies_checked,
     jobsFound: summary.jobs_found,
     jobsRelevant: summary.jobs_relevant,
@@ -1233,6 +1279,7 @@ async function runCareersIngest(options: { dryRun: boolean; limit: number; compa
     jobsSkipped: summary.skipped,
     errors: warningErrors,
     metadata: {
+      write_errors: summary.write_errors,
       source_counts: summary.source_counts,
       aggregate_sources_checked: summary.aggregate_sources_checked,
       aggregate_companies_created: summary.aggregate_companies_created,
