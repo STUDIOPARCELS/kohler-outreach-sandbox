@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Agent",
+      "Workflow",
+      "WebFetch",
+      "mcp__Supabase",
+      "mcp__github",
+      "mcp__Vercel"
+    ]
+  }
+}
