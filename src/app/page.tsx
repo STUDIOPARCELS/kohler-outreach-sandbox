@@ -1252,18 +1252,15 @@ export default function HomePage() {
   async function deleteLetter(letterId: string, companyname: string, contactname: string) {
     if (!window.confirm(`Reset the letter record for ${contactname} at ${companyname}?\n\nThis removes the printed/sent/emailed status so you can start fresh.`)) return;
     try {
+      // batch-status clears printed_at/sent_at/emailed_at/followup2_at on the
+      // "draft" transition. The old second call to /api/draft omitted
+      // companyname, so it 400'd silently and the timestamps never cleared.
       const res = await fetch("/api/batch-status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [letterId], status: "draft" }),
       });
       if (!res.ok) throw new Error("Failed to reset");
-      // Clear timestamps by updating directly
-      const r2 = await fetch("/api/draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: letterId, printed_at: null, sent_at: null, emailed_at: null, status: "draft" }),
-      });
       // Remove from local state
       setLettersMap((prev) => {
         const m = new Map(prev);

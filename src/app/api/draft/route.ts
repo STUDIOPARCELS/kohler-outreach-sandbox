@@ -9,13 +9,17 @@ export async function GET(req: NextRequest) {
   if (!companyname)
     return NextResponse.json({ error: "companyname required" }, { status: 400 });
 
-  // If contactname provided, look up specific contact's letter
+  // If contactname provided, look up specific contact's letter.
+  // Newest-first + limit(1) keeps .maybeSingle() from erroring when legacy
+  // duplicate rows exist for the same company + contact.
   if (contactname) {
     const { data, error } = await supabaseAdmin
       .from("reachout_company_inserts")
       .select("*")
       .eq("companyname", companyname)
       .eq("contactname", contactname)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
@@ -39,27 +43,34 @@ export async function POST(req: NextRequest) {
   if (!companyname)
     return NextResponse.json({ error: "companyname required" }, { status: 400 });
 
-  // Per-contact tracking: look up by companyname + contactname
+  // Per-contact tracking: look up by companyname + contactname.
+  // A failed lookup must return 500 — falling through to insert forks a
+  // duplicate row while the UI keeps editing the original. Newest-first +
+  // limit(1) keeps .maybeSingle() from erroring once duplicates exist.
   let existing = null;
   if (contactname) {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("reachout_company_inserts")
       .select("id")
       .eq("companyname", companyname)
       .eq("contactname", contactname)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     existing = data;
   }
 
   // If no contactname given, find any existing draft (for body_final updates)
   if (!existing && !contactname) {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("reachout_company_inserts")
       .select("id")
       .eq("companyname", companyname)
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     existing = data;
   }
 
