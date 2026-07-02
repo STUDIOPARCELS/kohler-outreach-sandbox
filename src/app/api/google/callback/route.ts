@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Upsert gmail_accounts
-    await supabaseAdmin.from("gmail_accounts").upsert(
+    const { error: upsertError } = await supabaseAdmin.from("gmail_accounts").upsert(
       {
         email,
         refresh_token: tokens.refresh_token,
@@ -61,8 +61,13 @@ export async function GET(req: NextRequest) {
       { onConflict: "email" }
     );
 
-    // Redirect back to the engine
+    // Redirect back to the engine. If the tokens didn't persist, ingest cannot
+    // run — "?gmail=connected" would be a lie.
     const baseUrl = req.nextUrl.origin || "https://kohler-outreach.vercel.app";
+    if (upsertError) {
+      console.error("Google callback: gmail_accounts upsert failed:", upsertError.message);
+      return NextResponse.redirect(`${baseUrl}/?gmail=error`);
+    }
     return NextResponse.redirect(`${baseUrl}/?gmail=connected`);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

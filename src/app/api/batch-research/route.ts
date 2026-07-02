@@ -1,4 +1,5 @@
 import { requireApiSecret } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -72,38 +73,39 @@ async function searchCompany(companyname: string): Promise<{ saved: number; erro
         notes: `RocketReach ${new Date().toISOString().split("T")[0]}`,
       };
 
-      const { data: existing } = await supabaseAdmin
+      const { data: existing, error: existingError } = await supabaseAdmin
         .from("contacts")
         .select("id")
         .eq("companyname", companyname)
         .ilike("contactname", name)
         .limit(1);
+      // A failed dedupe lookup must not fall through to insert
+      if (existingError) throw new Error(`contact lookup: ${existingError.message}`);
 
       if (!existing || existing.length === 0) {
-        const { error } = await supabaseAdmin.from("contacts").insert(row);
-        if (!error) {
-          savedCount++;
-          if (!firstContact) firstContact = { name: row.contactname, title: row.title, email: row.email };
-        }
+        mustWrite("batch-research: contact insert", await supabaseAdmin.from("contacts").insert(row));
+        savedCount++;
+        if (!firstContact) firstContact = { name: row.contactname, title: row.title, email: row.email };
       }
     }
 
     // Auto-create draft letter
     if (firstContact) {
-      const { data: existingLetter } = await supabaseAdmin
+      const { data: existingLetter, error: letterLookupError } = await supabaseAdmin
         .from("reachout_company_inserts")
         .select("id")
         .eq("companyname", companyname)
         .limit(1);
+      if (letterLookupError) throw new Error(`letter lookup: ${letterLookupError.message}`);
 
       if (!existingLetter || existingLetter.length === 0) {
-        await supabaseAdmin.from("reachout_company_inserts").insert({
+        mustWrite("batch-research: draft letter insert", await supabaseAdmin.from("reachout_company_inserts").insert({
           companyname,
           contactname: firstContact.name,
           contact_title: firstContact.title,
           contact_email: firstContact.email,
           status: "draft",
-        });
+        }));
       }
     }
 

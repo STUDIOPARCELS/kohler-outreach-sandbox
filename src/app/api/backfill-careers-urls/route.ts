@@ -1,4 +1,5 @@
 import { requireApiSecret } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isCareerIngestTargetNiche, isExcludedStaffingCompany, normalizeNiche } from "@/lib/targeting";
 import { NextRequest, NextResponse } from "next/server";
@@ -85,10 +86,10 @@ If you truly cannot find a careers page, return: NONE`,
       const url = text.trim().replace(/```/g, "").trim();
 
       if (url && url.startsWith("http") && url !== "NONE") {
-        await supabaseAdmin
+        mustWrite(`backfill-careers-urls: careers_url update for ${company.companyname}`, await supabaseAdmin
           .from("companies")
           .update({ careers_url: url })
-          .eq("companyname", company.companyname);
+          .eq("companyname", company.companyname));
         results.push({ company: company.companyname, url, status: "found" });
       } else {
         results.push({ company: company.companyname, url: null, status: "not_found" });
@@ -97,6 +98,7 @@ If you truly cannot find a careers page, return: NONE`,
       // Rate limit: ~1 request per second
       await new Promise(r => setTimeout(r, 1000));
     } catch (e) {
+      console.error(`backfill-careers-urls: ${company.companyname}:`, e instanceof Error ? e.message : String(e));
       results.push({ company: company.companyname, url: null, status: "error" });
     }
   }

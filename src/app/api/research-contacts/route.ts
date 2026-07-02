@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -161,12 +162,14 @@ ONLY the JSON array.`,
                   // Reject placeholder/fake names
                   if (/^(First|Last|John|Jane|Test|Example)\s+(Last|Doe|Name|User|Person)$/i.test(name)) continue;
 
-                  const { data: existing } = await supabaseAdmin
+                  const { data: existing, error: existingError } = await supabaseAdmin
                     .from("contacts")
                     .select("id")
                     .eq("companyname", companyname)
                     .ilike("contactname", name)
                     .limit(1);
+                  // A failed dedupe lookup must not fall through to insert
+                  if (existingError) throw new Error(`contact lookup: ${existingError.message}`);
 
                   if (!existing || existing.length === 0) {
                     const contactRow = {
@@ -177,27 +180,28 @@ ONLY the JSON array.`,
                       linkedin: "",
                       notes: `Web search ${new Date().toISOString().split("T")[0]}`,
                     };
-                    const { error } = await supabaseAdmin.from("contacts").insert(contactRow);
-                    if (!error) aiSaved.push(contactRow);
+                    mustWrite("research-contacts: web-search contact insert", await supabaseAdmin.from("contacts").insert(contactRow));
+                    aiSaved.push(contactRow);
                   }
                 }
 
                 if (aiSaved.length > 0) {
                   // Create a draft letter for the first contact
-                  const { data: existingLetter } = await supabaseAdmin
+                  const { data: existingLetter, error: letterLookupError } = await supabaseAdmin
                     .from("reachout_company_inserts")
                     .select("id")
                     .eq("companyname", companyname)
                     .limit(1);
+                  if (letterLookupError) throw new Error(`letter lookup: ${letterLookupError.message}`);
 
                   if (!existingLetter || existingLetter.length === 0) {
-                    await supabaseAdmin.from("reachout_company_inserts").insert({
+                    mustWrite("research-contacts: web-search draft letter insert", await supabaseAdmin.from("reachout_company_inserts").insert({
                       companyname,
                       contactname: aiSaved[0].contactname,
                       contact_title: aiSaved[0].title,
                       contact_email: "",
                       status: "draft",
-                    });
+                    }));
                   }
 
                   return NextResponse.json({
@@ -207,9 +211,15 @@ ONLY the JSON array.`,
                   });
                 }
               }
-            } catch { /* JSON parse failed */ }
+            } catch (fallbackErr) {
+              // JSON parse failure is expected noise; a DB write failure is not —
+              // log it so the fallback can't swallow lost contacts silently.
+              console.error("research-contacts: web-search fallback:", fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr));
+            }
           }
-        } catch { /* OpenAI fallback failed */ }
+        } catch (aiErr) {
+          console.error("research-contacts: OpenAI fallback failed:", aiErr instanceof Error ? aiErr.message : String(aiErr));
+        }
       }
 
       return NextResponse.json({ contacts: [], message: "No results found on RocketReach or web search for this company." });
@@ -288,36 +298,37 @@ ONLY the JSON array.`,
         email_searched: true,
       };
 
-      const { data: existing } = await supabaseAdmin
+      const { data: existing, error: existingError } = await supabaseAdmin
         .from("contacts")
         .select("id")
         .eq("companyname", companyname)
         .ilike("contactname", name)
         .limit(1);
+      // A failed dedupe lookup must not fall through to insert
+      if (existingError) throw new Error(`contact lookup: ${existingError.message}`);
 
       if (!existing || existing.length === 0) {
-        const { error } = await supabaseAdmin.from("contacts").insert(contactRow);
-        if (!error) saved.push(contactRow);
-      } else {
-        saved.push(contactRow);
+        mustWrite("research-contacts: contact insert", await supabaseAdmin.from("contacts").insert(contactRow));
       }
+      saved.push(contactRow);
     }
 
     if (saved.length > 0) {
-      const { data: existingLetter } = await supabaseAdmin
+      const { data: existingLetter, error: letterLookupError } = await supabaseAdmin
         .from("reachout_company_inserts")
         .select("id")
         .eq("companyname", companyname)
         .limit(1);
+      if (letterLookupError) throw new Error(`letter lookup: ${letterLookupError.message}`);
 
       if (!existingLetter || existingLetter.length === 0) {
-        await supabaseAdmin.from("reachout_company_inserts").insert({
+        mustWrite("research-contacts: draft letter insert", await supabaseAdmin.from("reachout_company_inserts").insert({
           companyname,
           contactname: saved[0].contactname,
           contact_title: saved[0].title,
           contact_email: saved[0].email,
           status: "draft",
-        });
+        }));
       }
     }
 

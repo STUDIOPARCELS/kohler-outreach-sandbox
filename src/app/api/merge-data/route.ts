@@ -1,4 +1,5 @@
 import { requireApiSecret } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -36,6 +37,7 @@ function parseAddress(raw: string): {
 
 export async function POST(req: NextRequest) {
   const authError = requireApiSecret(req); if (authError) return authError;
+  try {
   const results = {
     addresses_merged: 0,
     addresses_skipped: 0,
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const { error } = await supabaseAdmin
+      mustWrite(`merge-data: address update for ${name}`, await supabaseAdmin
         .from("companies")
         .update({
           mailing_address1: parsed.street,
@@ -81,9 +83,9 @@ export async function POST(req: NextRequest) {
           mailing_state: parsed.state,
           mailing_zip: parsed.zip,
         })
-        .eq("companyname", name);
+        .eq("companyname", name));
 
-      if (!error) results.addresses_merged++;
+      results.addresses_merged++;
     }
   }
 
@@ -111,13 +113,13 @@ export async function POST(req: NextRequest) {
           updates.title = tc.title;
         }
         if (Object.keys(updates).length > 0) {
-          await supabaseAdmin.from("contacts").update(updates).eq("id", existing[0].id);
+          mustWrite(`merge-data: contact update for ${tc.contactname}`, await supabaseAdmin.from("contacts").update(updates).eq("id", existing[0].id));
           results.contacts_updated++;
         } else {
           results.contacts_skipped++;
         }
       } else {
-        await supabaseAdmin.from("contacts").insert({
+        mustWrite(`merge-data: contact insert for ${tc.contactname}`, await supabaseAdmin.from("contacts").insert({
           companyname: tc.companyname,
           contactname: tc.contactname,
           title: tc.title || "",
@@ -125,7 +127,7 @@ export async function POST(req: NextRequest) {
           linkedin: tc.linkedin || "",
           phone: tc.phone || "",
           notes: tc.notes || "From tier_1_4_contacts",
-        });
+        }));
         results.contacts_merged++;
       }
     }
@@ -150,17 +152,21 @@ export async function POST(req: NextRequest) {
         .limit(1);
 
       if (contact?.[0]?.email) {
-        await supabaseAdmin
+        mustWrite(`merge-data: letter email update for ${l.companyname}`, await supabaseAdmin
           .from("reachout_company_inserts")
           .update({
             contact_email: contact[0].email,
             contact_title: contact[0].title || l.contact_title,
           })
-          .eq("id", l.id);
+          .eq("id", l.id));
         results.letters_email_updated++;
       }
     }
   }
 
   return NextResponse.json(results);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

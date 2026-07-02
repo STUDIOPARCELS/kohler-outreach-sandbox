@@ -1,4 +1,5 @@
 import { requireApiSecret } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
   }[] = [];
   let rateLimited = false;
 
+  try {
   for (const c of contacts) {
     if (rateLimited) break;
 
@@ -144,17 +146,17 @@ export async function POST(req: NextRequest) {
       if (lookup.linkedin) updateFields.linkedin = lookup.linkedin;
       if (lookup.phone) updateFields.phone = lookup.phone;
 
-      await supabaseAdmin
+      mustWrite(`backfill-emails: contact update for ${c.contactname}`, await supabaseAdmin
         .from("contacts")
         .update(updateFields)
-        .eq("id", c.id);
+        .eq("id", c.id));
 
       // Also update any existing letter drafts for this contact
-      await supabaseAdmin
+      mustWrite(`backfill-emails: letter email update for ${c.contactname}`, await supabaseAdmin
         .from("reachout_company_inserts")
         .update({ contact_email: lookup.email })
         .eq("companyname", c.companyname)
-        .eq("contactname", c.contactname);
+        .eq("contactname", c.contactname));
 
       results.push({
         id: c.id,
@@ -174,6 +176,10 @@ export async function POST(req: NextRequest) {
     }
 
     await delay(DELAY_MS);
+  }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message, processed: results.length, results }, { status: 500 });
   }
 
   // Count remaining

@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -21,12 +22,12 @@ export async function POST(req: NextRequest) {
 
     // Re-insert contacts
     if (contacts && contacts.length > 0) {
-      await supabaseAdmin.from("contacts").insert(contacts);
+      mustWrite("restore-company: contacts insert", await supabaseAdmin.from("contacts").insert(contacts));
     }
 
     // Re-insert letters
     if (letters && letters.length > 0) {
-      await supabaseAdmin.from("reachout_company_inserts").insert(letters);
+      mustWrite("restore-company: letters insert", await supabaseAdmin.from("reachout_company_inserts").insert(letters));
     }
 
     return NextResponse.json({ success: true, restored: company.companyname });

@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const authError = requireAppOrigin(req); if (authError) return authError;
-  const { data } = await supabaseAdmin.from("reachout_template").select("*");
+  const { data, error: readError } = await supabaseAdmin.from("reachout_template").select("*");
+  if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
   if (!data || data.length === 0) return NextResponse.json({ error: "No template" });
 
   const tpl = data[0];
@@ -20,5 +21,8 @@ export async function POST(req: NextRequest) {
     .update({ body_template: body })
     .eq("id", tpl.id);
 
-  return NextResponse.json({ success: !error, updated: true });
+  if (error) {
+    return NextResponse.json({ error: error.message, updated: false }, { status: 500 });
+  }
+  return NextResponse.json({ success: true, updated: true });
 }

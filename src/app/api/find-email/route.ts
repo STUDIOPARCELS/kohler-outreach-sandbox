@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -43,24 +44,24 @@ export async function POST(req: NextRequest) {
       const searchData = await searchRes.json();
       const profiles = searchData.profiles || [];
       if (profiles.length === 0) {
-        if (contactId) await supabaseAdmin.from("contacts").update({ email_searched: true }).eq("id", contactId);
+        if (contactId) mustWrite("find-email: mark contact email_searched", await supabaseAdmin.from("contacts").update({ email_searched: true }).eq("id", contactId));
         return NextResponse.json({ email: null, message: "No results found" });
       }
 
       const teaser = profiles[0].teaser || {};
       const email = (teaser.emails?.[0] ?? "") as string;
       if (!email.includes("@")) {
-        if (contactId) await supabaseAdmin.from("contacts").update({ email_searched: true }).eq("id", contactId);
+        if (contactId) mustWrite("find-email: mark contact email_searched", await supabaseAdmin.from("contacts").update({ email_searched: true }).eq("id", contactId));
         return NextResponse.json({ email: null, message: "No email found in search results" });
       }
 
       // Update contact
       if (contactId) {
-        await supabaseAdmin.from("contacts").update({ email, email_searched: true }).eq("id", contactId);
-        await supabaseAdmin.from("reachout_company_inserts")
+        mustWrite("find-email: contact email update", await supabaseAdmin.from("contacts").update({ email, email_searched: true }).eq("id", contactId));
+        mustWrite("find-email: letter contact_email update", await supabaseAdmin.from("reachout_company_inserts")
           .update({ contact_email: email })
           .eq("companyname", companyname)
-          .ilike("contactname", contactname);
+          .ilike("contactname", contactname));
       }
 
       return NextResponse.json({ email, source: "search" });
@@ -78,17 +79,17 @@ export async function POST(req: NextRequest) {
       "";
 
     if (!email) {
-      if (contactId) await supabaseAdmin.from("contacts").update({ email_searched: true }).eq("id", contactId);
+      if (contactId) mustWrite("find-email: mark contact email_searched", await supabaseAdmin.from("contacts").update({ email_searched: true }).eq("id", contactId));
       return NextResponse.json({ email: null, message: "Person found but no email available" });
     }
 
     // Update contact in database
     if (contactId) {
-      await supabaseAdmin.from("contacts").update({ email, email_searched: true }).eq("id", contactId);
-      await supabaseAdmin.from("reachout_company_inserts")
+      mustWrite("find-email: contact email update", await supabaseAdmin.from("contacts").update({ email, email_searched: true }).eq("id", contactId));
+      mustWrite("find-email: letter contact_email update", await supabaseAdmin.from("reachout_company_inserts")
         .update({ contact_email: email })
         .eq("companyname", companyname)
-        .ilike("contactname", contactname);
+        .ilike("contactname", contactname));
     }
 
     return NextResponse.json({ email, source: "lookup" });

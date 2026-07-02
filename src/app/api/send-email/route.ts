@@ -1,5 +1,6 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { findBouncedRecipients } from "@/lib/bounceSuppression";
+import { warnWrite } from "@/lib/dbGuard";
 import { isHumanApprovedDraftStatus, isLiveSendEnabled, liveSendDisabledMessage } from "@/lib/outreachSafety";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
@@ -202,6 +203,11 @@ export async function POST(req: NextRequest) {
       attachments,
     });
 
+    // Post-send bookkeeping: the email is already out, so a failed write must
+    // become a warning, never a 500 — a retry would double-send. But it can't
+    // stay silent either: an unrecorded send looks unsent and invites a resend.
+    const warnings: string[] = [];
+
     // Update letter status to "emailed" + save job tracking
     if (letterId) {
       const updateFields: Record<string, unknown> = {
@@ -212,14 +218,19 @@ export async function POST(req: NextRequest) {
       if (job_title) updateFields.job_title = job_title;
       if (job_url) updateFields.job_url = job_url;
       if (job_skills_matched) updateFields.job_skills_matched = job_skills_matched;
-      await supabaseAdmin
-        .from("reachout_company_inserts")
-        .update(updateFields)
-        .eq("id", letterId);
+      const updateWarning = warnWrite(
+        `send-email: post-send status update for letter ${letterId}`,
+        await supabaseAdmin
+          .from("reachout_company_inserts")
+          .update(updateFields)
+          .eq("id", letterId)
+      );
+      if (updateWarning) warnings.push(updateWarning);
     }
 
     // Log to tracking
-    try {
+    const trackingWarning = warnWrite(
+      "send-email: tracking insert",
       await supabaseAdmin.from("tracking").insert({
         companyname,
         contactname: contactname || null,
@@ -230,15 +241,15 @@ export async function POST(req: NextRequest) {
           message_id: info.messageId,
           attachments: attachments.map((a) => a.filename),
         }),
-      });
-    } catch {
-      /* non-critical */
-    }
+      })
+    );
+    if (trackingWarning) warnings.push(trackingWarning);
 
     return NextResponse.json({
       success: true,
       messageId: info.messageId,
       attachments: attachments.map((a) => a.filename),
+      ...(warnings.length > 0 ? { warnings } : {}),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

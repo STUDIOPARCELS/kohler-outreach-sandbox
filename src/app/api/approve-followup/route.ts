@@ -1,5 +1,6 @@
 import { requireAppOrigin } from "@/lib/auth";
 import { findBouncedRecipients } from "@/lib/bounceSuppression";
+import { warnWrite } from "@/lib/dbGuard";
 import { isFollowupSendableStatus, isLiveSendEnabled, liveSendDisabledMessage } from "@/lib/outreachSafety";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
@@ -159,24 +160,37 @@ export async function POST(req: NextRequest) {
       attachments,
     });
 
+    // Post-send bookkeeping: the email is already out, so a failed write must
+    // become a warning, never a 500 — a retry would double-send. But it can't
+    // stay silent either: an unrecorded follow-up looks unsent and invites a resend.
+    const warnings: string[] = [];
+
     // Update the letter record
     const updateFields = isSecondFollowup
       ? { followup2_at: new Date().toISOString(), status: "followup2_sent" }
       : { emailed_at: new Date().toISOString(), status: "emailed" };
 
-    await supabaseAdmin
-      .from("reachout_company_inserts")
-      .update(updateFields)
-      .eq("id", letterId);
+    const updateWarning = warnWrite(
+      `approve-followup: post-send status update for letter ${letterId}`,
+      await supabaseAdmin
+        .from("reachout_company_inserts")
+        .update(updateFields)
+        .eq("id", letterId)
+    );
+    if (updateWarning) warnings.push(updateWarning);
 
     // Log to tracking
-    try {
-      const { data: letter } = await supabaseAdmin
-        .from("reachout_company_inserts")
-        .select("companyname, contactname")
-        .eq("id", letterId)
-        .single();
+    const { data: letter, error: letterLookupError } = await supabaseAdmin
+      .from("reachout_company_inserts")
+      .select("companyname, contactname")
+      .eq("id", letterId)
+      .maybeSingle();
+    if (letterLookupError) {
+      warnings.push(`approve-followup: letter lookup for tracking: ${letterLookupError.message}`);
+    }
 
+    const trackingWarning = warnWrite(
+      "approve-followup: tracking insert",
       await supabaseAdmin.from("tracking").insert({
         companyname: letter?.companyname || "Unknown",
         contactname: letter?.contactname || null,
@@ -187,14 +201,14 @@ export async function POST(req: NextRequest) {
           message_id: info.messageId,
           type: isSecondFollowup ? "14_day_followup" : "7_day_followup",
         }),
-      });
-    } catch {
-      /* non-critical */
-    }
+      })
+    );
+    if (trackingWarning) warnings.push(trackingWarning);
 
     return NextResponse.json({
       success: true,
       messageId: info.messageId,
+      ...(warnings.length > 0 ? { warnings } : {}),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

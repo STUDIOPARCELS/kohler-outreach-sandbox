@@ -1,4 +1,5 @@
 import { requireAppOrigin } from "@/lib/auth";
+import { mustWrite } from "@/lib/dbGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -15,44 +16,50 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    // Fetch all data before deleting (for undo support)
-    const { data: companyData } = await supabaseAdmin
+    // Fetch all data before deleting (for undo support). A failed backup read
+    // must abort the delete — otherwise "undo" would restore nothing.
+    const { data: companyData, error: companyFetchError } = await supabaseAdmin
       .from("companies")
       .select("*")
       .eq("companyname", companyname)
-      .single();
+      .maybeSingle();
+    if (companyFetchError) {
+      return NextResponse.json({ error: `backup fetch (company): ${companyFetchError.message}` }, { status: 500 });
+    }
 
-    const { data: contactsData } = await supabaseAdmin
+    const { data: contactsData, error: contactsFetchError } = await supabaseAdmin
       .from("contacts")
       .select("*")
       .eq("companyname", companyname);
+    if (contactsFetchError) {
+      return NextResponse.json({ error: `backup fetch (contacts): ${contactsFetchError.message}` }, { status: 500 });
+    }
 
-    const { data: lettersData } = await supabaseAdmin
+    const { data: lettersData, error: lettersFetchError } = await supabaseAdmin
       .from("reachout_company_inserts")
       .select("*")
       .eq("companyname", companyname);
+    if (lettersFetchError) {
+      return NextResponse.json({ error: `backup fetch (letters): ${lettersFetchError.message}` }, { status: 500 });
+    }
 
     // Delete contacts first (FK-safe)
-    await supabaseAdmin.from("contacts").delete().eq("companyname", companyname);
+    mustWrite("delete-company: contacts delete", await supabaseAdmin.from("contacts").delete().eq("companyname", companyname));
 
     // Delete any letters/drafts
-    await supabaseAdmin
+    mustWrite("delete-company: letters delete", await supabaseAdmin
       .from("reachout_company_inserts")
       .delete()
-      .eq("companyname", companyname);
+      .eq("companyname", companyname));
 
     // Delete tracking entries
-    await supabaseAdmin.from("tracking").delete().eq("companyname", companyname);
+    mustWrite("delete-company: tracking delete", await supabaseAdmin.from("tracking").delete().eq("companyname", companyname));
 
     // Delete the company
-    const { error } = await supabaseAdmin
+    mustWrite("delete-company: company delete", await supabaseAdmin
       .from("companies")
       .delete()
-      .eq("companyname", companyname);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+      .eq("companyname", companyname));
 
     // Return deleted data so frontend can undo
     return NextResponse.json({
