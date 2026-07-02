@@ -1,0 +1,43 @@
+# CI for the outreach engine: typecheck, all test suites, production build.
+# No secrets required — the Supabase client is lazily initialized
+# (src/lib/supabaseAdmin.ts), so `next build` succeeds without env vars.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Fit-score tests
+        run: npm run test:fit
+
+      - name: Schema contract tests
+        run: npm run test:schema
+
+      - name: Gmail backfill tests
+        run: npm run test:gmail
+
+      - name: Bounce suppression tests
+        run: npm run test:bounce
+
+      - name: Freshness probe logic tests
+        run: npm run test:freshness
+
+      - name: Production build
+        run: npx next build

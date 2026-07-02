@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test:bounce": "node --test scripts/bounce-suppression.test.mjs",
     "test:fit": "node --test scripts/kohler-fit-score.test.mjs",
+    "test:freshness": "node --test scripts/check-freshness.test.mjs",
     "test:gmail": "node --test scripts/gmail-backfill.test.mjs",
     "test:schema": "node --test scripts/schema-contract.test.mjs"
   },

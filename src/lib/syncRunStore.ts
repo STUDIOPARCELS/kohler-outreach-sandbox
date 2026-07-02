@@ -1,7 +1,18 @@
 import { isMissingTableError, optionalDbErrorMessage } from "@/lib/optionalDb";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export type SyncRunStatus = "running" | "completed" | "completed_with_errors" | "error" | "skipped";
+export type SyncRunStatus =
+  | "running"
+  | "completed"
+  | "completed_with_errors"
+  | "error"
+  | "skipped"
+  | "abandoned";
+
+// A run still "running" after this long was killed (deploy, timeout beyond
+// maxDuration, crash) — finishSyncRun never fired. Mark it abandoned so run
+// history distinguishes a dead run from a live one.
+const STALE_RUNNING_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 
 export interface SyncRunHandle {
   id: string | null;
@@ -35,8 +46,31 @@ function elapsedMs(startedAt: string, finishedAt: string): number {
   return Math.max(0, new Date(finishedAt).getTime() - new Date(startedAt).getTime());
 }
 
+async function abandonStaleRuns(nowIso: string): Promise<void> {
+  const cutoff = new Date(new Date(nowIso).getTime() - STALE_RUNNING_MAX_AGE_MS).toISOString();
+  const { error } = await supabaseAdmin
+    .from("sync_runs")
+    .update({
+      status: "abandoned",
+      finished_at: nowIso,
+      updated_at: nowIso,
+      errors: [{ message: `abandoned: still "running" after 2h, marked stale at ${nowIso}` }],
+    })
+    .eq("status", "running")
+    .lt("started_at", cutoff);
+
+  if (error && !isMissingTableError(error, "sync_runs")) {
+    // Also tolerates DBs where the sync_runs status check constraint predates
+    // the "abandoned" migration — cleanup is best-effort and must never block
+    // a new run.
+    console.warn("sync_runs stale-run cleanup failed:", optionalDbErrorMessage(error));
+  }
+}
+
 export async function startSyncRun(input: StartSyncRunInput): Promise<SyncRunHandle> {
   const startedAt = new Date().toISOString();
+
+  await abandonStaleRuns(startedAt);
   const { data, error } = await supabaseAdmin
     .from("sync_runs")
     .insert({

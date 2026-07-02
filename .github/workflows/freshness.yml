@@ -1,0 +1,47 @@
+# Nightly freshness probe — fails when the ingest pipeline looks dead.
+#
+# Runs scripts/check-freshness.mjs against Supabase and turns red when:
+#   (a) no sync_runs row completed (completed/completed_with_errors) in 48h, or
+#   (b) a sync_runs row is stuck in status "running" for over 2h, or
+#   (c) no job_listings row has last_seen_at/first_seen_at within 72h.
+#
+# SETUP (one-time): add two repository secrets under
+#   repo Settings -> Secrets and variables -> Actions -> "New repository secret":
+#     SUPABASE_URL               e.g. https://<project-ref>.supabase.co
+#     SUPABASE_SERVICE_ROLE_KEY  the project's service-role key
+# Until both secrets exist, the probe logs a notice and exits green (skipped)
+# instead of spamming red runs. See also README.md "Nightly freshness probe".
+name: Freshness probe
+
+on:
+  schedule:
+    # Daily at 15:00 UTC — one hour after the 14:00 UTC pg_cron ingest window.
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check secrets
+        id: secrets
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::notice title=Freshness probe skipped::SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY secrets not configured — skipping. Add them under repo Settings -> Secrets and variables -> Actions (see comment at the top of this workflow)."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run freshness probe
+        if: steps.secrets.outputs.configured == 'true'
+        run: node scripts/check-freshness.mjs
