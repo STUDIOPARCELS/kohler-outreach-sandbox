@@ -397,6 +397,12 @@ export default function OpenRolesPage() {
                 <span className="rounded-full px-2 py-1 bg-white/10 text-slate-200 border border-white/10 normal-case">
                   Supabase {diagnostics?.runtime?.supabaseProjectRef || diagnostics?.runtime?.supabaseHost || "unknown"}
                 </span>
+                <Link
+                  href="/project-builds"
+                  className="rounded-full px-2 py-1 bg-amber-400/20 text-amber-100 border border-amber-300/20 hover:bg-amber-400/30 transition-colors normal-case"
+                >
+                  Project Builds →
+                </Link>
               </div>
             </div>
             <div className="grid grid-cols-2 sm:flex gap-2">

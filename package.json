@@ -7,10 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "node --test scripts/*.test.mjs tests/*.test.mjs",
     "test:bounce": "node --test scripts/bounce-suppression.test.mjs",
     "test:fit": "node --test scripts/kohler-fit-score.test.mjs",
     "test:gmail": "node --test scripts/gmail-backfill.test.mjs",
-    "test:schema": "node --test scripts/schema-contract.test.mjs"
+    "test:schema": "node --test scripts/schema-contract.test.mjs",
+    "test:builds": "node --test tests/projectBuilds.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.46.0",
@@ -22,6 +25,7 @@
     "resend": "^6.9.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.0.0",
     "@types/nodemailer": "^7.0.11",
     "@types/react": "^18.3.0",
